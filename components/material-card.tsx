@@ -3,7 +3,6 @@
 import { useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { FileText, Video, Calendar } from "lucide-react"
-import SubjectThumbnail from "./subject-thumbnail"
 
 interface MaterialCardProps {
   material: {
@@ -11,10 +10,9 @@ interface MaterialCardProps {
     title: string
     description: string
     type: string
-    category?: string
     size: string
     purchaseDate: string
-    image?: string
+    image: string
   }
   onClick: () => void
 }
@@ -22,10 +20,6 @@ interface MaterialCardProps {
 export default function MaterialCard({ material, onClick }: MaterialCardProps) {
   const [isHovered, setIsHovered] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
-
-  // Determine if we should use a custom image or the subject thumbnail
-  const hasCustomImage = !!material.image && material.image !== "/placeholder.svg" && !material.image.includes("placeholder")
-  const category = material.category || (material.type === "pdf" ? "document" : "video")
 
   return (
     <motion.div
@@ -45,26 +39,26 @@ export default function MaterialCard({ material, onClick }: MaterialCardProps) {
 
       {/* Content */}
       <div className="relative z-10 p-4">
-        {/* Image */}
+        {/* Image with type-based thumbnail */}
         <div className="relative mb-4 aspect-video overflow-hidden rounded-lg">
-          {hasCustomImage ? (
-            <div className="h-full w-full">
-              <img 
-                src={material.image} 
-                alt={material.title} 
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent"></div>
-            </div>
-          ) : (
-            <SubjectThumbnail 
-              category={category}
-              width={300}
-              height={169}
-              className="w-full h-full"
-              showTitle={false}
-            />
-          )}
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900">
+            {material.type === "pdf" ? (
+              <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-purple-900/40 to-blue-900/40">
+                <FileText className="h-16 w-16 text-purple-400" />
+                <div className="mt-2 text-sm font-medium text-purple-400">PDF Document</div>
+              </div>
+            ) : material.type === "video" ? (
+              <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-blue-900/40 to-cyan-900/40">
+                <Video className="h-16 w-16 text-blue-400" />
+                <div className="mt-2 text-sm font-medium text-blue-400">Video Lecture</div>
+              </div>
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800/40 to-slate-900/40">
+                <FileText className="h-16 w-16 text-slate-400" />
+                <div className="mt-2 text-sm font-medium text-slate-400">Document</div>
+              </div>
+            )}
+          </div>
           <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {material.type.toUpperCase()}
           </div>
