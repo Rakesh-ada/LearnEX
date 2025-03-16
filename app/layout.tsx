@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import SimpleFallback from "@/components/simple-fallback"
 import ClientOnly from "@/lib/client-only"
 import Script from "next/script"
+import Link from "next/link"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -32,7 +33,14 @@ export default function RootLayout({
                 <ClientOnly fallback={<SimpleFallback />}>
                   <StarBackground />
                 </ClientOnly>
-                <Navbar />
+                <Navbar>
+                  <Link href="/" className="flex items-center">
+                    <span className="text-2xl font-bold">
+                      <span className="text-white">Learn</span>
+                      <span className="text-[#8A6FE8]">EX</span>
+                    </span>
+                  </Link>
+                </Navbar>
                 <main className="flex-1 relative z-10">{children}</main>
               </div>
               <Toaster />
