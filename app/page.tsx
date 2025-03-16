@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import SpaceBackground from "@/components/space-background"
 import { ChevronRight, BookOpen, Upload, Download } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, useAnimationControls } from "framer-motion"
 import ClientOnly from "@/lib/client-only"
 import SimpleFallback from "@/components/simple-fallback"
 
@@ -16,6 +16,9 @@ export default function Home() {
   const scrollToFeatured = () => {
     featuredRef.current?.scrollIntoView({ behavior: "smooth" })
   }
+
+  const text = "TokenNotes: Buy, Sell & Trade Study Materials as Secure NFTs!"
+  const words = text.split(" ")
 
   return (
     <main className="relative min-h-screen">
@@ -48,12 +51,25 @@ export default function Home() {
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="mb-10 max-w-2xl text-lg text-slate-300"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            className="mb-10 max-w-2xl text-lg text-slate-300 relative"
           >
-            Buy, sell, and trade study materials as NFTs with encrypted access control.
+            {words.map((word, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                  duration: 0.1,
+                  delay: 0.4 + (i * 0.15),
+                  ease: "linear"
+                }}
+                className="inline-block mr-1.5"
+              >
+                {word}
+              </motion.span>
+            ))}
           </motion.p>
 
           <motion.div
@@ -91,8 +107,8 @@ export default function Home() {
           className="absolute bottom-8 flex flex-col items-center"
         >
           <span className="mb-2 text-sm text-slate-400">Scroll to discover</span>
-          <div className="h-10 w-6 rounded-full border-2 border-slate-400 p-1">
-            <div className="h-2 w-2 rounded-full bg-slate-400"></div>
+          <div className="relative h-10 w-6 rounded-full border-2 border-slate-400">
+            <div className="absolute left-1/2 top-2 h-2 w-2 -translate-x-1/2 rounded-full bg-slate-400"></div>
           </div>
         </motion.div>
       </section>
@@ -204,12 +220,10 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between md:flex-row">
             <div className="mb-6 flex items-center md:mb-0">
-              <div className="relative mr-2 h-8 w-8">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 opacity-70 blur-sm"></div>
-                <div className="absolute inset-0.5 rounded-full bg-black"></div>
-                <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-white">L</div>
-              </div>
-              <span className="text-xl font-bold text-white">LearnEX</span>
+              <span className="text-2xl font-bold">
+                <span className="text-white">Learn</span>
+                <span className="text-[#8A6FE8]">EX</span>
+              </span>
             </div>
             <div className="mb-6 flex space-x-6 md:mb-0">
               <a href="#" className="text-sm text-slate-400 hover:text-white">
