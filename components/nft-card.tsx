@@ -24,23 +24,25 @@ interface NFTCardProps {
 function getSubjectGradient(subject: string): string {
   switch (subject?.toLowerCase()) {
     case 'mathematics':
-      return 'from-blue-600 via-cyan-400 to-teal-300'
+      return 'from-blue-600 via-indigo-500 to-purple-500'
     case 'chemistry':
-      return 'from-green-500 via-emerald-400 to-teal-300'
+      return 'from-green-500 via-teal-500 to-cyan-500'
     case 'physics':
-      return 'from-purple-600 via-violet-400 to-indigo-300'
+      return 'from-purple-600 via-indigo-500 to-blue-500'
     case 'biology':
-      return 'from-green-600 via-lime-400 to-emerald-300'
+      return 'from-green-600 via-emerald-500 to-teal-500'
     case 'computer science':
-      return 'from-blue-600 via-indigo-400 to-violet-300'
+      return 'from-blue-600 via-indigo-500 to-violet-500'
     case 'literature':
-      return 'from-amber-500 via-orange-400 to-yellow-300'
+      return 'from-amber-500 via-orange-500 to-red-500'
     case 'history':
-      return 'from-red-600 via-rose-400 to-pink-300'
+      return 'from-red-600 via-rose-500 to-pink-500'
     case 'economics':
-      return 'from-emerald-600 via-green-400 to-lime-300'
+      return 'from-emerald-600 via-green-500 to-teal-500'
+    case 'blockchain':
+      return 'from-purple-600 via-violet-500 to-blue-500'
     default:
-      return 'from-purple-600 via-violet-400 to-indigo-300' // Default gradient
+      return 'from-purple-600 via-violet-500 to-blue-500' // Default gradient like in the image
   }
 }
 
@@ -323,6 +325,29 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                   <div className="mt-2 text-sm font-medium text-lime-400">Economics</div>
                 </div>
               )}
+              {item.category === "Blockchain" && (
+                <div className="flex h-full w-full flex-col items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-16 w-16 text-purple-400"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="2" y="7" width="6" height="6" rx="1"></rect>
+                    <rect x="16" y="7" width="6" height="6" rx="1"></rect>
+                    <rect x="9" y="7" width="6" height="6" rx="1"></rect>
+                    <rect x="9" y="16" width="6" height="6" rx="1"></rect>
+                    <path d="M5 13v2"></path>
+                    <path d="M19 13v2"></path>
+                    <path d="M12 13v2"></path>
+                  </svg>
+                  <div className="mt-2 text-sm font-medium text-purple-400">Blockchain</div>
+                </div>
+              )}
               {/* Default for any other category */}
               {![
                 "Mathematics",
@@ -333,6 +358,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 "Literature",
                 "History",
                 "Economics",
+                "Blockchain",
               ].includes(item.category) && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
