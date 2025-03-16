@@ -12,11 +12,36 @@ interface NFTCardProps {
     price: string
     author: string
     category: string
-    image: string
-    rating: number
-    sales: number
+    image?: string
+    thumbnailHash?: string
+    rating?: number
+    sales?: number
   }
   onClick: () => void
+}
+
+// Function to get gradient based on subject category
+function getSubjectGradient(subject: string): string {
+  switch (subject?.toLowerCase()) {
+    case 'mathematics':
+      return 'from-blue-600 via-cyan-400 to-teal-300'
+    case 'chemistry':
+      return 'from-green-500 via-emerald-400 to-teal-300'
+    case 'physics':
+      return 'from-purple-600 via-violet-400 to-indigo-300'
+    case 'biology':
+      return 'from-green-600 via-lime-400 to-emerald-300'
+    case 'computer science':
+      return 'from-blue-600 via-indigo-400 to-violet-300'
+    case 'literature':
+      return 'from-amber-500 via-orange-400 to-yellow-300'
+    case 'history':
+      return 'from-red-600 via-rose-400 to-pink-300'
+    case 'economics':
+      return 'from-emerald-600 via-green-400 to-lime-300'
+    default:
+      return 'from-purple-600 via-violet-400 to-indigo-300' // Default gradient
+  }
 }
 
 export default function NFTCard({ item, onClick }: NFTCardProps) {
@@ -117,13 +142,26 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
   return (
     <motion.div
       ref={cardRef}
-      className="group relative h-full cursor-pointer overflow-hidden rounded-xl border border-slate-800 bg-slate-900/80 p-4 backdrop-blur-sm transition-all duration-300"
+      className={`group relative h-full cursor-pointer overflow-hidden rounded-xl border border-slate-800 bg-gradient-to-br ${getSubjectGradient(item.category)} p-4 backdrop-blur-sm transition-all duration-300`}
       whileHover={{ scale: 1.02 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
       onClick={onClick}
       style={{ transformStyle: "preserve-3d" }}
     >
+      {/* Blockchain pattern overlay */}
+      <div 
+        className="absolute inset-0 opacity-20 mix-blend-overlay"
+        style={{
+          backgroundImage: "url('/backgrounds/blockchain-pattern.svg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      
+      {/* Add shine effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+
       {/* Glowing effect canvas */}
       <canvas
         ref={canvasRef}
@@ -136,11 +174,11 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
       <div className="relative z-10" style={{ transform: "translateZ(20px)" }}>
         {/* Image with category-based thumbnail */}
         <div className="relative mb-4 aspect-square overflow-hidden rounded-lg">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-800/50 to-slate-900/50">
             {/* Category-based icon/background */}
             <div className="flex h-full items-center justify-center">
               {item.category === "Mathematics" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-blue-900/40 to-purple-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-blue-400"
@@ -159,7 +197,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {item.category === "Chemistry" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-green-900/40 to-teal-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-green-400"
@@ -177,7 +215,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {item.category === "Physics" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-indigo-900/40 to-blue-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-indigo-400"
@@ -196,7 +234,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {item.category === "Biology" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-emerald-900/40 to-green-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-emerald-400"
@@ -214,7 +252,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {item.category === "Computer Science" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-cyan-900/40 to-blue-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-cyan-400"
@@ -233,7 +271,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {item.category === "Literature" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-amber-900/40 to-yellow-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-amber-400"
@@ -250,7 +288,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {item.category === "History" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-orange-900/40 to-red-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-orange-400"
@@ -268,7 +306,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {item.category === "Economics" && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-lime-900/40 to-green-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-lime-400"
@@ -296,7 +334,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 "History",
                 "Economics",
               ].includes(item.category) && (
-                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-purple-900/40 to-blue-900/40">
+                <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-16 w-16 text-purple-400"
@@ -315,7 +353,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
               )}
             </div>
           </div>
-          <div className="absolute bottom-2 left-2 rounded-md bg-purple-600/90 px-2 py-1 text-xs font-medium text-white">
+          <div className="absolute bottom-2 left-2 rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {item.category}
           </div>
         </div>
@@ -324,15 +362,21 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
         <h3 className="mb-1 text-lg font-bold text-white">{item.title}</h3>
         <p className="mb-3 line-clamp-2 text-sm text-slate-300">{item.description}</p>
 
-        {/* Rating */}
-        <div className="mb-3 flex items-center">
-          <div className="flex items-center">
-            <Star className="mr-1 h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm font-medium text-white">{item.rating.toFixed(1)}</span>
+        {/* Rating - Only show if rating exists */}
+        {typeof item.rating === 'number' && (
+          <div className="mb-3 flex items-center">
+            <div className="flex items-center">
+              <Star className="mr-1 h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm font-medium text-white">{item.rating.toFixed(1)}</span>
+            </div>
+            {typeof item.sales === 'number' && (
+              <>
+                <span className="mx-2 text-slate-500">•</span>
+                <span className="text-sm text-slate-400">{item.sales} sales</span>
+              </>
+            )}
           </div>
-          <span className="mx-2 text-slate-500">•</span>
-          <span className="text-sm text-slate-400">{item.sales} sales</span>
-        </div>
+        )}
 
         {/* Price and Author */}
         <div className="flex items-center justify-between">
@@ -340,9 +384,6 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
           <div className="truncate text-xs text-slate-400">by {item.author.substring(0, 6)}...</div>
         </div>
       </div>
-
-      {/* Hover overlay with glow */}
-      <div className="absolute inset-0 z-0 rounded-xl bg-gradient-to-r from-purple-600/0 to-blue-600/0 opacity-0 transition-all duration-300 group-hover:from-purple-600/20 group-hover:to-blue-600/20 group-hover:opacity-100"></div>
     </motion.div>
   )
 }
