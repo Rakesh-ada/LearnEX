@@ -12,15 +12,11 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-slate-800 bg-black/50 backdrop-blur-md">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="flex items-center">
-            <div className="relative mr-2 h-8 w-8">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 opacity-70 blur-sm"></div>
-              <div className="absolute inset-0.5 rounded-full bg-black"></div>
-              <div className="absolute inset-0 flex items-center justify-center text-xl font-bold text-white">L</div>
-            </div>
-            <span className="text-xl font-bold text-white">LearnEX</span>
-          </div>
+        <Link href="/" className="flex items-center">
+          <span className="text-2xl font-bold">
+            <span className="text-white">Learn</span>
+            <span className="text-[#8A6FE8]">EX</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -36,9 +32,6 @@ export default function Navbar() {
           </Link>
           <Link href="/my-materials" className="text-sm font-medium text-white/80 transition-colors hover:text-white">
             My Materials
-          </Link>
-          <Link href="/thumbnails" className="text-sm font-medium text-white/80 transition-colors hover:text-white">
-            Thumbnails
           </Link>
           <WalletButton />
         </div>
@@ -82,13 +75,6 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               My Materials
-            </Link>
-            <Link
-              href="/thumbnails"
-              className="rounded-md px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-slate-800 hover:text-white"
-              onClick={() => setIsOpen(false)}
-            >
-              Thumbnails
             </Link>
             <WalletButton isMobile />
           </div>
