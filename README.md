@@ -112,23 +112,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 3D Thumbnails
-
-The application features interactive 3D thumbnails for different subject categories. These thumbnails are rendered using Three.js and React Three Fiber, providing a more engaging visual representation of each subject.
-
-### Viewing the 3D Thumbnails
-
-Navigate to the `/thumbnails` route to see all available 3D thumbnails. You can toggle between 3D and 2D modes using the checkbox.
-
-### Generating Custom 3D Thumbnails
-
-If you want to generate custom 3D thumbnails:
-
-1. Run the 3D thumbnail generator:
-   ```
-   node scripts/serve-3d-generator.js
-   ```
-
-2. Open `http://localhost:3001` in your browser
-3. Use the controls to rotate and download the thumbnails
-4. Place the downloaded PNG files in the `public/thumbnails` directory 
