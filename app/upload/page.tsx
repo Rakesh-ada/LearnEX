@@ -16,11 +16,7 @@ export default function UploadPage() {
                 Upload Study Material
               </span>
             </h1>
-            <p className="mx-auto max-w-3xl text-center text-lg font-medium leading-relaxed">
-              <span className="bg-gradient-to-r from-slate-300 to-slate-400 bg-clip-text text-transparent">
-                Share your knowledge and earn by uploading educational content to our decentralized marketplace
-              </span>
-            </p>
+      
             {/* Optional decorative element */}
             <div className="absolute inset-0 -z-10 bg-gradient-to-b from-purple-500/5 via-slate-900/0 to-transparent" />
           </div>
