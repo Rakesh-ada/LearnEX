@@ -1,7 +1,7 @@
 "use client"
 
-import { useRef, useEffect, useState } from "react"
-import dynamic from 'next/dynamic'
+import { useRef, useEffect } from "react"
+import dynamic from "next/dynamic"
 import * as THREE from "three"
 import { useHydrationSafe } from "@/hooks/use-hydration-safe"
 
@@ -56,7 +56,7 @@ function SpaceBackgroundContent({
   speed = 0.0005,
   shootingStars = true,
   cosmicDust = true,
-  colorTheme = "mixed"
+  colorTheme = "mixed",
 }: SpaceBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -74,7 +74,7 @@ function SpaceBackgroundContent({
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
-      powerPreference: "high-performance"
+      powerPreference: "high-performance",
     })
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // Limit pixel ratio for performance
@@ -83,23 +83,15 @@ function SpaceBackgroundContent({
     // Color palette based on theme
     const getColor = () => {
       if (colorTheme === "blue") {
-        return new THREE.Color(
-          Math.random() * 0.2,
-          Math.random() * 0.2 + 0.3,
-          Math.random() * 0.3 + 0.7
-        )
+        return new THREE.Color(Math.random() * 0.2, Math.random() * 0.2 + 0.3, Math.random() * 0.3 + 0.7)
       } else if (colorTheme === "purple") {
-        return new THREE.Color(
-          Math.random() * 0.3 + 0.4,
-          Math.random() * 0.2,
-          Math.random() * 0.3 + 0.7
-        )
+        return new THREE.Color(Math.random() * 0.3 + 0.4, Math.random() * 0.2, Math.random() * 0.3 + 0.7)
       } else {
         // Mixed theme
         return new THREE.Color(
           Math.random() * 0.3 + (Math.random() > 0.5 ? 0.4 : 0.1),
           Math.random() * 0.3 + (Math.random() > 0.5 ? 0.1 : 0.3),
-          Math.random() * 0.3 + 0.7
+          Math.random() * 0.3 + 0.7,
         )
       }
     }
@@ -200,7 +192,7 @@ function SpaceBackgroundContent({
           direction: new THREE.Vector3(
             (Math.random() - 0.5) * 2,
             (Math.random() - 0.5) * 2,
-            (Math.random() - 0.5) * 2
+            (Math.random() - 0.5) * 2,
           ).normalize(),
           speed: Math.random() * 0.2 + 0.1,
           lifetime: 0,
@@ -258,7 +250,7 @@ function SpaceBackgroundContent({
     const animate = (time: number) => {
       const delta = time - lastTime
       lastTime = time
-      
+
       requestAnimationFrame(animate)
 
       // Rotate stars
@@ -269,11 +261,11 @@ function SpaceBackgroundContent({
       nebulae.forEach((nebula) => {
         nebula.mesh.rotation.x += nebula.rotationSpeed
         nebula.mesh.rotation.y += nebula.rotationSpeed * 1.5
-        
+
         // Pulse effect
         const material = nebula.mesh.material as THREE.MeshBasicMaterial
         material.opacity += nebula.pulseDirection * nebula.pulseSpeed
-        
+
         if (material.opacity > nebula.pulseMax) {
           material.opacity = nebula.pulseMax
           nebula.pulseDirection = -1
@@ -302,37 +294,35 @@ function SpaceBackgroundContent({
             // Activate a new shooting star
             star.active = true
             star.lifetime = 0
-            
+
             const startPoint = new THREE.Vector3(
               (Math.random() - 0.5) * 40,
               (Math.random() - 0.5) * 40,
-              (Math.random() - 0.5) * 40
+              (Math.random() - 0.5) * 40,
             )
-            
+
             star.direction = new THREE.Vector3(
               (Math.random() - 0.5) * 2,
               (Math.random() - 0.5) * 2,
-              (Math.random() - 0.5) * 2
+              (Math.random() - 0.5) * 2,
             ).normalize()
-            
-            const endPoint = new THREE.Vector3().copy(startPoint).add(
-              star.direction.clone().multiplyScalar(10)
-            )
-            
+
+            const endPoint = new THREE.Vector3().copy(startPoint).add(star.direction.clone().multiplyScalar(10))
+
             const points = [startPoint, endPoint]
             star.line.geometry.setFromPoints(points)
             star.line.position.set(0, 0, 0)
-            
+
             const material = star.line.material as THREE.LineBasicMaterial
             material.opacity = 0
           }
-          
+
           if (star.active) {
             star.lifetime++
-            
+
             const progress = star.lifetime / star.maxLifetime
             const material = star.line.material as THREE.LineBasicMaterial
-            
+
             if (progress < 0.2) {
               // Fade in
               material.opacity = progress * 5
@@ -342,9 +332,9 @@ function SpaceBackgroundContent({
             } else {
               material.opacity = 1
             }
-            
+
             star.line.position.add(star.direction.clone().multiplyScalar(star.speed))
-            
+
             if (star.lifetime >= star.maxLifetime) {
               star.active = false
               material.opacity = 0
@@ -355,21 +345,21 @@ function SpaceBackgroundContent({
 
       // Animate cosmic dust
       if (cosmicDust && dustParticles.length > 0) {
-        const dust = scene.children.find(child => child instanceof THREE.Points && child !== stars) as THREE.Points
+        const dust = scene.children.find((child) => child instanceof THREE.Points && child !== stars) as THREE.Points
         if (dust) {
           const positions = dust.geometry.attributes.position.array as Float32Array
-          
+
           dustParticles.forEach((particle) => {
             positions[particle.index] += particle.speed.x
             positions[particle.index + 1] += particle.speed.y
             positions[particle.index + 2] += particle.speed.z
-            
+
             // Wrap around if out of bounds
             if (Math.abs(positions[particle.index]) > 25) positions[particle.index] *= -0.9
             if (Math.abs(positions[particle.index + 1]) > 25) positions[particle.index + 1] *= -0.9
             if (Math.abs(positions[particle.index + 2]) > 25) positions[particle.index + 2] *= -0.9
           })
-          
+
           dust.geometry.attributes.position.needsUpdate = true
         }
       }
@@ -394,7 +384,7 @@ function SpaceBackgroundContent({
       nebulae.forEach((nebula) => {
         nebula.mesh.geometry.dispose()
         if (Array.isArray(nebula.mesh.material)) {
-          nebula.mesh.material.forEach(mat => mat.dispose())
+          nebula.mesh.material.forEach((mat) => mat.dispose())
         } else {
           nebula.mesh.material.dispose()
         }
@@ -403,7 +393,7 @@ function SpaceBackgroundContent({
       orbs.forEach((orb) => {
         orb.mesh.geometry.dispose()
         if (Array.isArray(orb.mesh.material)) {
-          orb.mesh.material.forEach(mat => mat.dispose())
+          orb.mesh.material.forEach((mat) => mat.dispose())
         } else {
           orb.mesh.material.dispose()
         }
@@ -413,7 +403,7 @@ function SpaceBackgroundContent({
         shootingStarsArray.forEach((star) => {
           star.line.geometry.dispose()
           if (Array.isArray(star.line.material)) {
-            star.line.material.forEach(mat => mat.dispose())
+            star.line.material.forEach((mat) => mat.dispose())
           } else {
             star.line.material.dispose()
           }
@@ -421,11 +411,11 @@ function SpaceBackgroundContent({
       }
 
       if (cosmicDust) {
-        const dust = scene.children.find(child => child instanceof THREE.Points && child !== stars) as THREE.Points
+        const dust = scene.children.find((child) => child instanceof THREE.Points && child !== stars) as THREE.Points
         if (dust) {
           dust.geometry.dispose()
           if (Array.isArray(dust.material)) {
-            dust.material.forEach(mat => mat.dispose())
+            dust.material.forEach((mat) => mat.dispose())
           } else {
             dust.material.dispose()
           }
@@ -449,21 +439,19 @@ function SpaceBackgroundPlaceholder() {
 }
 
 // Dynamically import the SpaceBackgroundContent component with SSR disabled
-const DynamicSpaceBackground = dynamic(
-  () => Promise.resolve(SpaceBackgroundContent),
-  { 
-    ssr: false,
-    loading: () => <SpaceBackgroundPlaceholder />
-  }
-)
+const DynamicSpaceBackground = dynamic(() => Promise.resolve(SpaceBackgroundContent), {
+  ssr: false,
+  loading: () => <SpaceBackgroundPlaceholder />,
+})
 
 // Export the dynamic component as default
 export default function SpaceBackground(props: SpaceBackgroundProps) {
   const isMounted = useHydrationSafe()
-  
+
   if (!isMounted) {
     return <SpaceBackgroundPlaceholder />
   }
-  
+
   return <DynamicSpaceBackground {...props} />
-} remove all white star
+}
+
