@@ -140,7 +140,7 @@ export default function MarketplacePage() {
           
           <div className="relative z-10">
             <div className="relative z-10">
-              <div className="mx-auto mb-12 max-w-3xl"> {/* Reduced from mb-20 */}
+              <div className="mx-auto mb-6 max-w-3xl"> {/* Reduced from mb-20 */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
                   <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
