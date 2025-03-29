@@ -10,7 +10,7 @@ export default function UploadPage() {
 
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="relative mb-12">
+          <div className="relative mb-2">
             <h1 className="mb-4 text-center">
               <span className="inline-block bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-4xl font-bold tracking-tight text-transparent">
                 Upload Study Material
