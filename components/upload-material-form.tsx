@@ -566,18 +566,7 @@ export default function UploadMaterialForm() {
 
   return (
     <div className="max-w-6xl mx-auto rounded-xl border border-slate-800 bg-gradient-to-b from-black/50 to-slate-900/50 p-8 backdrop-blur-sm">
-      <div className="flex justify-between items-start mb-6">
-        <h2 className="text-2xl font-bold text-white">Upload Study Material</h2>
-        <Button 
-          onClick={toggleDebugMode} 
-          variant="outline" 
-          size="sm"
-          className="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-700/50 border-slate-700"
-        >
-          <Bug className="h-4 w-4" />
-          {debugMode ? "Disable Debug" : "Debug Mode"}
-        </Button>
-      </div>
+     
 
       {isVerifyingContract && (
         <div className="text-center mb-4">
