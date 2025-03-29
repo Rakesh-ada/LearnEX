@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react"
 import dynamic from 'next/dynamic'
 import * as THREE from "three"
-import { useHydrationSafe } from "@/hooks/use-hydrationsafe"
+import { useHydrationSafe } from "@/hooks/use-hydration-safe"
 
 interface SpaceBackgroundProps {
   density?: number
@@ -103,6 +103,27 @@ function SpaceBackgroundContent({
         )
       }
     }
+
+    // Stars
+    const starGeometry = new THREE.BufferGeometry()
+    const starMaterial = new THREE.PointsMaterial({
+      color: 0xffffff,
+      size: 0.1,
+      transparent: true,
+    })
+
+    const starVertices: number[] = []
+    for (let i = 0; i < density; i++) {
+      const x = (Math.random() - 0.5) * 100
+      const y = (Math.random() - 0.5) * 100
+      const z = (Math.random() - 0.5) * 100
+      starVertices.push(x, y, z)
+    }
+
+    starGeometry.setAttribute("position", new THREE.Float32BufferAttribute(starVertices, 3))
+
+    const stars = new THREE.Points(starGeometry, starMaterial)
+    scene.add(stars)
 
     // Nebula (colored clouds)
     const nebulaCount = 5
@@ -240,6 +261,10 @@ function SpaceBackgroundContent({
       
       requestAnimationFrame(animate)
 
+      // Rotate stars
+      stars.rotation.x += speed * 0.2
+      stars.rotation.y += speed
+
       // Animate nebulae
       nebulae.forEach((nebula) => {
         nebula.mesh.rotation.x += nebula.rotationSpeed
@@ -330,7 +355,7 @@ function SpaceBackgroundContent({
 
       // Animate cosmic dust
       if (cosmicDust && dustParticles.length > 0) {
-        const dust = scene.children.find(child => child instanceof THREE.Points) as THREE.Points
+        const dust = scene.children.find(child => child instanceof THREE.Points && child !== stars) as THREE.Points
         if (dust) {
           const positions = dust.geometry.attributes.position.array as Float32Array
           
@@ -363,6 +388,8 @@ function SpaceBackgroundContent({
 
       // Dispose resources
       scene.clear()
+      starGeometry.dispose()
+      starMaterial.dispose()
 
       nebulae.forEach((nebula) => {
         nebula.mesh.geometry.dispose()
@@ -394,7 +421,7 @@ function SpaceBackgroundContent({
       }
 
       if (cosmicDust) {
-        const dust = scene.children.find(child => child instanceof THREE.Points) as THREE.Points
+        const dust = scene.children.find(child => child instanceof THREE.Points && child !== stars) as THREE.Points
         if (dust) {
           dust.geometry.dispose()
           if (Array.isArray(dust.material)) {
@@ -439,4 +466,4 @@ export default function SpaceBackground(props: SpaceBackgroundProps) {
   }
   
   return <DynamicSpaceBackground {...props} />
-}
+} remove all white star
