@@ -16,11 +16,19 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  output: 'export',
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+}
+
+if (process.env.GITHUB_ACTIONS === 'true') {
+  const repository = process.env.GITHUB_REPOSITORY?.replace(/.*?\//, '')
+  if (repository) {
+    nextConfig.basePath = `/${repository}`
+  }
 }
 
 mergeConfig(nextConfig, userConfig)

@@ -61,6 +61,27 @@ Study Marketplace allows creators to list educational materials on the blockchai
    NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt
    ```
 
+### Deployment to GitHub
+
+If you plan to deploy this project to GitHub Pages or use GitHub Actions for CI/CD, follow these steps:
+
+1. Go to your GitHub repository settings
+2. Navigate to "Secrets and variables" > "Actions"
+3. Add the following repository secrets:
+   - `NEXT_PUBLIC_PINATA_API_KEY` - Your Pinata API key
+   - `NEXT_PUBLIC_PINATA_API_SECRET` - Your Pinata API secret
+   - `NEXT_PUBLIC_PINATA_JWT` - Your Pinata JWT token
+
+4. (Optional) If you're using GitHub Pages, make sure to configure your workflow to set these environment variables during the build process:
+   ```yaml
+   env:
+     NEXT_PUBLIC_PINATA_API_KEY: ${{ secrets.NEXT_PUBLIC_PINATA_API_KEY }}
+     NEXT_PUBLIC_PINATA_API_SECRET: ${{ secrets.NEXT_PUBLIC_PINATA_API_SECRET }}
+     NEXT_PUBLIC_PINATA_JWT: ${{ secrets.NEXT_PUBLIC_PINATA_JWT }}
+     NEXT_PUBLIC_CONTRACT_ADDRESS: "0x775FeDAACfa5976E366A341171F3A59bcce383d0"
+     NEXT_PUBLIC_CHAIN_ID: "656476"
+   ```
+
 ### Smart Contract Deployment
 
 The contract is currently deployed at address `0x775FeDAACfa5976E366A341171F3A59bcce383d0` on the edu-chain network.
