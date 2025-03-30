@@ -201,29 +201,66 @@ function SpaceBackgroundContent({
     scene.add(starsSystem)
 
     // Nebula (colored clouds)
-    const nebulaCount = 5
+    const nebulaCount = 7
     const nebulae = [] as Nebula[]
 
     for (let i = 0; i < nebulaCount; i++) {
-      const nebulaGeometry = new THREE.SphereGeometry(Math.random() * 5 + 3, 32, 32)
+      // Use more complex geometry for nebulae
+      const nebulaSize = Math.random() * 8 + 4
+      let nebulaGeometry
+      
+      // Create different types of nebula shapes
+      const nebulaType = Math.floor(Math.random() * 3)
+      if (nebulaType === 0) {
+        // Sphere nebula
+        nebulaGeometry = new THREE.SphereGeometry(nebulaSize, 32, 32)
+      } else if (nebulaType === 1) {
+        // Torus nebula (ring-like)
+        const torusRadius = nebulaSize * 0.7
+        const tubeRadius = nebulaSize * 0.3
+        nebulaGeometry = new THREE.TorusGeometry(torusRadius, tubeRadius, 16, 50)
+      } else {
+        // Icosahedron (more crystalline structure)
+        nebulaGeometry = new THREE.IcosahedronGeometry(nebulaSize, 1)
+      }
+
+      // Create a more interesting material with custom color
+      const nebulaColor = getColor(0.5, 0.8)
       const nebulaMaterial = new THREE.MeshBasicMaterial({
-        color: getColor(),
+        color: nebulaColor,
         transparent: true,
-        opacity: 0.05,
+        opacity: 0.07 + Math.random() * 0.05,
         wireframe: true,
+        // Use different wireframe densities
+        wireframeLinewidth: 0.5 + Math.random() * 0.5,
       })
 
       const nebula = new THREE.Mesh(nebulaGeometry, nebulaMaterial)
-      nebula.position.set((Math.random() - 0.5) * 50, (Math.random() - 0.5) * 50, (Math.random() - 0.5) * 50)
+      
+      // Place nebulae further out to create depth
+      const distance = 30 + Math.random() * 30
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.random() * Math.PI
+      
+      nebula.position.set(
+        distance * Math.sin(theta) * Math.cos(phi),
+        distance * Math.sin(theta) * Math.sin(phi),
+        distance * Math.cos(theta)
+      )
+      
+      // Add random rotation for more natural look
+      nebula.rotation.x = Math.random() * Math.PI
+      nebula.rotation.y = Math.random() * Math.PI
+      nebula.rotation.z = Math.random() * Math.PI
 
       scene.add(nebula)
       nebulae.push({
         mesh: nebula,
         rotationSpeed: Math.random() * 0.001,
-        pulseSpeed: Math.random() * 0.01,
+        pulseSpeed: Math.random() * 0.005 + 0.002,
         pulseDirection: 1,
         pulseMin: 0.03,
-        pulseMax: 0.07,
+        pulseMax: 0.12,
       })
     }
 
@@ -585,14 +622,10 @@ function SpaceBackgroundContent({
   return <div ref={containerRef} className="fixed inset-0 -z-10" style={{ pointerEvents: "none" }} />
 }
 
-// Create a simple loading placeholder with a more realistic starry effect
+// Create a simple loading placeholder with a gradient background only (no CSS stars)
 function SpaceBackgroundPlaceholder() {
   return (
-    <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-purple-950/20 to-black">
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-[radial-gradient(white,rgba(255,255,255,0)_2px)] bg-[length:50px_50px]"></div>
-      </div>
-    </div>
+    <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-purple-950/20 to-black"></div>
   )
 }
 
