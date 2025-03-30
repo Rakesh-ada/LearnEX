@@ -870,6 +870,11 @@ export const listMaterialOnChainDebug = async (
     const contentHashStr = typeof contentHash === 'string' ? contentHash : contentHash.url;
     const previewHashStr = previewHash ? (typeof previewHash === 'string' ? previewHash : previewHash.url) : '';
     const thumbnailHashStr = thumbnailHash ? (typeof thumbnailHash === 'string' ? thumbnailHash : thumbnailHash.url) : '';
+    
+    // Validate thumbnail hash - use default IPFS hash if invalid or empty
+    const validatedThumbnailHash = thumbnailHashStr && isValidIPFSCid(thumbnailHashStr) 
+      ? thumbnailHashStr 
+      : "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
 
     console.log('Debug - Listing material with parameters:');
     console.log('Title:', title);
@@ -877,7 +882,8 @@ export const listMaterialOnChainDebug = async (
     console.log('Category:', category);
     console.log('Content Hash:', contentHashStr);
     console.log('Preview Hash:', previewHashStr);
-    console.log('Thumbnail Hash:', thumbnailHashStr);
+    console.log('Original Thumbnail Hash:', thumbnailHashStr);
+    console.log('Validated Thumbnail Hash:', validatedThumbnailHash);
     console.log('Price:', price);
 
     // Call the contract function to list the material
@@ -887,7 +893,7 @@ export const listMaterialOnChainDebug = async (
       category,
       contentHashStr,
       previewHashStr,
-      thumbnailHashStr,
+      validatedThumbnailHash,
       price
     );
   } catch (error) {
@@ -913,6 +919,11 @@ export const debugListMaterial = async (
     const contentHashStr = typeof contentHash === 'string' ? contentHash : contentHash.url;
     const previewHashStr = previewHash ? (typeof previewHash === 'string' ? previewHash : previewHash.url) : '';
     const thumbnailHashStr = thumbnailHash ? (typeof thumbnailHash === 'string' ? thumbnailHash : thumbnailHash.url) : '';
+    
+    // Validate thumbnail hash - use default IPFS hash if invalid or empty
+    const validatedThumbnailHash = thumbnailHashStr && isValidIPFSCid(thumbnailHashStr) 
+      ? thumbnailHashStr 
+      : "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
 
     console.log('=== DEBUG LIST MATERIAL ===');
     console.log('Processed parameters:');
@@ -921,20 +932,21 @@ export const debugListMaterial = async (
     console.log('Category:', category);
     console.log('Content Hash:', contentHashStr);
     console.log('Preview Hash:', previewHashStr);
-    console.log('Thumbnail Hash:', thumbnailHashStr);
+    console.log('Original Thumbnail Hash:', thumbnailHashStr);
+    console.log('Validated Thumbnail Hash:', validatedThumbnailHash);
     console.log('Price:', price);
 
     // Import the debug function from contract.ts
     const { debugContractTransaction } = await import('./contract');
     
-    // Call the debug function
+    // Call the debug function with validated thumbnail hash
     return await debugContractTransaction(
       title,
       description,
       category,
       contentHashStr,
       previewHashStr,
-      thumbnailHashStr,
+      validatedThumbnailHash,
       price
     );
   } catch (error) {
@@ -998,6 +1010,14 @@ export const listMaterialWithFallback = async (
     // First try to verify if the contract has the getThumbnailHash function
     const verifyResult = await verifyContractFunctions();
     
+    // Extract thumbnail URL properly and validate it
+    const thumbnailHashStr = thumbnailHash ? (typeof thumbnailHash === 'string' ? thumbnailHash : thumbnailHash.url) : '';
+    
+    // Validate thumbnail hash - use default IPFS hash if invalid or empty
+    const validatedThumbnailHash = thumbnailHashStr && isValidIPFSCid(thumbnailHashStr) 
+      ? thumbnailHashStr 
+      : "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
+    
     // If the contract is missing the getThumbnailHash function, use an empty string
     if (verifyResult.warning && verifyResult.warning.includes('getThumbnailHash function is missing')) {
       console.warn('Using empty string for thumbnailHash due to missing function in contract');
@@ -1013,17 +1033,14 @@ export const listMaterialWithFallback = async (
         price
       );
     } else {
-      // Process thumbnailHash normally
-      const thumbnailHashStr = thumbnailHash ? (typeof thumbnailHash === 'string' ? thumbnailHash : thumbnailHash.url) : '';
-      
-      // Call the contract function with normal parameters
+      // Call the contract function with validated thumbnail hash
       return await contractListMaterialOnChain(
         title,
         description,
         category,
         contentHashStr,
         previewHashStr,
-        thumbnailHashStr,
+        validatedThumbnailHash,
         price
       );
     }
