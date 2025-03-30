@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { CONTRACT_ABI } from './contract-abi';
+import { isValidIPFSCid } from './pinning-service';
 
 // Deployed contract address from environment variable
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x775FeDAACfa5976E366A341171F3A59bcce383d0';
@@ -59,7 +60,12 @@ export const listMaterialOnChain = async (
     const safeCategory = String(category);
     const safeContentHash = String(contentHash);
     const safePreviewHash = String(previewHash || '');
-    const safeThumbnailHash = thumbnailHash ? String(thumbnailHash) : "ipfs://QmdefaultEmptyThumbnailHash";
+    
+    // Fix: Use a valid IPFS hash for default thumbnail
+    // This uses a real, pinned empty image as fallback instead of the placeholder text
+    const safeThumbnailHash = thumbnailHash && isValidIPFSCid(thumbnailHash) 
+      ? String(thumbnailHash) 
+      : "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
 
     console.log('Listing material with parameters:', {
       title: safeTitle,

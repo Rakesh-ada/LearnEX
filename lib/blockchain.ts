@@ -17,6 +17,7 @@ import {
   getMaterialThumbnailInfoOnChain,
   getThumbnailHashOnChain
 } from './contract';
+import { isValidIPFSCid } from './pinning-service';
 
 // Deployed contract address
 export const CONTRACT_ADDRESS = '0x775FeDAACfa5976E366A341171F3A59bcce383d0';
@@ -669,21 +670,28 @@ export const listMaterial = async (
   price: string
 ): Promise<number | null> => {
   try {
-    // Process the hash values to ensure they're strings
-    const contentHashStr = typeof contentHash === 'string' ? contentHash : contentHash.url;
-    const previewHashStr = previewHash ? (typeof previewHash === 'string' ? previewHash : previewHash.url) : '';
-    const thumbnailHashStr = thumbnailHash ? (typeof thumbnailHash === 'string' ? thumbnailHash : thumbnailHash.url) : '';
-
-    // Call the contract function to list the material
-    return await contractListMaterialOnChain(
+    // Extract url if object is passed
+    const contentUrl = typeof contentHash === 'object' ? contentHash.url : contentHash;
+    const previewUrl = typeof previewHash === 'object' ? previewHash.url : previewHash;
+    const thumbnailUrl = typeof thumbnailHash === 'object' ? thumbnailHash.url : thumbnailHash;
+    
+    // Validate thumbnail hash
+    const validatedThumbnailUrl = thumbnailUrl && isValidIPFSCid(thumbnailUrl) 
+      ? thumbnailUrl 
+      : "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
+    
+    // Call the contract function
+    const materialId = await contractListMaterialOnChain(
       title,
       description,
       category,
-      contentHashStr,
-      previewHashStr,
-      thumbnailHashStr,
+      contentUrl,
+      previewUrl,
+      validatedThumbnailUrl,
       price
     );
+    
+    return materialId;
   } catch (error) {
     console.error('Error listing material:', error);
     return null;

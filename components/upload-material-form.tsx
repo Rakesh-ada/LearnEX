@@ -296,7 +296,7 @@ export default function UploadMaterialForm() {
           });
         }
       } else {
-        thumbnailHash = "ipfs://QmdefaultEmptyThumbnailHash";
+        thumbnailHash = "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
       }
 
       const previewHash = `ipfs://Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
