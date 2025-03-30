@@ -79,6 +79,11 @@ function SpaceBackgroundContent({
 
     // Scene setup
     const scene = new THREE.Scene()
+    // Add a subtle blue-purple gradient fog to create depth and color in the background
+    scene.fog = new THREE.FogExp2(new THREE.Color(0x090418), 0.00035)
+    // Add a faint ambient blue light to enhance the space feeling
+    const ambientLight = new THREE.AmbientLight(0x0a0a2a, 0.5)
+    scene.add(ambientLight)
 
     // Camera setup
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
@@ -109,29 +114,35 @@ function SpaceBackgroundContent({
           Math.random() * variation + saturation
         )
       } else {
-        // Mixed theme with more natural star colors
-        // Randomly choose between cool blues, warm whites, and subtle yellows
+        // Enhanced mixed theme with more blue and purple tones
         const colorType = Math.random()
-        if (colorType < 0.4) {
-          // Cool blue/white stars
+        if (colorType < 0.3) {
+          // Cool blue stars
+          return new THREE.Color(
+            0.3 + Math.random() * 0.3,
+            0.7 + Math.random() * 0.3,
+            0.9 + Math.random() * 0.1
+          )
+        } else if (colorType < 0.65) {
+          // Purple stars
+          return new THREE.Color(
+            0.5 + Math.random() * 0.3,
+            0.2 + Math.random() * 0.3,
+            0.8 + Math.random() * 0.2
+          )
+        } else if (colorType < 0.85) {
+          // Warm white with slight blue tint
           return new THREE.Color(
             0.7 + Math.random() * 0.3,
-            0.8 + Math.random() * 0.2,
+            0.7 + Math.random() * 0.3,
             0.9 + Math.random() * 0.1
-          )
-        } else if (colorType < 0.7) {
-          // Warm white/yellow stars
-          return new THREE.Color(
-            0.9 + Math.random() * 0.1,
-            0.8 + Math.random() * 0.2,
-            0.6 + Math.random() * 0.2
           )
         } else {
-          // Slight blue or purple tint
+          // Slight pink/magenta tint
           return new THREE.Color(
-            0.6 + Math.random() * 0.4,
-            0.6 + Math.random() * 0.4,
-            0.9 + Math.random() * 0.1
+            0.8 + Math.random() * 0.2,
+            0.4 + Math.random() * 0.2,
+            0.7 + Math.random() * 0.3
           )
         }
       }
@@ -224,8 +235,30 @@ function SpaceBackgroundContent({
         nebulaGeometry = new THREE.IcosahedronGeometry(nebulaSize, 1)
       }
 
-      // Create a more interesting material with custom color
-      const nebulaColor = getColor(0.5, 0.8)
+      // Create a more interesting material with vibrant blue/purple colors
+      let nebulaColor;
+      const colorChoice = Math.random();
+      
+      if (colorChoice < 0.4) {
+        // Deep blue nebula
+        nebulaColor = new THREE.Color(0x0a1a5e).lerp(
+          new THREE.Color(0x4060ff), 
+          Math.random() * 0.5 + 0.3
+        );
+      } else if (colorChoice < 0.8) {
+        // Purple nebula
+        nebulaColor = new THREE.Color(0x3a0a5e).lerp(
+          new THREE.Color(0x9040ff), 
+          Math.random() * 0.5 + 0.3
+        );
+      } else {
+        // Pinkish/magenta nebula
+        nebulaColor = new THREE.Color(0x5a0a5e).lerp(
+          new THREE.Color(0xff40ff), 
+          Math.random() * 0.5 + 0.3
+        );
+      }
+      
       const nebulaMaterial = new THREE.MeshBasicMaterial({
         color: nebulaColor,
         transparent: true,
@@ -622,10 +655,10 @@ function SpaceBackgroundContent({
   return <div ref={containerRef} className="fixed inset-0 -z-10" style={{ pointerEvents: "none" }} />
 }
 
-// Create a simple loading placeholder with a gradient background only (no CSS stars)
+// Create a simple loading placeholder with a blue-purple gradient background
 function SpaceBackgroundPlaceholder() {
   return (
-    <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-purple-950/20 to-black"></div>
+    <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-indigo-950/20 to-purple-950/30"></div>
   )
 }
 
