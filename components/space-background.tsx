@@ -212,12 +212,19 @@ function SpaceBackgroundContent({
     scene.add(starsSystem)
 
     // Nebula (colored clouds)
-    const nebulaCount = 7
+    const nebulaCount = 3 // Limit to only 3 visible nebulae
     const nebulae = [] as Nebula[]
+
+    // Pre-define positions to ensure significant spacing
+    const nebulaPositions = [
+      { x: -40, y: 20, z: -30 },
+      { x: 45, y: -15, z: -40 },
+      { x: 5, y: 35, z: -50 }
+    ]
 
     for (let i = 0; i < nebulaCount; i++) {
       // Use more complex geometry for nebulae
-      const nebulaSize = Math.random() * 8 + 4
+      const nebulaSize = Math.random() * 12 + 8 // Make them larger
       let nebulaGeometry
       
       // Create different types of nebula shapes
@@ -262,7 +269,7 @@ function SpaceBackgroundContent({
       const nebulaMaterial = new THREE.MeshBasicMaterial({
         color: nebulaColor,
         transparent: true,
-        opacity: 0.07 + Math.random() * 0.05,
+        opacity: 0.1 + Math.random() * 0.07, // Slightly more visible
         wireframe: true,
         // Use different wireframe densities
         wireframeLinewidth: 0.5 + Math.random() * 0.5,
@@ -270,15 +277,11 @@ function SpaceBackgroundContent({
 
       const nebula = new THREE.Mesh(nebulaGeometry, nebulaMaterial)
       
-      // Place nebulae further out to create depth
-      const distance = 30 + Math.random() * 30
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.random() * Math.PI
-      
+      // Use predefined positions to ensure spacing
       nebula.position.set(
-        distance * Math.sin(theta) * Math.cos(phi),
-        distance * Math.sin(theta) * Math.sin(phi),
-        distance * Math.cos(theta)
+        nebulaPositions[i].x, 
+        nebulaPositions[i].y, 
+        nebulaPositions[i].z
       )
       
       // Add random rotation for more natural look
@@ -289,11 +292,11 @@ function SpaceBackgroundContent({
       scene.add(nebula)
       nebulae.push({
         mesh: nebula,
-        rotationSpeed: Math.random() * 0.001,
-        pulseSpeed: Math.random() * 0.005 + 0.002,
+        rotationSpeed: Math.random() * 0.0005 + 0.0001, // Slower rotation
+        pulseSpeed: Math.random() * 0.003 + 0.001, // Slower pulse
         pulseDirection: 1,
         pulseMin: 0.03,
-        pulseMax: 0.12,
+        pulseMax: 0.17, // Higher maximum opacity for more visibility
       })
     }
 
