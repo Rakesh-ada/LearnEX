@@ -47,16 +47,6 @@ export default function Navbar() {
             Marketplace
           </Link>
           <Link 
-            href="/web-thumbnails" 
-            className={`text-sm font-medium transition-colors ${
-              isActiveLink('/web-thumbnails') || isActiveLink('/marketplace/web-thumbnails')
-                ? 'bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent' 
-                : 'text-white/80 hover:text-white'
-            }`}
-          >
-            8-bit Thumbnails
-          </Link>
-          <Link 
             href="/upload" 
             className={`text-sm font-medium transition-colors ${
               isActiveLink('/upload') 
@@ -112,17 +102,6 @@ export default function Navbar() {
               onClick={() => setIsOpen(false)}
             >
               Marketplace
-            </Link>
-            <Link
-              href="/web-thumbnails"
-              className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                isActiveLink('/web-thumbnails') || isActiveLink('/marketplace/web-thumbnails')
-                  ? 'bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent' 
-                  : 'text-white/80 hover:bg-slate-800 hover:text-white'
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              8-bit Thumbnails
             </Link>
             <Link
               href="/upload"
