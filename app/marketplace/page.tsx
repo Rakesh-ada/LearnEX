@@ -111,7 +111,10 @@ export default function MarketplacePage() {
     }
 
     if (category !== "All") {
-      items = items.filter((item) => item.category === category)
+      items = items.filter((item) => 
+        item.category.toLowerCase() === category.toLowerCase() ||
+        (item.category.toLowerCase() === 'computer-science' && category.toLowerCase() === 'computer science')
+      )
     }
 
     if (sortBy === "price-low") {

@@ -81,7 +81,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
           <div className="absolute inset-0 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-[2px]">
             {/* Category-based icon/background */}
             <div className="flex h-full items-center justify-center">
-              {item.category === "Mathematics" && (
+              {item.category?.toLowerCase() === "mathematics" && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -90,17 +90,14 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                    <path d="M12 2v20M2 12h20" />
+                    <path d="M19 5L5 19M5 5l14 14" />
                   </svg>
                   <div className="mt-2 text-sm font-medium text-blue-400">Mathematics</div>
                 </div>
               )}
-              {item.category === "Chemistry" && (
+              {item.category?.toLowerCase() === "chemistry" && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -109,16 +106,13 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
-                    <path d="M9 3h6v11l3 3H6l3-3V3z"></path>
-                    <path d="M10 9h4"></path>
+                    <path d="M9 3h6m-3 0v6m-8 2h2m4 0h-2v8l-2 2m14-10h2m-4 0h-2v8l2 2m-7-6h4" />
                   </svg>
                   <div className="mt-2 text-sm font-medium text-green-400">Chemistry</div>
                 </div>
               )}
-              {item.category === "Physics" && (
+              {item.category?.toLowerCase() === "physics" && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -127,17 +121,15 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M18.4 12a6.8 6.8 0 0 0 0-6.8M5.6 12a6.8 6.8 0 0 1 0-6.8"></path>
-                    <path d="M18.4 12a6.8 6.8 0 0 1-12.8 0"></path>
+                    <circle cx="12" cy="12" r="8" />
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
                   </svg>
                   <div className="mt-2 text-sm font-medium text-indigo-400">Physics</div>
                 </div>
               )}
-              {item.category === "Biology" && (
+              {item.category?.toLowerCase() === "biology" && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -146,16 +138,13 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
-                    <path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <path d="M8 7V3m8 4V3"></path>
+                    <path d="M3 12h4l3 8l4-16l3 8h4"></path>
                   </svg>
                   <div className="mt-2 text-sm font-medium text-emerald-400">Biology</div>
                 </div>
               )}
-              {item.category === "Computer Science" && (
+              {(item.category?.toLowerCase() === "computer science" || item.category?.toLowerCase() === "computer-science") && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -164,17 +153,15 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
-                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                    <path d="m9 10 2 2-2 2"></path>
-                    <path d="M15 10h-4"></path>
+                    <rect x="3" y="4" width="18" height="12" rx="2" ry="2"></rect>
+                    <line x1="2" y1="20" x2="22" y2="20"></line>
+                    <line x1="12" y1="16" x2="12" y2="20"></line>
                   </svg>
                   <div className="mt-2 text-sm font-medium text-cyan-400">Computer Science</div>
                 </div>
               )}
-              {item.category === "Literature" && (
+              {item.category?.toLowerCase() === "literature" && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -183,15 +170,14 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
-                    <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"></path>
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                   </svg>
                   <div className="mt-2 text-sm font-medium text-amber-400">Literature</div>
                 </div>
               )}
-              {item.category === "History" && (
+              {item.category?.toLowerCase() === "history" && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -200,8 +186,6 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
                   >
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
@@ -209,7 +193,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                   <div className="mt-2 text-sm font-medium text-orange-400">History</div>
                 </div>
               )}
-              {item.category === "Economics" && (
+              {item.category?.toLowerCase() === "economics" && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
