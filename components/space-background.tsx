@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import dynamic from "next/dynamic"
 import * as THREE from "three"
 import { useHydrationSafe } from "@/hooks/use-hydration-safe"
@@ -11,6 +11,8 @@ interface SpaceBackgroundProps {
   shootingStars?: boolean
   cosmicDust?: boolean
   colorTheme?: "blue" | "purple" | "mixed"
+  parallax?: boolean
+  twinkleEffects?: boolean
 }
 
 // Define types for our objects
@@ -50,6 +52,15 @@ interface DustParticle {
   }
 }
 
+interface Star {
+  index: number
+  twinkleSpeed: number
+  twinkleDirection: number
+  baseSize: number
+  originalColor: THREE.Color
+  depth: number
+}
+
 // Create the actual background component that will be dynamically imported
 function SpaceBackgroundContent({
   density = 1000,
@@ -57,8 +68,11 @@ function SpaceBackgroundContent({
   shootingStars = true,
   cosmicDust = true,
   colorTheme = "mixed",
+  parallax = true,
+  twinkleEffects = true,
 }: SpaceBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const mousePosition = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -81,41 +95,110 @@ function SpaceBackgroundContent({
     containerRef.current.appendChild(renderer.domElement)
 
     // Color palette based on theme
-    const getColor = () => {
+    const getColor = (variation = 0.3, saturation = 0.7) => {
       if (colorTheme === "blue") {
-        return new THREE.Color(Math.random() * 0.2, Math.random() * 0.2 + 0.3, Math.random() * 0.3 + 0.7)
-      } else if (colorTheme === "purple") {
-        return new THREE.Color(Math.random() * 0.3 + 0.4, Math.random() * 0.2, Math.random() * 0.3 + 0.7)
-      } else {
-        // Mixed theme
         return new THREE.Color(
-          Math.random() * 0.3 + (Math.random() > 0.5 ? 0.4 : 0.1),
-          Math.random() * 0.3 + (Math.random() > 0.5 ? 0.1 : 0.3),
-          Math.random() * 0.3 + 0.7,
+          Math.random() * 0.1, 
+          Math.random() * variation + 0.3, 
+          Math.random() * variation + saturation
         )
+      } else if (colorTheme === "purple") {
+        return new THREE.Color(
+          Math.random() * variation + 0.3, 
+          Math.random() * 0.1, 
+          Math.random() * variation + saturation
+        )
+      } else {
+        // Mixed theme with more natural star colors
+        // Randomly choose between cool blues, warm whites, and subtle yellows
+        const colorType = Math.random()
+        if (colorType < 0.4) {
+          // Cool blue/white stars
+          return new THREE.Color(
+            0.7 + Math.random() * 0.3,
+            0.8 + Math.random() * 0.2,
+            0.9 + Math.random() * 0.1
+          )
+        } else if (colorType < 0.7) {
+          // Warm white/yellow stars
+          return new THREE.Color(
+            0.9 + Math.random() * 0.1,
+            0.8 + Math.random() * 0.2,
+            0.6 + Math.random() * 0.2
+          )
+        } else {
+          // Slight blue or purple tint
+          return new THREE.Color(
+            0.6 + Math.random() * 0.4,
+            0.6 + Math.random() * 0.4,
+            0.9 + Math.random() * 0.1
+          )
+        }
       }
     }
 
-    // Stars
+    // Stars with twinkling and color variation
     const starGeometry = new THREE.BufferGeometry()
-    const starMaterial = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.1,
-      transparent: true,
-    })
-
     const starVertices: number[] = []
+    const starColors: number[] = []
+    const starSizes: number[] = []
+
+    // Stars distribution with different layers for parallax depth
+    const starLayers = 3
+    const stars: Star[] = []
+    
+    // Create stars with varied sizes and colors
     for (let i = 0; i < density; i++) {
-      const x = (Math.random() - 0.5) * 100
-      const y = (Math.random() - 0.5) * 100
-      const z = (Math.random() - 0.5) * 100
+      // Distribute stars in a dome-like hemisphere facing the camera
+      // This creates a more immersive effect than a uniform distribution
+      const theta = THREE.MathUtils.randFloatSpread(360) 
+      const phi = THREE.MathUtils.randFloatSpread(180)
+      
+      // Ensure most stars are far away, but some are closer for depth
+      const depth = Math.random() ** 2 // Squared to favor stars being far away
+      const radius = 100 + depth * 50 // Distance from center
+      
+      const x = radius * Math.sin(theta) * Math.cos(phi)
+      const y = radius * Math.sin(theta) * Math.sin(phi)
+      const z = -Math.abs(radius * Math.cos(theta)) // Negative to ensure stars are in front
+      
       starVertices.push(x, y, z)
+      
+      // Vary star colors
+      const starColor = getColor(0.2, 0.8)
+      starColors.push(starColor.r, starColor.g, starColor.b)
+      
+      // Vary star sizes based on brightness
+      const brightness = Math.random()
+      const size = 0.05 + brightness * brightness * 0.35 // Square brightness for more small stars
+      starSizes.push(size)
+      
+      // Store star properties for twinkling animation
+      stars.push({
+        index: i,
+        twinkleSpeed: 0.003 + Math.random() * 0.01,
+        twinkleDirection: Math.random() > 0.5 ? 1 : -1,
+        baseSize: size,
+        originalColor: starColor.clone(),
+        depth: depth
+      })
     }
 
     starGeometry.setAttribute("position", new THREE.Float32BufferAttribute(starVertices, 3))
+    starGeometry.setAttribute("color", new THREE.Float32BufferAttribute(starColors, 3))
+    starGeometry.setAttribute("size", new THREE.Float32BufferAttribute(starSizes, 1))
+    
+    const starMaterial = new THREE.PointsMaterial({
+      size: 0.1,
+      vertexColors: true,
+      transparent: true,
+      opacity: 1,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
+    })
 
-    const stars = new THREE.Points(starGeometry, starMaterial)
-    scene.add(stars)
+    const starsSystem = new THREE.Points(starGeometry, starMaterial)
+    scene.add(starsSystem)
 
     // Nebula (colored clouds)
     const nebulaCount = 5
@@ -202,7 +285,7 @@ function SpaceBackgroundContent({
     }
 
     // Cosmic dust
-    const dustCount = cosmicDust ? 200 : 0
+    const dustCount = cosmicDust ? 300 : 0
     const dustParticles = [] as DustParticle[]
 
     if (cosmicDust) {
@@ -212,14 +295,21 @@ function SpaceBackgroundContent({
         size: 0.05,
         transparent: true,
         opacity: 0.3,
+        blending: THREE.AdditiveBlending,
       })
 
       const dustVertices: number[] = []
+      const dustColors: number[] = []
+
       for (let i = 0; i < dustCount; i++) {
         const x = (Math.random() - 0.5) * 50
         const y = (Math.random() - 0.5) * 50
         const z = (Math.random() - 0.5) * 50
         dustVertices.push(x, y, z)
+
+        // Add color variations to dust
+        const dustColor = getColor(0.2, 0.5)
+        dustColors.push(dustColor.r, dustColor.g, dustColor.b)
 
         dustParticles.push({
           index: i * 3,
@@ -232,8 +322,23 @@ function SpaceBackgroundContent({
       }
 
       dustGeometry.setAttribute("position", new THREE.Float32BufferAttribute(dustVertices, 3))
+      dustGeometry.setAttribute("color", new THREE.Float32BufferAttribute(dustColors, 3))
+
       const dust = new THREE.Points(dustGeometry, dustMaterial)
+      dust.name = "cosmicDust"
       scene.add(dust)
+    }
+
+    // Mouse movement for parallax effect
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePosition.current = {
+        x: (e.clientX / window.innerWidth) * 2 - 1,
+        y: (e.clientY / window.innerHeight) * 2 - 1,
+      }
+    }
+
+    if (parallax) {
+      window.addEventListener("mousemove", handleMouseMove)
     }
 
     // Handle window resize
@@ -253,9 +358,53 @@ function SpaceBackgroundContent({
 
       requestAnimationFrame(animate)
 
-      // Rotate stars
-      stars.rotation.x += speed * 0.2
-      stars.rotation.y += speed
+      // Apply parallax effect with mouse movement
+      if (parallax) {
+        const targetX = mousePosition.current.x * 0.15
+        const targetY = -mousePosition.current.y * 0.15
+        
+        camera.position.x += (targetX - camera.position.x) * 0.01
+        camera.position.y += (targetY - camera.position.y) * 0.01
+        
+        // Subtly look at center
+        camera.lookAt(0, 0, 0)
+      }
+
+      // Rotate stars very slowly
+      starsSystem.rotation.y += speed * 0.1
+
+      // Animate star twinkling and sizes
+      if (twinkleEffects) {
+        const positions = starsSystem.geometry.attributes.position.array as Float32Array
+        const sizes = starsSystem.geometry.attributes.size.array as Float32Array
+        const colors = starsSystem.geometry.attributes.color.array as Float32Array
+        
+        stars.forEach((star) => {
+          // Twinkle effect (pulsating size)
+          const i = star.index
+          const sizeFactor = Math.sin(time * 0.001 * star.twinkleSpeed) * 0.3 + 0.7
+          sizes[i] = star.baseSize * sizeFactor
+          
+          // Subtle color fluctuation based on size
+          const colorIndex = i * 3
+          const colorFactor = 0.8 + sizeFactor * 0.2
+          colors[colorIndex] = star.originalColor.r * colorFactor
+          colors[colorIndex + 1] = star.originalColor.g * colorFactor
+          colors[colorIndex + 2] = star.originalColor.b * colorFactor
+          
+          // Subtle movement for closer stars only (parallax effect)
+          if (parallax && star.depth < 0.4) {
+            const movement = Math.sin(time * 0.0005 * star.twinkleSpeed) * 0.2
+            const posIndex = i * 3
+            positions[posIndex] += movement * (1 - star.depth) * 0.01
+            positions[posIndex + 1] += movement * (1 - star.depth) * 0.01
+          }
+        })
+        
+        starsSystem.geometry.attributes.position.needsUpdate = true
+        starsSystem.geometry.attributes.size.needsUpdate = true
+        starsSystem.geometry.attributes.color.needsUpdate = true
+      }
 
       // Animate nebulae
       nebulae.forEach((nebula) => {
@@ -290,15 +439,15 @@ function SpaceBackgroundContent({
       // Animate shooting stars
       if (shootingStars) {
         shootingStarsArray.forEach((star) => {
-          if (!star.active && Math.random() < 0.005) {
+          if (!star.active && Math.random() < 0.003) {
             // Activate a new shooting star
             star.active = true
             star.lifetime = 0
 
             const startPoint = new THREE.Vector3(
-              (Math.random() - 0.5) * 40,
-              (Math.random() - 0.5) * 40,
-              (Math.random() - 0.5) * 40,
+              (Math.random() - 0.5) * 80,
+              (Math.random() - 0.5) * 80,
+              (Math.random() - 0.5) * 80,
             )
 
             star.direction = new THREE.Vector3(
@@ -307,10 +456,15 @@ function SpaceBackgroundContent({
               (Math.random() - 0.5) * 2,
             ).normalize()
 
-            const endPoint = new THREE.Vector3().copy(startPoint).add(star.direction.clone().multiplyScalar(10))
+            const endPoint = new THREE.Vector3().copy(startPoint).add(star.direction.clone().multiplyScalar(40))
 
-            const points = [startPoint, endPoint]
-            star.line.geometry.setFromPoints(points)
+            const trailPoints = [
+              new THREE.Vector3().copy(endPoint).add(star.direction.clone().multiplyScalar(-12)),
+              startPoint,
+              endPoint,
+            ]
+            
+            star.line.geometry.setFromPoints(trailPoints)
             star.line.position.set(0, 0, 0)
 
             const material = star.line.material as THREE.LineBasicMaterial
@@ -345,7 +499,7 @@ function SpaceBackgroundContent({
 
       // Animate cosmic dust
       if (cosmicDust && dustParticles.length > 0) {
-        const dust = scene.children.find((child) => child instanceof THREE.Points && child !== stars) as THREE.Points
+        const dust = scene.getObjectByName("cosmicDust") as THREE.Points
         if (dust) {
           const positions = dust.geometry.attributes.position.array as Float32Array
 
@@ -372,6 +526,10 @@ function SpaceBackgroundContent({
     // Cleanup
     return () => {
       window.removeEventListener("resize", handleResize)
+      if (parallax) {
+        window.removeEventListener("mousemove", handleMouseMove)
+      }
+      
       if (containerRef.current) {
         containerRef.current.removeChild(renderer.domElement)
       }
@@ -411,7 +569,7 @@ function SpaceBackgroundContent({
       }
 
       if (cosmicDust) {
-        const dust = scene.children.find((child) => child instanceof THREE.Points && child !== stars) as THREE.Points
+        const dust = scene.getObjectByName("cosmicDust") as THREE.Points
         if (dust) {
           dust.geometry.dispose()
           if (Array.isArray(dust.material)) {
@@ -422,12 +580,12 @@ function SpaceBackgroundContent({
         }
       }
     }
-  }, [density, speed, shootingStars, cosmicDust, colorTheme])
+  }, [density, speed, shootingStars, cosmicDust, colorTheme, parallax, twinkleEffects])
 
   return <div ref={containerRef} className="fixed inset-0 -z-10" style={{ pointerEvents: "none" }} />
 }
 
-// Create a simple loading placeholder
+// Create a simple loading placeholder with a more realistic starry effect
 function SpaceBackgroundPlaceholder() {
   return (
     <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-purple-950/20 to-black">

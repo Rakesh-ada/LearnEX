@@ -141,7 +141,15 @@ export default function MarketplacePage() {
   return (
     <main className="min-h-screen pt-12"> {/* Reduced from pt-16 */}
       <ClientOnly fallback={<SimpleFallback />}>
-        <SpaceBackground density={800} speed={0.0003} />
+        <SpaceBackground 
+          density={1500} 
+          speed={0.0003} 
+          shootingStars={true}
+          cosmicDust={true}
+          colorTheme="mixed"
+          parallax={true}
+          twinkleEffects={true}
+        />
       </ClientOnly>
 
       <section className="relative py-8"> {/* Reduced from py-16 */}
