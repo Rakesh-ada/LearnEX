@@ -8,6 +8,8 @@ import { X, Star, Share2, BookOpen, User, Loader2, ChevronRight, Info, Heart } f
 import { toast } from "@/hooks/use-toast"
 import { useWallet } from "@/hooks/use-wallet"
 import { purchaseMaterial } from "@/lib/blockchain"
+import { getIPFSGatewayUrl, isValidIPFSCid } from "@/lib/pinning-service"
+import { generatePixelThumbnail } from "@/lib/pixel-thumbnail-generator"
 
 interface NFTModalProps {
   isOpen: boolean
@@ -19,6 +21,7 @@ interface NFTModalProps {
     author: string
     category: string
     image: string
+    thumbnailHash?: string
     rating?: number
     sales?: number
     createdAt?: string
@@ -31,7 +34,12 @@ export default function NFTModal({ isOpen, item, onClose }: NFTModalProps) {
   const [isPurchasing, setIsPurchasing] = useState(false)
   const [activeTab, setActiveTab] = useState<'details' | 'preview'>('details')
   const [isLiked, setIsLiked] = useState(false)
+  const [thumbnailError, setThumbnailError] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
+
+  const hasThumbnail = item.thumbnailHash && isValidIPFSCid(item.thumbnailHash)
+  const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(item.thumbnailHash!) : ""
+  const pixelThumbnailUrl = generatePixelThumbnail(item.title, item.category)
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -204,14 +212,37 @@ export default function NFTModal({ isOpen, item, onClose }: NFTModalProps) {
                     opacity: [0.9, 1, 0.9]
                   }}
                   transition={{ duration: 10, repeat: Infinity }}
-                  className="h-full w-full overflow-hidden"
+                  className="h-full w-full relative overflow-hidden"
                 >
-                  <Image 
-                    src={item.image || "/placeholder.svg"} 
-                    alt={item.title} 
-                    fill 
-                    className="object-cover transition-transform" 
-                  />
+                  {/* Display IPFS thumbnail if available and valid */}
+                  {hasThumbnail && !thumbnailError ? (
+                    <Image 
+                      src={thumbnailUrl} 
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 600px"
+                      className="object-cover transition-transform" 
+                      onError={() => setThumbnailError(true)}
+                    />
+                  ) : (
+                    <div className="h-full w-full relative">
+                      {/* Fallback to pixel art thumbnail if no valid IPFS thumbnail */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm">
+                        <div className="flex h-full items-center justify-center">
+                          <div className="relative h-4/5 w-4/5 overflow-hidden rounded-md border border-white/10 shadow-[0_0_25px_rgba(123,97,255,0.2)]">
+                            <Image
+                              src={pixelThumbnailUrl}
+                              alt={item.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 600px"
+                              className="object-contain"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="absolute bottom-3 right-3 z-20 rounded-sm bg-black/70 px-2 py-1 text-xs text-white/80 backdrop-blur-sm">8-bit Pixel Art</div>
+                    </div>
+                  )}
                 </motion.div>
                 
                 {/* Floating category badge */}

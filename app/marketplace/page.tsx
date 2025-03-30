@@ -58,7 +58,7 @@ const container = {
   }
 };
 
-const item = {
+const itemVariant = {
   hidden: { y: 20, opacity: 0 },
   show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 25 } }
 };
@@ -315,14 +315,14 @@ export default function MarketplacePage() {
                 <div className="flex flex-wrap gap-1">
                   {CATEGORIES.map((cat) => (
                     <motion.div key={cat} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button
-                        variant={category === cat ? "default" : "outline"}
-                        size="sm"
+                    <Button
+                      variant={category === cat ? "default" : "outline"}
+                      size="sm"
                         className={`${category === cat ? "bg-purple-600 hover:bg-purple-700" : "border-slate-700 text-white hover:bg-slate-800"} text-xs rounded-md px-3 py-1.5 h-auto transition-all duration-200`}
-                        onClick={() => setCategory(cat)}
-                      >
-                        {cat}
-                      </Button>
+                      onClick={() => setCategory(cat)}
+                    >
+                      {cat}
+                    </Button>
                     </motion.div>
                   ))}
                 </div>
@@ -342,18 +342,18 @@ export default function MarketplacePage() {
                     whileHover={{ scale: 1.05 }} 
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Button
-                      variant={category === cat ? "default" : "outline"}
-                      size="sm"
+                  <Button
+                    variant={category === cat ? "default" : "outline"}
+                    size="sm"
                       className={`${
                         category === cat 
                           ? "bg-purple-600 hover:bg-purple-700" 
                           : "border-slate-700 text-white hover:bg-slate-800"
                       } text-xs font-medium rounded-md px-3 py-1.5 h-auto transition-all duration-200`}
-                      onClick={() => setCategory(cat)}
-                    >
-                      {cat}
-                    </Button>
+                    onClick={() => setCategory(cat)}
+                  >
+                    {cat}
+                  </Button>
                   </motion.div>
                 ))}
               </div>
@@ -366,7 +366,7 @@ export default function MarketplacePage() {
                 exit={{ opacity: 0 }}
                 className="flex h-60 items-center justify-center"
               >
-                <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center">
                   <Loader2 className="h-12 w-12 animate-spin text-purple-500" />
                   <p className="mt-4 text-slate-400">Loading materials...</p>
                 </div>
@@ -380,12 +380,12 @@ export default function MarketplacePage() {
                 <div className="rounded-xl bg-red-900/20 p-8 text-center backdrop-blur-sm">
                   <p className="mb-4 text-lg text-red-400">{error}</p>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      onClick={() => window.location.reload()}
+                  <Button 
+                    onClick={() => window.location.reload()}
                       className="bg-red-600 hover:bg-red-700"
-                    >
-                      Try Again
-                    </Button>
+                  >
+                    Try Again
+                  </Button>
                   </motion.div>
                 </div>
               </motion.div>
@@ -420,7 +420,7 @@ export default function MarketplacePage() {
                 {filteredItems.map((item) => (
                   <motion.div 
                     key={item.id}
-                    variants={item}
+                    variants={itemVariant}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
                     onClick={() => openModal(item)}
@@ -494,7 +494,7 @@ export default function MarketplacePage() {
             )}
             
             {/* Results count and pagination */}
-            {!isLoading && !error && filteredItems.length > 0 && (
+              {!isLoading && !error && filteredItems.length > 0 && (
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -527,7 +527,7 @@ export default function MarketplacePage() {
                   </motion.div>
                 </div>
               </motion.div>
-            )}
+              )}
           </div>
         </div>
       </section>

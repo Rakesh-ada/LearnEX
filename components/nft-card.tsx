@@ -96,23 +96,24 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
       />
       
       <div className="relative z-10">
-        {/* Image container with improved animations */}
+        {/* Image container with improved animations and fixed aspect ratio */}
         <motion.div 
-          className="relative mb-5 aspect-square overflow-hidden rounded-lg ring-1 ring-white/10"
+          className="relative mb-5 overflow-hidden rounded-lg ring-1 ring-white/10"
+          style={{ aspectRatio: "1/1" }}
           whileHover={{ boxShadow: "0 8px 32px rgba(123, 97, 255, 0.2)" }}
         >
           {hasThumbnail && !thumbnailError ? (
-            <>
+            <div className="relative w-full h-full">
               <Image
                 src={thumbnailUrl}
                 alt={item.title}
-                width={300}
-                height={300}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                fill
+                sizes="(max-width: 768px) 100vw, 300px"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
                 onError={() => setThumbnailError(true)}
               />
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60"></div>
-            </>
+            </div>
           ) : (
             <>
               {/* 8-bit Pixel Art Thumbnail with enhanced presentation */}
@@ -126,9 +127,9 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                     <Image
                       src={pixelThumbnailUrl}
                       alt={item.title}
-                      width={300}
-                      height={300}
-                      className="h-full w-full"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 300px"
+                      className="object-contain"
                     />
                   </div>
                 </motion.div>
