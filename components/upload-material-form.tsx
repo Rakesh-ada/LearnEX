@@ -792,6 +792,13 @@ export default function UploadMaterialForm() {
                             <SelectItem value="mathematics">Mathematics</SelectItem>
                             <SelectItem value="science">Science</SelectItem>
                             <SelectItem value="language">Language</SelectItem>
+                            <SelectItem value="physics">Physics</SelectItem>
+                            <SelectItem value="chemistry">Chemistry</SelectItem>
+                            <SelectItem value="biology">Biology</SelectItem>
+                            <SelectItem value="computer-science">Computer Science</SelectItem>
+                            <SelectItem value="literature">Literature</SelectItem>
+                            <SelectItem value="history">History</SelectItem>
+                            <SelectItem value="economics">Economics</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>

@@ -27,14 +27,21 @@ interface MaterialItem {
 
 const CATEGORIES = [
   "All",
+  "Blockchain",
+  "Programming",
+  "Design",
+  "Business", 
   "Mathematics",
-  "Chemistry",
+  "Science",
+  "Language",
   "Physics",
+  "Chemistry",
   "Biology",
   "Computer Science",
   "Literature",
   "History",
   "Economics",
+  "Other"
 ]
 
 export default function MarketplacePage() {

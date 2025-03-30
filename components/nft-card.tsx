@@ -32,6 +32,7 @@ function getSubjectGradient(subject: string): string {
     case 'biology':
       return 'from-green-600 via-emerald-500 to-teal-500'
     case 'computer science':
+    case 'computer-science':
       return 'from-blue-600 via-indigo-500 to-violet-500'
     case 'literature':
       return 'from-amber-500 via-orange-500 to-red-500'
@@ -41,6 +42,16 @@ function getSubjectGradient(subject: string): string {
       return 'from-emerald-600 via-green-500 to-teal-500'
     case 'blockchain':
       return 'from-purple-600 via-violet-500 to-blue-500'
+    case 'programming':
+      return 'from-blue-500 via-cyan-500 to-teal-500'
+    case 'design':
+      return 'from-pink-500 via-purple-500 to-indigo-500'
+    case 'business':
+      return 'from-blue-500 via-indigo-500 to-purple-500'
+    case 'science':
+      return 'from-cyan-500 via-blue-500 to-indigo-500'
+    case 'language':
+      return 'from-yellow-500 via-orange-500 to-red-500'
     default:
       return 'from-purple-600 via-violet-500 to-blue-500' // Default gradient like in the image
   }
@@ -240,8 +251,9 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                 </div>
               )}
               {!["mathematics", "chemistry", "physics", "biology", 
-                "computer science", "literature", "history", 
-                "economics", "blockchain"].includes(item.category?.toLowerCase()) && (
+                "computer science", "computer-science", "literature", "history", 
+                "economics", "blockchain", "programming", "design", "business",
+                "science", "language"].includes(item.category?.toLowerCase()) && (
                 <div className="flex h-full w-full flex-col items-center justify-center">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
