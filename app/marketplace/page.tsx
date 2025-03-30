@@ -210,13 +210,13 @@ export default function MarketplacePage() {
             {isFilterOpen && (
               <div className="mt-4 rounded-md border border-slate-700 bg-slate-900 p-4 md:hidden">
                 <h3 className="mb-2 font-medium text-white">Categories</h3>
-                <div className="space-y-2">
+                <div className="flex flex-wrap gap-1">
                   {CATEGORIES.map((cat) => (
                     <Button
                       key={cat}
                       variant={category === cat ? "default" : "outline"}
                       size="sm"
-                      className={`mr-2 ${category === cat ? "bg-purple-600" : "border-slate-700 text-white"}`}
+                      className={`${category === cat ? "bg-purple-600" : "border-slate-700 text-white"} text-xs px-2 py-1 h-auto`}
                       onClick={() => setCategory(cat)}
                     >
                       {cat}
@@ -227,13 +227,13 @@ export default function MarketplacePage() {
             )}
 
             <div className="mb-6 hidden md:block"> {/* Reduced from mb-8 */}
-              <div className="flex flex-wrap justify-center gap-2">
+              <div className="flex flex-wrap justify-center gap-1">
                 {CATEGORIES.map((cat) => (
                   <Button
                     key={cat}
                     variant={category === cat ? "default" : "outline"}
                     size="sm"
-                    className={`${category === cat ? "bg-purple-600" : "border-slate-700 text-white"}`}
+                    className={`${category === cat ? "bg-purple-600" : "border-slate-700 text-white"} text-xs px-2 py-1 h-auto`}
                     onClick={() => setCategory(cat)}
                   >
                     {cat}
