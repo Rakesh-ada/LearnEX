@@ -364,7 +364,7 @@ function SpaceBackgroundContent({
     if (cosmicDust) {
       const dustGeometry = new THREE.BufferGeometry()
       const dustMaterial = new THREE.PointsMaterial({
-        color: getColor(),
+        vertexColors: true,
         size: 0.05,
         transparent: true,
         opacity: 0.3,
@@ -375,21 +375,50 @@ function SpaceBackgroundContent({
       const dustColors: number[] = []
 
       for (let i = 0; i < dustCount; i++) {
-        const x = (Math.random() - 0.5) * 50
-        const y = (Math.random() - 0.5) * 50
-        const z = (Math.random() - 0.5) * 50
+        // Use spherical distribution to evenly spread dust throughout the space
+        const radius = 20 + Math.random() * 60 // Spread from inner radius 20 to outer radius 80
+        const theta = Math.random() * Math.PI * 2
+        const phi = Math.random() * Math.PI
+        
+        // Convert spherical coordinates to Cartesian
+        const x = radius * Math.sin(phi) * Math.cos(theta)
+        const y = radius * Math.sin(phi) * Math.sin(theta)
+        const z = radius * Math.cos(phi)
+        
         dustVertices.push(x, y, z)
 
-        // Add color variations to dust
-        const dustColor = getColor(0.2, 0.5)
+        // Add color variations to dust with more purple hues
+        let dustColor;
+        const colorVar = Math.random();
+        
+        if (colorVar < 0.6) {
+          // Purple dust (majority)
+          dustColor = new THREE.Color(0x3a0a5e).lerp(
+            new THREE.Color(0x9040ff), 
+            Math.random() * 0.6 + 0.3
+          );
+        } else if (colorVar < 0.85) {
+          // Blue dust
+          dustColor = new THREE.Color(0x0a1a5e).lerp(
+            new THREE.Color(0x4060ff), 
+            Math.random() * 0.6 + 0.3
+          );
+        } else {
+          // Magenta dust
+          dustColor = new THREE.Color(0x5a0a5e).lerp(
+            new THREE.Color(0xff40ff), 
+            Math.random() * 0.6 + 0.3
+          );
+        }
+        
         dustColors.push(dustColor.r, dustColor.g, dustColor.b)
 
         dustParticles.push({
           index: i * 3,
           speed: {
-            x: (Math.random() - 0.5) * 0.005,
-            y: (Math.random() - 0.5) * 0.005,
-            z: (Math.random() - 0.5) * 0.005,
+            x: (Math.random() - 0.5) * 0.003, // Slightly slower movement
+            y: (Math.random() - 0.5) * 0.003,
+            z: (Math.random() - 0.5) * 0.003,
           },
         })
       }
@@ -581,10 +610,21 @@ function SpaceBackgroundContent({
             positions[particle.index + 1] += particle.speed.y
             positions[particle.index + 2] += particle.speed.z
 
-            // Wrap around if out of bounds
-            if (Math.abs(positions[particle.index]) > 25) positions[particle.index] *= -0.9
-            if (Math.abs(positions[particle.index + 1]) > 25) positions[particle.index + 1] *= -0.9
-            if (Math.abs(positions[particle.index + 2]) > 25) positions[particle.index + 2] *= -0.9
+            // Wrap around if out of bounds - use spherical bounds for consistency
+            const x = positions[particle.index];
+            const y = positions[particle.index + 1];
+            const z = positions[particle.index + 2];
+            const distanceFromCenter = Math.sqrt(x*x + y*y + z*z);
+            
+            if (distanceFromCenter > 90) {
+              // Reset to a random position within inner boundary
+              const newRadius = 20 + Math.random() * 20;
+              const ratio = newRadius / distanceFromCenter;
+              
+              positions[particle.index] = x * ratio;
+              positions[particle.index + 1] = y * ratio;
+              positions[particle.index + 2] = z * ratio;
+            }
           })
 
           dust.geometry.attributes.position.needsUpdate = true
