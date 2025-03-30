@@ -297,6 +297,11 @@ export default function UploadMaterialForm() {
         }
       } else {
         thumbnailHash = "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
+        
+        toast({
+          title: "Using 8-bit Thumbnail",
+          description: "A unique 8-bit pixel thumbnail will be generated based on your material's title.",
+        });
       }
 
       const previewHash = `ipfs://Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
