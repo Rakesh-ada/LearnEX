@@ -8,7 +8,7 @@
 import { getSubjectThumbnail } from './thumbnails';
 
 // Color palettes for different categories (8-bit style colors)
-const COLOR_PALETTES: Record<string, string[]> = {
+export const COLOR_PALETTES: Record<string, string[]> = {
   'blockchain': ['#5928E5', '#8860F9', '#A482FC', '#D3C5FC', '#B9A8FF'],
   'programming': ['#0F52BA', '#147DF5', '#5cb2ff', '#a0d6ff', '#d2eaff'],
   'design': ['#E5287A', '#F96090', '#FCACCC', '#FCB9D3', '#FFDCEA'],
@@ -29,14 +29,14 @@ const COLOR_PALETTES: Record<string, string[]> = {
 };
 
 // Default palette if category not found
-const DEFAULT_PALETTE = ['#5A5A5A', '#7E7E7E', '#A0A0A0', '#C2C2C2', '#E5E5E5'];
+export const DEFAULT_PALETTE = ['#5A5A5A', '#7E7E7E', '#A0A0A0', '#C2C2C2', '#E5E5E5'];
 
 /**
  * Generate a simple hash from a string
  * @param str Input string
  * @returns A numeric hash value
  */
-function simpleHash(str: string): number {
+export function simpleHash(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = ((hash << 5) - hash) + str.charCodeAt(i);
@@ -51,7 +51,7 @@ function simpleHash(str: string): number {
  * @param category The category of the material
  * @returns A 2D array representing the pixel grid
  */
-function generatePixelGrid(title: string, category: string): number[][] {
+export function generatePixelGrid(title: string, category: string): number[][] {
   // Create a hash from the title
   const hash = simpleHash(title);
   
@@ -84,7 +84,7 @@ function generatePixelGrid(title: string, category: string): number[][] {
  * @param palette The color palette to use
  * @returns An SVG string representing the pixel art
  */
-function gridToSVG(grid: number[][], palette: string[]): string {
+export function gridToSVG(grid: number[][], palette: string[]): string {
   const svgSize = 400; // SVG viewbox size
   const pixelSize = svgSize / 8; // Size of each pixel
   
