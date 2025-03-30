@@ -58,19 +58,49 @@ function generatePixelGrid(title: string, category: string): number[][] {
   // Initialize an 8x8 grid
   const grid: number[][] = Array(8).fill(0).map(() => Array(8).fill(0));
   
+  // Normalize category for special handling
+  const normalizedCategory = category.toLowerCase().trim();
+  
   // Fill the grid with values based on the hash
   // This ensures the same title always generates the same pattern
   let value = hash;
-  for (let y = 0; y < 8; y++) {
-    for (let x = 0; x < 8; x++) {
-      // Create a mirrored pattern for symmetry (only fill left half, mirror right half)
-      if (x < 4) {
+  
+  // Different pattern generation based on category
+  if (normalizedCategory === 'blockchain') {
+    // Special pattern for blockchain that avoids the M-shaped gap
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 4; x++) {
+        // Generate density based on y-position (more filled at the bottom)
+        const colorIndex = (value % 5);
+        
+        // Ensure middle sections are more filled
+        if (y >= 4) {
+          // Bottom half should be more densely colored
+          grid[y][x] = Math.min(2, colorIndex);
+        } else if (y === 3 && (x === 1 || x === 2)) {
+          // Fill in the middle section where the gap typically occurs
+          grid[y][x] = (value % 3) + 1; // Values 1-3
+        } else {
+          grid[y][x] = colorIndex;
+        }
+        
+        // Mirror to right side
+        grid[y][7-x] = grid[y][x];
+        
+        value = Math.floor(value / 3);
+      }
+    }
+  } else {
+    // Standard pattern for other categories
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 4; x++) {
+        // Create a mirrored pattern for symmetry (only fill left half, mirror right half)
         // Get a value between 0-4 (for 5 color shades)
         grid[y][x] = (value % 5);
         value = Math.floor(value / 3);
-      } else {
+        
         // Mirror the left side
-        grid[y][x] = grid[y][7-x];
+        grid[y][7-x] = grid[y][x];
       }
     }
   }
