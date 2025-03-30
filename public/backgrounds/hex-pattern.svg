@@ -1,0 +1,8 @@
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hexagons" width="56" height="100" patternUnits="userSpaceOnUse" patternTransform="scale(0.5)">
+      <path fill="none" stroke="#ffffff" stroke-width="0.5" d="M28 66L0 50L0 16L28 0L56 16L56 50L28 66Z M28 133L0 116L0 83L28 66L56 83L56 116L28 133Z" opacity="0.2" />
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#hexagons)" />
+</svg> 

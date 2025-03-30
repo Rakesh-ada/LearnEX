@@ -139,22 +139,39 @@ export default function MarketplacePage() {
   }
 
   return (
-    <main className="min-h-screen pt-12"> {/* Reduced from pt-16 */}
+    <main className="min-h-screen bg-slate-950 pt-12">
       <ClientOnly fallback={<SimpleFallback />}>
-        <SpaceBackground density={800} speed={0.0003} />
+        <SpaceBackground density={1200} speed={0.0004} />
       </ClientOnly>
 
-      <section className="relative py-8"> {/* Reduced from py-16 */}
+      <div className="relative z-10 mb-6 overflow-hidden bg-gradient-to-b from-purple-900/20 to-slate-950/0 py-8">
+        <div className="container relative mx-auto px-4">
+          <div className="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-purple-500/5 blur-3xl"></div>
+          <div className="absolute -left-24 top-12 h-64 w-64 rounded-full bg-blue-500/5 blur-3xl"></div>
+          
+          <h1 className="mb-2 text-center text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              LearnEX Marketplace
+            </span>
+          </h1>
+          <p className="mx-auto mb-6 max-w-2xl text-center text-sm text-slate-400 md:text-base">
+            Discover and purchase tokenized educational materials on the blockchain. 
+            Own your learning resources with verified authenticity and provenance.
+          </p>
+        </div>
+      </div>
+
+      <section className="relative py-4">
         <div className="container mx-auto px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-slate-900/0 to-transparent" />
           
           <div className="relative z-10">
             <div className="relative z-10">
-              <div className="mx-auto mb-6 max-w-3xl"> {/* Reduced from mb-20 */}
+              <div className="mx-auto mb-6 max-w-3xl">
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
                   <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
-                      <Search className="h-5 w-5 text-purple-400/90" />
+                      <Search className="h-5 w-5 text-blue-400/90" />
                     </div>
                     
                     <Input
@@ -162,9 +179,9 @@ export default function MarketplacePage() {
                       placeholder="Search study materials..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-12 w-full rounded-xl border border-slate-700/50 bg-slate-900/50 pl-12 pr-[140px] text-white 
-                        shadow-lg shadow-purple-500/5 backdrop-blur-sm placeholder:text-slate-400 
-                        focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10"
+                      className="h-12 w-full rounded-xl border border-slate-700/50 bg-slate-900/70 pl-12 pr-[140px] text-white 
+                        shadow-lg shadow-blue-500/5 backdrop-blur-md placeholder:text-slate-400 
+                        focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
                     />
                     
                     <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -174,7 +191,7 @@ export default function MarketplacePage() {
                             hover:text-white focus:ring-0 focus:ring-offset-0"
                         >
                           <div className="flex items-center gap-2 text-sm">
-                            <ArrowUpDown className="h-4 w-4 text-purple-400/80" />
+                            <ArrowUpDown className="h-4 w-4 text-cyan-400/80" />
                             {sortBy === "newest" ? "New " : 
                              sortBy === "price-low" ? "Low " :
                              sortBy === "price-high" ? "High " : "Sort"}
@@ -182,23 +199,23 @@ export default function MarketplacePage() {
                         </SelectTrigger>
                         <SelectContent 
                           className="rounded-lg border border-slate-700/50 bg-slate-900/90 
-                            text-white shadow-xl shadow-purple-500/10 backdrop-blur-md min-w-[140px]"
+                            text-white shadow-xl shadow-blue-500/10 backdrop-blur-md min-w-[140px]"
                         >
                           <SelectItem 
                             value="newest"
-                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                            className="hover:bg-blue-500/20 focus:bg-blue-500/20"
                           >
                             Newest First
                           </SelectItem>
                           <SelectItem 
                             value="price-low"
-                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                            className="hover:bg-blue-500/20 focus:bg-blue-500/20"
                           >
                             Price: Lowest
                           </SelectItem>
                           <SelectItem 
                             value="price-high"
-                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                            className="hover:bg-blue-500/20 focus:bg-blue-500/20"
                           >
                             Price: Highest
                           </SelectItem>
@@ -206,20 +223,35 @@ export default function MarketplacePage() {
                       </Select>
                     </div>
                   </div>
+                  
+                  <Button
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    className="flex h-12 items-center gap-2 rounded-xl border border-slate-700/50 
+                      bg-slate-900/70 px-4 text-white shadow-lg shadow-blue-500/5 backdrop-blur-md 
+                      hover:border-blue-500/50 hover:bg-slate-800/70 md:hidden"
+                    variant="outline"
+                  >
+                    <SlidersHorizontal className="h-5 w-5 text-blue-400" />
+                    Filters
+                  </Button>
                 </div>
               </div>
             </div>
 
             {isFilterOpen && (
-              <div className="mt-4 rounded-md border border-slate-700 bg-slate-900 p-4 md:hidden">
-                <h3 className="mb-2 font-medium text-white">Categories</h3>
-                <div className="flex flex-wrap gap-1">
+              <div className="mt-4 rounded-xl border border-slate-700 bg-slate-900/90 p-5 shadow-lg shadow-blue-500/5 backdrop-blur-md md:hidden">
+                <h3 className="mb-3 font-medium text-white">Categories</h3>
+                <div className="flex flex-wrap gap-1.5">
                   {CATEGORIES.map((cat) => (
                     <Button
                       key={cat}
                       variant={category === cat ? "default" : "outline"}
                       size="sm"
-                      className={`${category === cat ? "bg-purple-600" : "border-slate-700 text-white"} text-xs px-2 py-1 h-auto`}
+                      className={`${
+                        category === cat 
+                          ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white" 
+                          : "border-slate-700 bg-slate-800/50 text-white hover:border-blue-500/50"
+                      } text-xs px-2 py-1 h-auto rounded-lg`}
                       onClick={() => setCategory(cat)}
                     >
                       {cat}
@@ -229,14 +261,18 @@ export default function MarketplacePage() {
               </div>
             )}
 
-            <div className="mb-6 hidden md:block"> {/* Reduced from mb-8 */}
-              <div className="flex flex-wrap justify-center gap-1">
+            <div className="mb-8 hidden md:block">
+              <div className="flex flex-wrap justify-center gap-1.5">
                 {CATEGORIES.map((cat) => (
                   <Button
                     key={cat}
                     variant={category === cat ? "default" : "outline"}
                     size="sm"
-                    className={`${category === cat ? "bg-purple-600" : "border-slate-700 text-white"} text-xs px-2 py-1 h-auto`}
+                    className={`${
+                      category === cat 
+                        ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white" 
+                        : "border-slate-700 bg-slate-800/50 text-white hover:border-blue-500/50"
+                    } text-xs px-3 py-1 h-auto rounded-lg`}
                     onClick={() => setCategory(cat)}
                   >
                     {cat}
@@ -245,45 +281,40 @@ export default function MarketplacePage() {
               </div>
             </div>
 
-            <div className="relative z-10 pt-2"> {/* Added pt-2 */}
+            <div className="relative z-10 pt-2">
               {isLoading && (
                 <div className="flex min-h-[400px] items-center justify-center">
                   <div className="flex flex-col items-center">
-                    <Loader2 className="mb-4 h-10 w-10 animate-spin text-purple-500" />
+                    <Loader2 className="mb-4 h-10 w-10 animate-spin text-blue-500" />
                     <p className="text-white">Loading marketplace items...</p>
                   </div>
                 </div>
               )}
 
-              {error && !isLoading && (
-                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-red-800 bg-black/50 p-8 backdrop-blur-sm">
-                  <p className="text-center text-red-400">{error}</p>
-                  <Button 
-                    className="mt-4 bg-purple-600 hover:bg-purple-700"
-                    onClick={() => window.location.reload()}
-                  >
-                    Try Again
-                  </Button>
+              {!isLoading && error && (
+                <div className="flex min-h-[400px] flex-col items-center justify-center">
+                  <div className="rounded-xl border border-red-500/30 bg-red-900/10 p-6 text-center backdrop-blur">
+                    <p className="text-red-400">{error}</p>
+                    <Button 
+                      className="mt-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white"
+                      onClick={() => window.location.reload()}
+                    >
+                      Try Again
+                    </Button>
+                  </div>
                 </div>
               )}
 
               {!isLoading && !error && filteredItems.length === 0 && (
-                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-slate-800 bg-black/50 p-8 backdrop-blur-sm">
-                  <p className="text-center text-slate-400">
-                    {materials.length === 0 
-                      ? "No materials are currently listed in the marketplace." 
-                      : "No materials match your search criteria."}
-                  </p>
-                  {!currentAccount && materials.length === 0 && (
-                    <p className="mt-4 text-center text-slate-400">
-                      Connect your wallet to list your own study materials.
-                    </p>
-                  )}
+                <div className="flex min-h-[400px] items-center justify-center">
+                  <div className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 text-center backdrop-blur-md">
+                    <p className="text-slate-400">No items found for your search criteria.</p>
+                  </div>
                 </div>
               )}
 
               {!isLoading && !error && filteredItems.length > 0 && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"> {/* Reduced from gap-6 */}
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredItems.map((item) => (
                     <NFTCard key={item.id} item={item} onClick={() => openModal(item)} />
                   ))}
