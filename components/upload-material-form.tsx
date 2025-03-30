@@ -37,7 +37,6 @@ import { verifyContract, checkUserBalance, checkNetwork, switchToCorrectNetwork,
 import { toast } from "@/hooks/use-toast"
 import { pinFileToIPFS } from "@/lib/pinning-service"
 
-// Form schema
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
@@ -72,7 +71,6 @@ export default function UploadMaterialForm() {
   const [isTestingSimplified, setIsTestingSimplified] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
 
-  // Initialize form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -83,12 +81,10 @@ export default function UploadMaterialForm() {
     },
   })
 
-  // Verify contract and check balance on component mount
   useEffect(() => {
     const checkContractAndNetwork = async () => {
       setIsVerifyingContract(true)
       try {
-        // Check network
         const networkCheck = await checkNetwork();
         setIsCorrectNetwork(networkCheck.isCorrectNetwork);
         setCurrentNetwork(networkCheck.currentNetwork);
@@ -103,7 +99,6 @@ export default function UploadMaterialForm() {
           return;
         }
         
-        // Verify contract
         const isVerified = await verifyContract()
         setContractVerified(isVerified)
         if (!isVerified) {
@@ -114,7 +109,6 @@ export default function UploadMaterialForm() {
           })
         }
         
-        // Check user balance
         const { hasBalance, balance } = await checkUserBalance()
         setUserBalance(balance)
         setHasEnoughBalance(hasBalance)
@@ -138,7 +132,6 @@ export default function UploadMaterialForm() {
     }
   }, [currentAccount])
 
-  // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     setFileError(null)
@@ -148,14 +141,12 @@ export default function UploadMaterialForm() {
       return
     }
 
-    // Check file size (max 50MB)
     if (selectedFile.size > 50 * 1024 * 1024) {
       setFileError("File size exceeds 50MB limit")
       setFile(null)
       return
     }
 
-    // Check file type
     const fileType = selectedFile.type
     if (!fileType.includes("pdf") && !fileType.includes("video")) {
       setFileError("Only PDF and video files are supported")
@@ -166,7 +157,6 @@ export default function UploadMaterialForm() {
     setFile(selectedFile)
   }
 
-  // Handle thumbnail file selection
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     setThumbnailError(null)
@@ -176,14 +166,12 @@ export default function UploadMaterialForm() {
       return
     }
 
-    // Check file size (max 5MB)
     if (selectedFile.size > 5 * 1024 * 1024) {
       setThumbnailError("Thumbnail size exceeds 5MB limit")
       setThumbnailFile(null)
       return
     }
 
-    // Check file type
     const fileType = selectedFile.type
     if (!fileType.includes("image")) {
       setThumbnailError("Only image files are supported for thumbnails")
@@ -194,7 +182,6 @@ export default function UploadMaterialForm() {
     setThumbnailFile(selectedFile)
   }
 
-  // Get file type icon
   const getFileTypeIcon = () => {
     if (!file) return null
     
@@ -207,26 +194,23 @@ export default function UploadMaterialForm() {
     return null
   }
 
-  // Format file size
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " bytes"
     else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB"
     else return (bytes / (1024 * 1024)).toFixed(1) + " MB"
   }
 
-  // Handle form submission
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-    if (!currentAccount) {
-      toast({
-        title: "Wallet Not Connected",
+      if (!currentAccount) {
+        toast({
+          title: "Wallet Not Connected",
           description: "Please connect your wallet to list a material",
           variant: "destructive",
         })
         return
       }
 
-      // Check network first
       const networkCheck = await checkNetwork();
       if (!networkCheck.isCorrectNetwork) {
         toast({
@@ -250,31 +234,28 @@ export default function UploadMaterialForm() {
         toast({
           title: "Insufficient Balance",
           description: `Your wallet balance (${userBalance} ETH) is too low to cover gas fees. Please add more ETH to your wallet.`,
-        variant: "destructive",
-      })
-      return
-    }
+          variant: "destructive",
+        })
+        return
+      }
 
-    if (!file) {
-      setFileError("Please select a file to upload")
-      return
-    }
+      if (!file) {
+        setFileError("Please select a file to upload")
+        return
+      }
 
       setIsUploading(true)
       setUploadProgress(10)
 
-      // Upload the main content file to IPFS
       let contentHash = ""
       try {
         setUploadProgress(30)
         setPinningProgress(20)
         
-        // Simulate pinning to IPFS (in a real app, use a service like Pinata)
         const contentResponse = await pinFileToIPFS(file, (progress) => {
           setPinningProgress(20 + Math.floor(progress * 0.6))
         })
         
-        // Extract the URL string from the response
         contentHash = contentResponse.url
         
         setUploadProgress(70)
@@ -289,18 +270,15 @@ export default function UploadMaterialForm() {
         throw new Error("Failed to pin content to IPFS");
       }
 
-      // Upload thumbnail to IPFS if available
       let thumbnailHash = ""
       if (thumbnailFile) {
         try {
           setPinningProgress(85)
           
-          // Simulate pinning thumbnail to IPFS
           const thumbnailResponse = await pinFileToIPFS(thumbnailFile, (progress) => {
             setPinningProgress(85 + Math.floor(progress * 0.1))
           })
           
-          // Extract the URL string from the response
           thumbnailHash = thumbnailResponse.url
           
           setPinningProgress(95)
@@ -311,7 +289,6 @@ export default function UploadMaterialForm() {
           });
         } catch (error) {
           console.error("Error pinning thumbnail to IPFS:", error);
-          // Continue even if thumbnail upload fails
           toast({
             title: "Thumbnail Upload Failed",
             description: "Continuing with listing without a thumbnail.",
@@ -319,15 +296,11 @@ export default function UploadMaterialForm() {
           });
         }
       } else {
-        // Set a default empty IPFS hash for thumbnail if none was uploaded
         thumbnailHash = "ipfs://QmdefaultEmptyThumbnailHash";
-        console.log("No thumbnail uploaded, using default empty hash:", thumbnailHash);
       }
 
-      // Generate a preview hash (in a real implementation, this would be a thumbnail or preview)
       const previewHash = `ipfs://Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
 
-      // List the material on the blockchain with the IPFS content hash
       try {
         console.log("Listing material with parameters:", {
           title: values.title,
@@ -339,7 +312,6 @@ export default function UploadMaterialForm() {
           price: values.price
         });
 
-        // First verify the contract functions
         const verifyResult = await verifyContractFunctions();
         if (!verifyResult.success) {
           toast({
@@ -349,7 +321,6 @@ export default function UploadMaterialForm() {
           });
         }
 
-        // If there's a warning about missing functions, show it
         if (verifyResult.warning) {
           toast({
             title: "Contract Warning",
@@ -362,7 +333,6 @@ export default function UploadMaterialForm() {
           description: "Attempting to list your material on the blockchain. This may take a moment...",
         });
 
-        // Use the fallback function that handles missing thumbnail functionality
         const result = await listMaterialWithFallback(
           values.title,
           values.description,
@@ -373,7 +343,6 @@ export default function UploadMaterialForm() {
           values.price
         );
 
-        // Check if the result is an object (from debug function) or a number (from normal function)
         if (typeof result === 'object' && result !== null) {
           if (result.success) {
             toast({
@@ -381,7 +350,6 @@ export default function UploadMaterialForm() {
               description: `Your study material has been pinned to IPFS and listed on the marketplace with ID: ${result.materialId}`,
             });
             
-            // Reset form
             form.reset();
             setFile(null);
             setThumbnailFile(null);
@@ -394,7 +362,6 @@ export default function UploadMaterialForm() {
             description: `Your study material has been pinned to IPFS and listed on the marketplace with ID: ${result}`,
           });
           
-          // Reset form
           form.reset();
           setFile(null);
           setThumbnailFile(null);
@@ -415,7 +382,6 @@ export default function UploadMaterialForm() {
           variant: "destructive",
         });
 
-        // Try one more time with the debug function
         toast({
           title: "Trying Alternative Method",
           description: "Attempting to list your material using a different method...",
@@ -438,7 +404,6 @@ export default function UploadMaterialForm() {
               description: `Your study material has been listed on the marketplace with ID: ${debugResult.materialId}`,
             });
             
-            // Reset form
             form.reset();
             setFile(null);
             setThumbnailFile(null);
@@ -468,7 +433,6 @@ export default function UploadMaterialForm() {
     }
   }
 
-  // Connect wallet if not connected
   const handleConnectWallet = async () => {
     try {
       await connect()
@@ -482,7 +446,6 @@ export default function UploadMaterialForm() {
     }
   }
 
-  // Handle network switch
   const handleSwitchNetwork = async () => {
     setIsSwitchingNetwork(true)
     try {
@@ -492,7 +455,6 @@ export default function UploadMaterialForm() {
           title: "Network Switched",
           description: "Successfully switched to Sepolia testnet.",
         })
-        // Refresh the page to ensure everything is updated
         window.location.reload()
       } else {
         toast({
@@ -513,7 +475,6 @@ export default function UploadMaterialForm() {
     }
   }
 
-  // Handle contract test
   const handleTestContract = async () => {
     setIsTestingContract(true);
     try {
@@ -546,11 +507,9 @@ export default function UploadMaterialForm() {
     }
   };
 
-  // Handle test with simplified parameters
   const handleTestSimplified = async () => {
     setIsTestingSimplified(true);
     try {
-      // First check network
       const networkCheck = await checkNetwork();
       if (!networkCheck.isCorrectNetwork) {
         toast({
@@ -567,7 +526,6 @@ export default function UploadMaterialForm() {
         description: "Attempting to list a material with simplified parameters...",
       });
 
-      // Use simplified parameters
       const result = await listMaterialOnChainDebug(
         "Test Title",
         "Test Description",
@@ -602,13 +560,12 @@ export default function UploadMaterialForm() {
     }
   };
 
-  // Toggle debug mode
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
   };
 
   return (
-    <div className="max-w-4xl mx-auto rounded-xl border border-slate-800 bg-gradient-to-b from-black/50 to-slate-900/50 p-8 backdrop-blur-sm">
+    <div className="max-w-6xl mx-auto rounded-xl border border-slate-800 bg-gradient-to-b from-black/50 to-slate-900/50 p-8 backdrop-blur-sm">
      
 
       {isVerifyingContract && (
@@ -711,13 +668,11 @@ export default function UploadMaterialForm() {
               
               <Button 
                 onClick={() => {
-                  // Test with empty thumbnail
                   toast({
                     title: "Testing Empty Thumbnail",
                     description: "Checking console output for thumbnail handling...",
                   });
                   
-                  // Log how empty thumbnails are handled
                   const emptyThumbnail1 = "";
                   const emptyThumbnail2 = null;
                   const emptyThumbnail3 = { url: "" };
@@ -778,227 +733,234 @@ export default function UploadMaterialForm() {
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Introduction to Blockchain" {...field} />
-                  </FormControl>
-                  
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Introduction to Blockchain" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="A comprehensive guide to blockchain technology..."
-                      {...field}
-                    />
-                  </FormControl>
-                  
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="A comprehensive guide to blockchain technology..."
+                          className="min-h-[120px]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="blockchain">Blockchain</SelectItem>
-                      <SelectItem value="programming">Programming</SelectItem>
-                      <SelectItem value="design">Design</SelectItem>
-                      <SelectItem value="business">Business</SelectItem>
-                      <SelectItem value="mathematics">Mathematics</SelectItem>
-                      <SelectItem value="science">Science</SelectItem>
-                      <SelectItem value="language">Language</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Price (ETH)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.001" min="0.001" {...field} />
-                  </FormControl>
-                  
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <FormLabel>File</FormLabel>
-              <div className="rounded-lg border border-dashed border-slate-700 p-6">
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <Upload className="h-8 w-8 text-slate-500" />
-                  <p className="text-sm text-slate-400">
-                    Drag and drop your file here, or click to browse
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Supported formats: PDF, MP4, MOV (Max 50MB)
-                  </p>
-                  <Input
-                    type="file"
-                    className="hidden"
-                    id="file-upload"
-                    accept=".pdf,.mp4,.mov"
-                    onChange={handleFileChange}
-                    disabled={isUploading}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="blockchain">Blockchain</SelectItem>
+                            <SelectItem value="programming">Programming</SelectItem>
+                            <SelectItem value="design">Design</SelectItem>
+                            <SelectItem value="business">Business</SelectItem>
+                            <SelectItem value="mathematics">Mathematics</SelectItem>
+                            <SelectItem value="science">Science</SelectItem>
+                            <SelectItem value="language">Language</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-2"
-                    onClick={() => document.getElementById("file-upload")?.click()}
-                    disabled={isUploading}
-                  >
-                    Select File
-                  </Button>
+
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Price (ETH)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.001" min="0.001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
 
-              {fileError && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{fileError}</AlertDescription>
-                </Alert>
-              )}
-
-              {file && (
-                <div className="mt-4 rounded-lg bg-slate-800 p-3">
-                  <div className="flex items-center space-x-3">
-                    {getFileTypeIcon()}
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white truncate">
-                        {file.name}
+              {/* Right Column */}
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <FormLabel>File</FormLabel>
+                  <div className="rounded-lg border border-dashed border-slate-700 p-6">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Upload className="h-8 w-8 text-slate-500" />
+                      <p className="text-sm text-slate-400">
+                        Drag and drop your file here, or click to browse
                       </p>
-                      <p className="text-xs text-slate-400">
-                        {formatFileSize(file.size)}
+                      <p className="text-xs text-slate-500">
+                        Supported formats: PDF, MP4, MOV (Max 50MB)
                       </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {isUploading && (
-                <div className="mt-4 space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <p className="text-xs text-slate-400">Uploading file</p>
-                      <p className="text-xs text-slate-400">{uploadProgress}%</p>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-slate-800">
-                      <div
-                        className="h-1.5 rounded-full bg-blue-500"
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
+                      <Input
+                        type="file"
+                        className="hidden"
+                        id="file-upload"
+                        accept=".pdf,.mp4,.mov"
+                        onChange={handleFileChange}
+                        disabled={isUploading}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => document.getElementById("file-upload")?.click()}
+                        disabled={isUploading}
+                      >
+                        Select File
+                      </Button>
                     </div>
                   </div>
 
-                  {uploadProgress === 100 && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <p className="text-xs text-slate-400">Pinning to IPFS</p>
-                        <p className="text-xs text-slate-400">{pinningProgress}%</p>
+                  {fileError && (
+                    <Alert variant="destructive" className="mt-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{fileError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {file && (
+                    <div className="mt-4 rounded-lg bg-slate-800 p-3">
+                      <div className="flex items-center space-x-3">
+                        {getFileTypeIcon()}
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white truncate">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {formatFileSize(file.size)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="h-1.5 w-full rounded-full bg-slate-800">
-                        <div
-                          className="h-1.5 rounded-full bg-purple-500"
-                          style={{ width: `${pinningProgress}%` }}
-                        ></div>
+                    </div>
+                  )}
+
+                  {isUploading && (
+                    <div className="mt-4 space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <p className="text-xs text-slate-400">Uploading file</p>
+                          <p className="text-xs text-slate-400">{uploadProgress}%</p>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-slate-800">
+                          <div
+                            className="h-1.5 rounded-full bg-blue-500"
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {uploadProgress === 100 && (
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <p className="text-xs text-slate-400">Pinning to IPFS</p>
+                            <p className="text-xs text-slate-400">{pinningProgress}%</p>
+                          </div>
+                          <div className="h-1.5 w-full rounded-full bg-slate-800">
+                            <div
+                              className="h-1.5 rounded-full bg-purple-500"
+                              style={{ width: `${pinningProgress}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <FormLabel>Thumbnail</FormLabel>
+                  <div className="rounded-lg border border-dashed border-slate-700 p-6">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <Upload className="h-8 w-8 text-slate-500" />
+                      <p className="text-sm text-slate-400">
+                        Drag and drop your thumbnail here, or click to browse
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Supported formats: JPG, PNG (Max 5MB)
+                      </p>
+                      <Input
+                        type="file"
+                        className="hidden"
+                        id="thumbnail-upload"
+                        accept=".jpg,.png"
+                        onChange={handleThumbnailChange}
+                        disabled={isUploading}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2"
+                        onClick={() => document.getElementById("thumbnail-upload")?.click()}
+                        disabled={isUploading}
+                      >
+                        Select Thumbnail
+                      </Button>
+                    </div>
+                  </div>
+
+                  {thumbnailError && (
+                    <Alert variant="destructive" className="mt-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Error</AlertTitle>
+                      <AlertDescription>{thumbnailError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {thumbnailFile && (
+                    <div className="mt-4 rounded-lg bg-slate-800 p-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white truncate">
+                            {thumbnailFile.name}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {formatFileSize(thumbnailFile.size)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <FormLabel>Thumbnail</FormLabel>
-              <div className="rounded-lg border border-dashed border-slate-700 p-6">
-                <div className="flex flex-col items-center justify-center space-y-2">
-                  <Upload className="h-8 w-8 text-slate-500" />
-                  <p className="text-sm text-slate-400">
-                    Drag and drop your thumbnail here, or click to browse
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Supported formats: JPG, PNG (Max 5MB)
-                  </p>
-                  <Input
-                    type="file"
-                    className="hidden"
-                    id="thumbnail-upload"
-                    accept=".jpg,.png"
-                    onChange={handleThumbnailChange}
-                    disabled={isUploading}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-2"
-                    onClick={() => document.getElementById("thumbnail-upload")?.click()}
-                    disabled={isUploading}
-                  >
-                    Select Thumbnail
-                  </Button>
-                </div>
               </div>
-
-              {thumbnailError && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Error</AlertTitle>
-                  <AlertDescription>{thumbnailError}</AlertDescription>
-                </Alert>
-              )}
-
-              {thumbnailFile && (
-                <div className="mt-4 rounded-lg bg-slate-800 p-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-white truncate">
-                        {thumbnailFile.name}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {formatFileSize(thumbnailFile.size)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="pt-4">

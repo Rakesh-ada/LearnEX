@@ -13,7 +13,6 @@ import { useWallet } from "@/hooks/use-wallet"
 import ClientOnly from "@/lib/client-only"
 import SimpleFallback from "@/components/simple-fallback"
 
-// Define the material item type
 interface MaterialItem {
   id: string
   title: string
@@ -26,7 +25,6 @@ interface MaterialItem {
   isActive: boolean
 }
 
-// Categories for filtering
 const CATEGORIES = [
   "All",
   "Mathematics",
@@ -52,23 +50,21 @@ export default function MarketplacePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Fetch materials from blockchain
   useEffect(() => {
     const fetchMaterials = async () => {
       try {
         setIsLoading(true)
         const fetchedMaterials = await getAllMaterials(0, 50)
         
-        // Transform and filter out invalid materials
         const formattedMaterials = fetchedMaterials
           .filter(material => 
-            material?.id && // Check if id exists
-            material?.title?.trim() && // Check if title exists and isn't empty
-            material?.description?.trim() && // Check if description exists and isn't empty
-            material?.price && // Check if price exists
-            material?.owner?.trim() && // Check if owner exists and isn't empty
-            material?.category?.trim() && // Check if category exists and isn't empty
-            material?.createdAt // Check if createdAt exists
+            material?.id &&
+            material?.title?.trim() &&
+            material?.description?.trim() &&
+            material?.price &&
+            material?.owner?.trim() &&
+            material?.category?.trim() &&
+            material?.createdAt
           )
           .map(material => ({
             id: material.id.toString(),
@@ -79,7 +75,7 @@ export default function MarketplacePage() {
             category: material.category.trim(),
             image: "/placeholder.svg?height=400&width=400",
             createdAt: material.createdAt,
-            isActive: material.isActive ?? true // Default to true if not specified
+            isActive: material.isActive ?? true
           }))
         
         setMaterials(formattedMaterials)
@@ -95,11 +91,9 @@ export default function MarketplacePage() {
     fetchMaterials()
   }, [])
 
-  // Filter and sort items based on search, category, and sort criteria
   useEffect(() => {
     let items = [...materials]
 
-    // Apply search filter
     if (searchTerm) {
       items = items.filter(
         (item) =>
@@ -109,12 +103,10 @@ export default function MarketplacePage() {
       )
     }
 
-    // Apply category filter
     if (category !== "All") {
       items = items.filter((item) => item.category === category)
     }
 
-    // Apply sorting
     if (sortBy === "price-low") {
       items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
     } else if (sortBy === "price-high") {
@@ -137,89 +129,77 @@ export default function MarketplacePage() {
   }
 
   return (
-    <main className="min-h-screen pt-16">
+    <main className="min-h-screen pt-12"> {/* Reduced from pt-16 */}
       <ClientOnly fallback={<SimpleFallback />}>
         <SpaceBackground density={800} speed={0.0003} />
       </ClientOnly>
 
-      {/* Enhanced Header Section */}
-      <section className="relative py-16">
+      <section className="relative py-8"> {/* Reduced from py-16 */}
         <div className="container mx-auto px-4">
-          {/* Gradient Background */}
           <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-slate-900/0 to-transparent" />
           
-          {/* Header Content */}
-          
-
-          {/* Search and Filters */}
           <div className="relative z-10">
-  {/* Enhanced Search and Sort Bar */}
-  <div className="relative z-10">
-    <div className="mx-auto mb-20 max-w-3xl">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
-        {/* Search Bar with Sort Inside */}
-        <div className="relative flex-1">
-          {/* Search Icon */}
-          <div className="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
-            <Search className="h-5 w-5 text-purple-400/90" />
-          </div>
-          
-          {/* Search Input */}
-          <Input
-            type="text"
-            placeholder="Search study materials..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-12 w-full rounded-xl border border-slate-700/50 bg-slate-900/50 pl-12 pr-[140px] text-white 
-              shadow-lg shadow-purple-500/5 backdrop-blur-sm placeholder:text-slate-400 
-              focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10"
-          />
-          
-          {/* Sort Control - Positioned Inside Search Bar */}
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger 
-                className="h-9 w-[110px] border-0 bg-transparent text-white/80 
-                  hover:text-white focus:ring-0 focus:ring-offset-0"
-              >
-                <div className="flex items-center gap-2 text-sm">
-                  <ArrowUpDown className="h-4 w-4 text-purple-400/80" />
-                  {sortBy === "newest" ? "New " : 
-                   sortBy === "price-low" ? "Low " :
-                   sortBy === "price-high" ? "High " : "Sort"}
+            <div className="relative z-10">
+              <div className="mx-auto mb-6 max-w-3xl"> {/* Reduced from mb-20 */}
+                <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                  <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
+                      <Search className="h-5 w-5 text-purple-400/90" />
+                    </div>
+                    
+                    <Input
+                      type="text"
+                      placeholder="Search study materials..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="h-12 w-full rounded-xl border border-slate-700/50 bg-slate-900/50 pl-12 pr-[140px] text-white 
+                        shadow-lg shadow-purple-500/5 backdrop-blur-sm placeholder:text-slate-400 
+                        focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10"
+                    />
+                    
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                      <Select value={sortBy} onValueChange={setSortBy}>
+                        <SelectTrigger 
+                          className="h-9 w-[110px] border-0 bg-transparent text-white/80 
+                            hover:text-white focus:ring-0 focus:ring-offset-0"
+                        >
+                          <div className="flex items-center gap-2 text-sm">
+                            <ArrowUpDown className="h-4 w-4 text-purple-400/80" />
+                            {sortBy === "newest" ? "New " : 
+                             sortBy === "price-low" ? "Low " :
+                             sortBy === "price-high" ? "High " : "Sort"}
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent 
+                          className="rounded-lg border border-slate-700/50 bg-slate-900/90 
+                            text-white shadow-xl shadow-purple-500/10 backdrop-blur-md min-w-[140px]"
+                        >
+                          <SelectItem 
+                            value="newest"
+                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                          >
+                            Newest First
+                          </SelectItem>
+                          <SelectItem 
+                            value="price-low"
+                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                          >
+                            Price: Lowest
+                          </SelectItem>
+                          <SelectItem 
+                            value="price-high"
+                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                          >
+                            Price: Highest
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
-              </SelectTrigger>
-              <SelectContent 
-                className="rounded-lg border border-slate-700/50 bg-slate-900/90 
-                  text-white shadow-xl shadow-purple-500/10 backdrop-blur-md min-w-[140px]"
-              >
-                <SelectItem 
-                  value="newest"
-                  className="hover:bg-purple-500/20 focus:bg-purple-500/20"
-                >
-                  Newest First
-                </SelectItem>
-                <SelectItem 
-                  value="price-low"
-                  className="hover:bg-purple-500/20 focus:bg-purple-500/20"
-                >
-                  Price: Lowest
-                </SelectItem>
-                <SelectItem 
-                  value="price-high"
-                  className="hover:bg-purple-500/20 focus:bg-purple-500/20"
-                >
-                  Price: Highest
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+              </div>
+            </div>
 
-            {/* Mobile Filters */}
             {isFilterOpen && (
               <div className="mt-4 rounded-md border border-slate-700 bg-slate-900 p-4 md:hidden">
                 <h3 className="mb-2 font-medium text-white">Categories</h3>
@@ -239,8 +219,7 @@ export default function MarketplacePage() {
               </div>
             )}
 
-            {/* Desktop Category Filters */}
-            <div className="mb-8 hidden md:block">
+            <div className="mb-6 hidden md:block"> {/* Reduced from mb-8 */}
               <div className="flex flex-wrap justify-center gap-2">
                 {CATEGORIES.map((cat) => (
                   <Button
@@ -256,9 +235,7 @@ export default function MarketplacePage() {
               </div>
             </div>
 
-            {/* Materials Content */}
-            <div className="relative z-10">
-              {/* Loading State */}
+            <div className="relative z-10 pt-2"> {/* Added pt-2 */}
               {isLoading && (
                 <div className="flex min-h-[400px] items-center justify-center">
                   <div className="flex flex-col items-center">
@@ -268,7 +245,6 @@ export default function MarketplacePage() {
                 </div>
               )}
 
-              {/* Error State */}
               {error && !isLoading && (
                 <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-red-800 bg-black/50 p-8 backdrop-blur-sm">
                   <p className="text-center text-red-400">{error}</p>
@@ -281,7 +257,6 @@ export default function MarketplacePage() {
                 </div>
               )}
 
-              {/* Empty State */}
               {!isLoading && !error && filteredItems.length === 0 && (
                 <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-slate-800 bg-black/50 p-8 backdrop-blur-sm">
                   <p className="text-center text-slate-400">
@@ -297,9 +272,8 @@ export default function MarketplacePage() {
                 </div>
               )}
 
-              {/* Materials Grid */}
               {!isLoading && !error && filteredItems.length > 0 && (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"> {/* Reduced from gap-6 */}
                   {filteredItems.map((item) => (
                     <NFTCard key={item.id} item={item} onClick={() => openModal(item)} />
                   ))}
@@ -310,11 +284,9 @@ export default function MarketplacePage() {
         </div>
       </section>
 
-      {/* Material Detail Modal */}
       {selectedItem && (
         <NFTModal isOpen={isModalOpen} onClose={closeModal} item={selectedItem} />
       )}
     </main>
   )
 }
-
