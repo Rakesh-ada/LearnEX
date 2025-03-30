@@ -67,27 +67,55 @@ function generatePixelGrid(title: string, category: string): number[][] {
   
   // Different pattern generation based on category
   if (normalizedCategory === 'blockchain') {
-    // Special pattern for blockchain that avoids the M-shaped gap
+    // Complete redesign for blockchain category - solid pattern with no gaps
+    
+    // First, fill in a base pattern with medium-dark colors
+    for (let y = 0; y < 8; y++) {
+      for (let x = 0; x < 8; x++) {
+        // Default to color index 2 (medium shade from the palette)
+        grid[y][x] = 2;
+      }
+    }
+    
+    // Then, apply a randomized pattern on top based on the hash
     for (let y = 0; y < 8; y++) {
       for (let x = 0; x < 4; x++) {
-        // Generate density based on y-position (more filled at the bottom)
-        const colorIndex = (value % 5);
+        const colorValue = value % 5;
         
-        // Ensure middle sections are more filled
-        if (y >= 4) {
-          // Bottom half should be more densely colored
-          grid[y][x] = Math.min(2, colorIndex);
-        } else if (y === 3 && (x === 1 || x === 2)) {
-          // Fill in the middle section where the gap typically occurs
-          grid[y][x] = (value % 3) + 1; // Values 1-3
-        } else {
-          grid[y][x] = colorIndex;
+        // Top part (face-like area) - lighter colors
+        if (y < 4) {
+          // Make corners lighter
+          if (y < 2 && (x < 2 || x > 5)) {
+            grid[y][x] = Math.max(3, colorValue);
+          } 
+          // Always fill the middle section with darker colors (no gaps)
+          else if (y === 3 && (x >= 1 && x <= 2)) {
+            grid[y][x] = Math.min(1, colorValue);
+          }
+          // Random variation for other pixels
+          else {
+            grid[y][x] = colorValue;
+          }
+        }
+        // Bottom part - more consistent dark colors
+        else {
+          grid[y][x] = Math.min(2, colorValue); // Ensures no light colors in bottom
         }
         
         // Mirror to right side
         grid[y][7-x] = grid[y][x];
         
         value = Math.floor(value / 3);
+      }
+    }
+    
+    // Force-fill the middle areas where gaps typically occur
+    for (let x = 2; x <= 5; x++) {
+      for (let y = 2; y <= 4; y++) {
+        // Ensure these critical middle pixels are always filled with a visible color
+        if (grid[y][x] > 2) {
+          grid[y][x] = 1; // Use a darker color to ensure visibility
+        }
       }
     }
   } else {
