@@ -16,7 +16,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  output: 'export',
+  // Only use static export for GitHub Pages, not for Vercel
+  ...(process.env.GITHUB_ACTIONS === 'true' && {
+    output: 'export',
+  }),
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
@@ -24,6 +27,7 @@ const nextConfig = {
   },
 }
 
+// Set the base path dynamically if this is a GitHub Pages deployment
 if (process.env.GITHUB_ACTIONS === 'true') {
   const repository = process.env.GITHUB_REPOSITORY?.replace(/.*?\//, '')
   if (repository) {
