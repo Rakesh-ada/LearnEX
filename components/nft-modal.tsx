@@ -40,6 +40,11 @@ export default function NFTModal({ isOpen, item, onClose }: NFTModalProps) {
   const hasThumbnail = item.thumbnailHash && isValidIPFSCid(item.thumbnailHash)
   const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(item.thumbnailHash!) : ""
   const pixelThumbnailUrl = generatePixelThumbnail(item.title, item.category)
+  
+  // Reset the thumbnail error state when the item changes
+  useEffect(() => {
+    setThumbnailError(false)
+  }, [item.id, item.thumbnailHash])
 
   // Close modal when clicking outside
   useEffect(() => {

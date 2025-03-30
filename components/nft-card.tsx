@@ -63,9 +63,21 @@ function getSubjectGradient(subject: string): string {
 export default function NFTCard({ item, onClick }: NFTCardProps) {
   const [thumbnailError, setThumbnailError] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  
+  // Determine which thumbnail to use
   const hasThumbnail = item.thumbnailHash && isValidIPFSCid(item.thumbnailHash)
   const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(item.thumbnailHash!) : ""
+  
+  // Generate a pixel art thumbnail as fallback
   const pixelThumbnailUrl = generatePixelThumbnail(item.title, item.category)
+  
+  // Default thumbnail URL for use if both IPFS and pixel art fail
+  const defaultThumbnailUrl = "/thumbnails/default.svg"
+  
+  useEffect(() => {
+    // Reset thumbnail error state when item changes
+    setThumbnailError(false)
+  }, [item.id, item.thumbnailHash])
   
   return (
     <motion.div
@@ -84,7 +96,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
       <motion.div 
         className="absolute inset-0 opacity-10 mix-blend-overlay"
         style={{
-          backgroundImage: "url('/backgrounds/blockchain-pattern.svg')",
+          backgroundImage: "url('/backgrounds/grid-pattern.svg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -130,6 +142,7 @@ export default function NFTCard({ item, onClick }: NFTCardProps) {
                       fill
                       sizes="(max-width: 768px) 100vw, 300px"
                       className="object-contain"
+                      priority={true}
                     />
                   </div>
                 </motion.div>

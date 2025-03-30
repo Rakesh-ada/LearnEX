@@ -423,71 +423,12 @@ export default function MarketplacePage() {
                     variants={itemVariant}
                     onMouseEnter={() => setHoveredItem(item.id)}
                     onMouseLeave={() => setHoveredItem(null)}
-                    onClick={() => openModal(item)}
-                    whileHover={{ 
-                      scale: 1.03, 
-                      boxShadow: "0 20px 25px -5px rgba(112, 26, 117, 0.15), 0 10px 10px -5px rgba(112, 26, 117, 0.1)"
-                    }}
-                    className="group relative transform overflow-hidden rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 p-1 transition-all duration-300"
+                    className="h-full w-full"
                   >
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: hoveredItem === item.id ? 1 : 0 }}
-                      className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-500/5 transition-opacity duration-300"
+                    <NFTCard
+                      item={item}
+                      onClick={() => openModal(item)}
                     />
-                    
-                    <div className="relative h-full overflow-hidden rounded-lg border border-slate-700/50 bg-slate-900">
-                      <NFTCard
-                        item={item}
-                        onClick={() => {}}
-                      />
-                      
-                      {/* Hover overlay with clearer CTA */}
-                      <motion.div 
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: hoveredItem === item.id ? 1 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-black/80 to-black/90 backdrop-blur-sm"
-                      >
-                        <motion.div 
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ 
-                            y: hoveredItem === item.id ? 0 : 20,
-                            opacity: hoveredItem === item.id ? 1 : 0
-                          }}
-                          transition={{ delay: 0.1 }}
-                          className="text-center"
-                        >
-                          <p className="text-center text-xl font-bold text-white">{item.title}</p>
-                          <div className="mt-2 flex items-center justify-center">
-                            <span className="rounded-full bg-purple-600/80 px-3 py-1 text-xs text-white backdrop-blur-sm">
-                              {item.category}
-                            </span>
-                          </div>
-                          <p className="mt-3 font-semibold text-white">{item.price}</p>
-                        </motion.div>
-                        
-                        <motion.div
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ 
-                            y: hoveredItem === item.id ? 0 : 20,
-                            opacity: hoveredItem === item.id ? 1 : 0
-                          }}
-                          transition={{ delay: 0.2 }}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="mt-4"
-                        >
-                          <Button 
-                            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                            size="sm"
-                          >
-                            <ShoppingBag className="mr-2 h-4 w-4" />
-                            View Details
-                          </Button>
-                        </motion.div>
-                      </motion.div>
-                    </div>
                   </motion.div>
                 ))}
               </motion.div>
