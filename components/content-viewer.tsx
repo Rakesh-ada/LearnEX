@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, FileText, Video, Download, AlertTriangle } from "lucide-react"
+import { Loader2, FileText, Video, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import { useWallet } from "@/hooks/use-wallet"
-import { pinByHash, isValidIPFSCid, getIPFSGatewayUrl, fetchFromIPFS } from "@/lib/pinning-service"
+import { pinByHash, isValidIPFSCid, fetchFromIPFS } from "@/lib/pinning-service"
+import { getSecureContentUrl } from "@/lib/secure-content"
 
 interface ContentViewerProps {
   contentHash: string
@@ -17,109 +18,57 @@ interface ContentViewerProps {
 export default function ContentViewer({ contentHash, title, type, onClose }: ContentViewerProps) {
   const { currentAccount } = useWallet()
   const [isLoading, setIsLoading] = useState(true)
-  const [content, setContent] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
   const [isValidIpfs, setIsValidIpfs] = useState(false)
-  const [showInternalViewer, setShowInternalViewer] = useState(false)
   const [isPinning, setIsPinning] = useState(false)
   const [isPinned, setIsPinned] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [ipfsGatewayUrl, setIpfsGatewayUrl] = useState<string | null>(null)
+  const [secureContentUrl, setSecureContentUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchContent = async () => {
+    const initializeContent = async () => {
       try {
         setIsLoading(true)
-        setError(null)
-        setIsValidIpfs(false)
-        setIpfsGatewayUrl(null)
         
-        // Check if the hash is an IPFS hash (starts with "ipfs://")
+        // Check if the hash is an IPFS hash
         if (contentHash.startsWith("ipfs://")) {
-          const cid = contentHash.replace("ipfs://", "")
-          
-          // Use the utility function to validate the CID
+          // Validate CID
           const isValidCid = isValidIPFSCid(contentHash)
           setIsValidIpfs(isValidCid)
           
           if (isValidCid) {
-            // Get the gateway URL
-            const gatewayUrl = getIPFSGatewayUrl(contentHash)
-            setIpfsGatewayUrl(gatewayUrl)
+            // Generate secure URL
+            const secureUrl = getSecureContentUrl(contentHash, type)
+            setSecureContentUrl(secureUrl)
             
-            // For the preview, we'll still use placeholder content
+            // For PDFs, open directly in Chrome's viewer
             if (type === "pdf") {
-              setContent(`
-                # ${title}
-                
-                This PDF document is available for viewing or download.
-                
-                The content is stored on IPFS with the following CID:
-                ${cid}
-                
-                You can:
-                1. View it in the LearnEX Viewer
-                2. Download it directly
-                3. Save it for offline access
-              `)
-            } else {
-              // For video content
-              setContent(`
-                # ${title} (Video)
-                
-                This video is available for viewing or download.
-                
-                The content is stored on IPFS with the following CID:
-                ${cid}
-                
-                You can:
-                1. View it in the LearnEX Viewer
-                2. Download it directly
-                3. Save it for offline access
-              `)
+              window.open(secureUrl, "_blank")
             }
-          } else {
-            // Invalid CID
-            setContent(`
-              # ${title}
-              
-              This content has an invalid IPFS identifier.
-              
-              Please contact support if you continue to experience issues.
-            `)
           }
-        } else {
-          // Handle other types of content hashes
-          setContent(`
-              # ${title}
-              
-              This content is available for viewing within the LearnEX platform.
-              
-              In a production environment, you would:
-              1. Fetch the content from our secure storage
-              2. Display it in an appropriate viewer
-              
-              For now, this text representation serves as a placeholder.
-          `)
         }
       } catch (err) {
-        console.error("Error fetching content:", err)
-        setError("Failed to load content. Please try again.")
+        console.error("Error initializing content:", err)
+        toast({
+          title: "Error",
+          description: "Failed to initialize content viewer.",
+          variant: "destructive",
+        })
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchContent()
+    initializeContent()
   }, [contentHash, title, type])
 
-  const handleViewInternally = () => {
-    setShowInternalViewer(true)
-    
-    toast({
-      title: "Viewer Activated",
-      description: "Viewing content within the LearnEX platform.",
-    })
+  const handleOpenInChrome = () => {
+    if (secureContentUrl) {
+      window.open(secureContentUrl, "_blank")
+      toast({
+        title: "Content Opened",
+        description: `${type.toUpperCase()} is now open in a new tab.`,
+      })
+    }
   }
 
   const handleDownloadContent = async () => {
@@ -163,31 +112,7 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
         
         toast({
           title: "Download Started",
-          description: "Your content is being downloaded from IPFS.",
-        })
-      } else {
-        // Fallback for non-IPFS content or invalid CIDs
-        const fileContent = `Content for "${title}"\n\nThis is a placeholder for content that couldn't be retrieved from IPFS.`
-        const blob = new Blob([fileContent], { type: 'text/plain' })
-        const url = URL.createObjectURL(blob)
-        
-        // Create a temporary link element and trigger download
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`
-        document.body.appendChild(a)
-        a.click()
-        
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-        }, 100)
-        
-        toast({
-          title: "Download Started",
-          description: "A placeholder file is being downloaded as the actual content couldn't be retrieved.",
-          variant: "destructive",
+          description: "Your content is being downloaded.",
         })
       }
     } catch (err) {
@@ -221,8 +146,8 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
       if (success) {
         setIsPinned(true)
         toast({
-          title: "Content Saved Successfully",
-          description: "This content has been saved and will remain accessible.",
+          title: "Content Saved",
+          description: "This content has been saved for offline access.",
         })
       } else {
         toast({
@@ -243,277 +168,83 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
     }
   }
 
-  const renderInternalViewer = () => {
-    if (!ipfsGatewayUrl && contentHash.startsWith("ipfs://") && isValidIpfs) {
-      // Get the gateway URL if not already set
-      const gatewayUrl = getIPFSGatewayUrl(contentHash)
-      setIpfsGatewayUrl(gatewayUrl)
-    }
-    
-    if (type === "pdf" && ipfsGatewayUrl) {
-      return (
-        <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white">PDF Viewer</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-slate-600 text-white"
-              onClick={() => setShowInternalViewer(false)}
-            >
-              Back to Content
-            </Button>
-          </div>
-          <div className="aspect-video rounded-lg bg-slate-900 flex flex-col items-center justify-center">
-            {isValidIpfs ? (
-              <iframe 
-                src={`${ipfsGatewayUrl}#toolbar=0`} 
-                className="h-full w-full rounded-lg"
-                title={title}
-              />
-            ) : (
-              <div className="text-center p-6">
-                <FileText className="mx-auto mb-4 h-16 w-16 text-purple-400" />
-                <h4 className="mb-2 text-lg font-medium text-white">{title}</h4>
-                <p className="mb-4 text-sm text-slate-400">
-                  Unable to display PDF. The content may be unavailable or in an unsupported format.
-                </p>
-                <div className="flex justify-center">
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700"
-                    onClick={handleDownloadContent}
-                    disabled={isDownloading}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    {isDownloading ? "Downloading..." : "Download PDF"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    } else if (type === "video" && ipfsGatewayUrl) {
-      return (
-        <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white">Video Player</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-slate-600 text-white"
-              onClick={() => setShowInternalViewer(false)}
-            >
-              Back to Content
-            </Button>
-          </div>
-          <div className="aspect-video rounded-lg bg-slate-900 flex items-center justify-center">
-            {isValidIpfs ? (
-              <video 
-                controls 
-                className="h-full w-full rounded-lg"
-                src={ipfsGatewayUrl}
-              >
-                Your browser does not support the video tag.
-              </video>
-            ) : (
-              <div className="text-center p-6">
-                <Video className="mx-auto mb-4 h-16 w-16 text-purple-400" />
-                <h4 className="mb-2 text-lg font-medium text-white">{title}</h4>
-                <p className="mb-4 text-sm text-slate-400">
-                  Unable to display video. The content may be unavailable or in an unsupported format.
-                </p>
-                <div className="flex justify-center">
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700"
-                    onClick={handleDownloadContent}
-                    disabled={isDownloading}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    {isDownloading ? "Downloading..." : "Download Video"}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )
-    } else {
-      // Fallback for other content types or when gateway URL is not available
-      return (
-        <div className="rounded-lg border border-slate-700 bg-slate-800 p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-medium text-white">Content Viewer</h3>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="border-slate-600 text-white"
-              onClick={() => setShowInternalViewer(false)}
-            >
-              Back to Content
-            </Button>
-          </div>
-          <div className="aspect-video rounded-lg bg-slate-900 flex items-center justify-center">
-            <div className="text-center p-6">
-              {type === "pdf" ? (
-                <FileText className="mx-auto mb-4 h-16 w-16 text-purple-400" />
-              ) : (
-                <Video className="mx-auto mb-4 h-16 w-16 text-purple-400" />
-              )}
-              <h4 className="mb-2 text-lg font-medium text-white">{title}</h4>
-              <p className="mb-4 text-sm text-slate-400">
-                Unable to display content. The content may be unavailable or in an unsupported format.
-              </p>
-              <div className="flex justify-center">
-                <Button 
-                  className="bg-purple-600 hover:bg-purple-700"
-                  onClick={handleDownloadContent}
-                  disabled={isDownloading}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {isDownloading ? "Downloading..." : "Download Content"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    }
-  }
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
-
-      {/* Content Viewer */}
-      <div className="relative z-10 max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700 p-4">
-          <div className="flex items-center">
-            {type === "pdf" ? (
-              <FileText className="mr-2 h-5 w-5 text-purple-400" />
-            ) : (
-              <Video className="mr-2 h-5 w-5 text-purple-400" />
-            )}
-            <h2 className="text-xl font-bold text-white">{title}</h2>
-            {isPinned && (
-              <span className="ml-3 rounded-full bg-green-900/50 px-2 py-0.5 text-xs font-medium text-green-400">
-                Saved
-              </span>
-            )}
-          </div>
-          <Button variant="outline" size="sm" className="border-slate-700 text-white" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-
-        {/* Content Area */}
-        <div className="max-h-[70vh] overflow-auto p-6">
-          {isLoading ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center">
-              <Loader2 className="mb-4 h-10 w-10 animate-spin text-purple-500" />
-              <p className="text-white">Loading content...</p>
-            </div>
-          ) : isPinning ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center">
-              <Loader2 className="mb-4 h-10 w-10 animate-spin text-purple-500" />
-              <p className="text-white">Saving content...</p>
-              <p className="mt-2 text-sm text-slate-400">This may take a moment</p>
-            </div>
-          ) : isDownloading ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center">
-              <Loader2 className="mb-4 h-10 w-10 animate-spin text-purple-500" />
-              <p className="text-white">Downloading from IPFS...</p>
-              <p className="mt-2 text-sm text-slate-400">This may take a moment depending on network conditions</p>
-            </div>
-          ) : error ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-red-800 bg-black/50 p-8 backdrop-blur-sm">
-              <p className="text-center text-red-400">{error}</p>
-              <Button 
-                className="mt-4 bg-purple-600 hover:bg-purple-700"
-                onClick={() => window.location.reload()}
-              >
-                Try Again
-              </Button>
-            </div>
-          ) : showInternalViewer ? (
-            renderInternalViewer()
+      
+      <div className="relative z-10 w-full max-w-md overflow-hidden rounded-xl border border-slate-700 bg-slate-900 p-6 shadow-xl">
+        <h2 className="mb-4 text-xl font-bold text-white flex items-center">
+          {type === "pdf" ? (
+            <FileText className="mr-2 h-5 w-5 text-purple-400" />
+          ) : type === "video" ? (
+            <Video className="mr-2 h-5 w-5 text-purple-400" />
           ) : (
-            <div className="prose prose-invert max-w-none">
-              {!isValidIpfs && contentHash.startsWith("ipfs://") && (
-                <div className="mb-6 rounded-lg border border-yellow-600 bg-yellow-950/30 p-4">
-                  <div className="flex items-start">
-                    <AlertTriangle className="mr-3 h-5 w-5 flex-shrink-0 text-yellow-500" />
-                    <div>
-                      <h3 className="text-lg font-medium text-yellow-400">Content Access Issue</h3>
-                      <p className="mt-1 text-sm text-yellow-300">
-                        There may be an issue accessing this content through external services.
-                        Please use the "View in LearnEX Viewer" button below to access this content.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <pre className="rounded-lg bg-slate-800 p-4 text-sm text-slate-300 whitespace-pre-wrap">
-                {content}
-              </pre>
-              
-              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-between">
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button 
-                    className="bg-purple-600 hover:bg-purple-700"
-                    onClick={handleViewInternally}
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    View in LearnEX Viewer
-                  </Button>
-                  
-                  <Button 
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={handleDownloadContent}
-                    disabled={isDownloading}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    {isDownloading ? "Downloading..." : "Download Content"}
-                  </Button>
-                  
-                  {contentHash.startsWith("ipfs://") && (
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={handlePinContent}
-                      disabled={isPinned || isPinning}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      {isPinned ? "Saved" : isPinning ? "Saving..." : "Save for Offline"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              <div className="mt-6 rounded-lg bg-slate-800 p-4">
-                <h3 className="mb-2 text-lg font-medium text-white">About LearnEX Content</h3>
-                <p className="text-sm text-slate-300">
-                  LearnEX provides secure access to educational content through our distributed storage system.
-                  All content is verified and accessible only to authorized users who have purchased the materials.
-                </p>
-                <p className="mt-2 text-sm text-slate-300">
-                  When you save content for offline access:
-                </p>
-                <ul className="mt-1 list-disc pl-5 text-sm text-slate-300">
-                  <li>The content is stored securely in our distributed network</li>
-                  <li>It remains accessible even if you're temporarily offline</li>
-                  <li>You can access it from any device with your account</li>
-                  <li>Our system ensures the content remains available long-term</li>
-                </ul>
-                <p className="mt-2 text-sm text-slate-400">
-                  By saving content you've purchased, you ensure it remains accessible to you in the future.
-                </p>
-              </div>
-            </div>
+            <FileText className="mr-2 h-5 w-5 text-purple-400" />
           )}
-        </div>
+          {title}
+        </h2>
+        
+        {isLoading ? (
+          <div className="flex py-6 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+            <span className="ml-2 text-white">Loading content...</span>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-white/80">
+              {type === "pdf" 
+                ? "The PDF has been opened in Chrome's built-in PDF viewer. If it didn't open, click the button below."
+                : type === "video"
+                ? "Click below to view or download this video content."
+                : "Click below to view or download this content."}
+            </p>
+            
+            <div className="flex flex-col gap-2">
+              <Button 
+                className="w-full bg-purple-600 hover:bg-purple-700"
+                onClick={handleOpenInChrome}
+                disabled={!secureContentUrl}
+              >
+                {type === "pdf" ? (
+                  <>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Open PDF in Chrome
+                  </>
+                ) : type === "video" ? (
+                  <>
+                    <Video className="mr-2 h-4 w-4" />
+                    Open Video
+                  </>
+                ) : (
+                  <>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Open Content
+                  </>
+                )}
+              </Button>
+              
+              <Button 
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                onClick={handleDownloadContent}
+                disabled={isDownloading}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isDownloading ? "Downloading..." : `Download ${type.toUpperCase()}`}
+              </Button>
+              
+              {contentHash.startsWith("ipfs://") && (
+                <Button 
+                  className="w-full bg-green-600 hover:bg-green-700"
+                  onClick={handlePinContent}
+                  disabled={isPinned || isPinning}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  {isPinned ? "Saved" : isPinning ? "Saving..." : "Save for Offline"}
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -2,14 +2,16 @@
 
 import { useRef, useEffect, useState } from "react"
 import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { X, Star, Share2, BookOpen, User, Loader2, ChevronRight, Info, Heart } from "lucide-react"
+import { 
+  X, Star, Share2, BookOpen, User, 
+  Loader2, Copy, CheckCheck, Link as LinkIcon 
+} from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { useWallet } from "@/hooks/use-wallet"
 import { purchaseMaterial } from "@/lib/blockchain"
-import { getIPFSGatewayUrl, isValidIPFSCid } from "@/lib/pinning-service"
-import { generatePixelThumbnail } from "@/lib/pixel-thumbnail-generator"
+import { getProfileImage } from "./navbar"
 
 interface NFTModalProps {
   isOpen: boolean
@@ -32,19 +34,16 @@ interface NFTModalProps {
 export default function NFTModal({ isOpen, item, onClose }: NFTModalProps) {
   const { currentAccount, connect } = useWallet()
   const [isPurchasing, setIsPurchasing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'details' | 'preview'>('details')
-  const [isLiked, setIsLiked] = useState(false)
-  const [thumbnailError, setThumbnailError] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
-  const hasThumbnail = item.thumbnailHash && isValidIPFSCid(item.thumbnailHash)
-  const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(item.thumbnailHash!) : ""
-  const pixelThumbnailUrl = generatePixelThumbnail(item.title, item.category)
-  
-  // Reset the thumbnail error state when the item changes
-  useEffect(() => {
-    setThumbnailError(false)
-  }, [item.id, item.thumbnailHash])
+  // Determine if we should use the SVG category thumbnail
+  const shouldUseTagSvg = !item.image || 
+    item.image === "" || 
+    item.image.includes("placeholder.svg") || 
+    item.image.includes("placeholder") ||
+    !item.image.match(/\.(jpeg|jpg|gif|png|webp)$/i)
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -136,367 +135,473 @@ export default function NFTModal({ isOpen, item, onClose }: NFTModalProps) {
     }
   }
 
-  const toggleLike = () => {
-    setIsLiked(prev => !prev)
-    toast({
-      title: isLiked ? "Removed from favorites" : "Added to favorites",
-      description: isLiked 
-        ? "This item has been removed from your favorites" 
-        : "This item has been added to your favorites",
-    })
-  }
+  // Handle share functionality
+  const handleShare = async () => {
+    setIsSharing(true);
+    
+    // Create share URL
+    const shareUrl = `${window.location.origin}/marketplace?item=${item.id}`;
+    
+    try {
+      // Try native share API first (mobile devices)
+      if (navigator.share) {
+        await navigator.share({
+          title: `Check out ${item.title}`,
+          text: `I found this amazing learning resource: ${item.title}`,
+          url: shareUrl
+        });
+        toast({
+          title: "Shared successfully!",
+          description: "Content has been shared"
+        });
+      } else {
+        // Fallback to clipboard copy
+        await navigator.clipboard.writeText(shareUrl);
+        setIsCopied(true);
+        toast({
+          title: "Link copied!",
+          description: "Share link copied to clipboard"
+        });
+        
+        // Reset copied state after 3 seconds
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+      toast({
+        title: "Share failed",
+        description: "Unable to share this content",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            onClick={onClose}
-          />
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden p-4">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+      />
 
-          {/* Modal */}
-          <motion.div
-            ref={modalRef}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative z-10 max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900 shadow-2xl"
-          >
-            {/* Animated pattern background */}
-            <div className="absolute inset-0 overflow-hidden">
-              <motion.div 
-                className="absolute inset-0 opacity-10"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%239C92AC' fill-opacity='0.5' fill-rule='evenodd'/%3E%3C/svg%3E")`,
-                }}
-                animate={{ 
-                  backgroundPosition: ["0px 0px", "100px 100px"],
-                  opacity: [0.05, 0.15, 0.05]
-                }}
-                transition={{ 
-                  duration: 20, 
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                }}
-              />
-            </div>
+      {/* Modal */}
+      <motion.div
+        ref={modalRef}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        className="relative z-10 my-auto max-h-[85vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-xl"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 z-10 rounded-full bg-slate-800 p-2 text-slate-400 transition-colors hover:bg-slate-700 hover:text-white"
+        >
+          <X className="h-5 w-5" />
+        </button>
 
-            {/* Close button */}
-            <motion.button
-              onClick={onClose}
-              whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
-              whileTap={{ scale: 0.95 }}
-              className="absolute right-4 top-4 z-10 rounded-full bg-slate-800/80 p-2 text-slate-300 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </motion.button>
-
-            <div className="flex h-full flex-col md:flex-row">
-              {/* Image section */}
-              <div className="relative h-[350px] w-full md:h-auto md:w-1/2">
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-blue-600/30"
-                  animate={{ 
-                    opacity: [0.6, 0.8, 0.6],
-                  }}
-                  transition={{ duration: 5, repeat: Infinity }}
-                />
-                <motion.div 
-                  initial={{ scale: 1.05, opacity: 0.9 }}
-                  animate={{ 
-                    scale: [1.05, 1, 1.05],
-                    opacity: [0.9, 1, 0.9]
-                  }}
-                  transition={{ duration: 10, repeat: Infinity }}
-                  className="h-full w-full relative overflow-hidden"
-                >
-                  {/* Display IPFS thumbnail if available and valid */}
-                  {hasThumbnail && !thumbnailError ? (
-                    <Image 
-                      src={thumbnailUrl} 
-                      alt={item.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 600px"
-                      className="object-cover transition-transform" 
-                      onError={() => setThumbnailError(true)}
-                    />
-                  ) : (
-                    <div className="h-full w-full relative">
-                      {/* Fallback to pixel art thumbnail if no valid IPFS thumbnail */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm">
-                        <div className="flex h-full items-center justify-center">
-                          <div className="relative h-4/5 w-4/5 overflow-hidden rounded-md border border-white/10 shadow-[0_0_25px_rgba(123,97,255,0.2)]">
-                            <Image
-                              src={pixelThumbnailUrl}
-                              alt={item.title}
-                              fill
-                              sizes="(max-width: 768px) 100vw, 600px"
-                              className="object-contain"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="absolute bottom-3 right-3 z-20 rounded-sm bg-black/70 px-2 py-1 text-xs text-white/80 backdrop-blur-sm">8-bit Pixel Art</div>
-                    </div>
-                  )}
-                </motion.div>
-                
-                {/* Floating category badge */}
-                <motion.div
-                  initial={{ y: -5, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="absolute left-4 top-4 z-10"
-                >
-                  <span className="rounded-md bg-gradient-to-r from-purple-600 to-purple-700 px-3 py-1.5 text-xs font-medium text-white shadow-lg">
-                    {item.category}
-                  </span>
-                </motion.div>
-                
-                {/* Like button */}
-                <motion.button
-                  onClick={toggleLike}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-4 top-4 z-10 rounded-full bg-slate-800/60 p-2 backdrop-blur-sm"
-                >
-                  <Heart className={`h-5 w-5 ${isLiked ? 'fill-red-500 text-red-500' : 'text-white'}`} />
-                </motion.button>
+        <div className="flex flex-col md:flex-row">
+          {/* Image section */}
+          <div className="relative h-[300px] w-full md:h-auto md:w-1/2">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-blue-500/20"></div>
+            {shouldUseTagSvg ? (
+              <div className="flex h-full w-full items-center justify-center bg-slate-800/80">
+                {/* SVG Logos based on category */}
+                {item.category?.toLowerCase() === "mathematics" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-blue-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M12 2v20M2 12h20" />
+                      <path d="M19 5L5 19M5 5l14 14" />
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-blue-400">Mathematics</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "chemistry" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-green-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M9 3h6m-3 0v6m-8 2h2m4 0h-2v8l-2 2m14-10h2m-4 0h-2v8l2 2m-7-6h4" />
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-green-400">Chemistry</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "physics" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-indigo-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <circle cx="12" cy="12" r="8" />
+                      <path d="M5 12h14" />
+                      <path d="M12 5v14" />
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-indigo-400">Physics</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "biology" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-emerald-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M3 12h4l3 8l4-16l3 8h4"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-emerald-400">Biology</div>
+                  </div>
+                )}
+                {(item.category?.toLowerCase() === "computer science" || item.category?.toLowerCase() === "computer-science") && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-cyan-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <rect x="3" y="4" width="18" height="12" rx="2" ry="2"></rect>
+                      <line x1="2" y1="20" x2="22" y2="20"></line>
+                      <line x1="12" y1="16" x2="12" y2="20"></line>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-cyan-400">Computer Science</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "programming" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-blue-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="16 18 22 12 16 6"></polyline>
+                      <polyline points="8 6 2 12 8 18"></polyline>
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-blue-400">Programming</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "design" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-pink-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <circle cx="12" cy="12" r="6"></circle>
+                      <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-pink-400">Design</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "business" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-indigo-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-indigo-400">Business</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "science" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-cyan-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 3v3a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V3"></path>
+                      <line x1="12" y1="12" x2="12" y2="21"></line>
+                      <path d="M20 16.2A5 5 0 0 1 16.8 20H7.2A5 5 0 0 1 4 16.2V7.8A5 5 0 0 1 7.2 4h9.6A5 5 0 0 1 20 7.8v8.4z"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-cyan-400">Science</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "language" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-yellow-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 8h14M5 12h14M5 16h6"></path>
+                      <path d="M15 16l4 4"></path>
+                      <path d="M19 16l-4 4"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-yellow-400">Language</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "blockchain" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-purple-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="2" y="7" width="6" height="6" rx="1"></rect>
+                      <rect x="16" y="7" width="6" height="6" rx="1"></rect>
+                      <rect x="9" y="7" width="6" height="6" rx="1"></rect>
+                      <rect x="9" y="16" width="6" height="6" rx="1"></rect>
+                      <path d="M5 13v2"></path>
+                      <path d="M19 13v2"></path>
+                      <path d="M12 13v2"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-purple-400">Blockchain</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "literature" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-amber-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-amber-400">Literature</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "history" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-orange-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-orange-400">History</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "economics" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-lime-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="12" y1="2" x2="12" y2="22"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-lime-400">Economics</div>
+                  </div>
+                )}
+                {/* Default for other categories */}
+                {!["mathematics", "chemistry", "physics", "biology", 
+                  "computer science", "computer-science", "literature", "history", 
+                  "economics", "blockchain", "programming", "design", "business",
+                  "science", "language"].includes(item.category?.toLowerCase()) && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-24 w-24 text-purple-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    <div className="mt-3 text-lg font-medium text-purple-400">{item.category}</div>
+                  </div>
+                )}
               </div>
+            ) : (
+              <Image src={item.image || "/placeholder.svg"} alt={item.title} fill className="object-cover" />
+            )}
+          </div>
 
-              {/* Content section */}
-              <div className="flex w-full flex-col p-6 md:w-1/2 md:overflow-y-auto">
-                {/* Header section with rating */}
-                <motion.div 
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="mb-2 flex items-center justify-between"
-                >
-                  {item.rating !== undefined && (
-                    <div className="flex items-center rounded-full bg-slate-800/60 px-3 py-1 backdrop-blur-sm">
-                      <Star className="mr-1 h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium text-white">{item.rating.toFixed(1)}</span>
-                      {item.sales !== undefined && (
-                        <>
-                          <span className="mx-2 text-slate-500">•</span>
-                          <span className="text-sm text-slate-300">{item.sales} sales</span>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </motion.div>
-
-                {/* Title with animated underline */}
-                <motion.div
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="relative mb-4"
-                >
-                  <h2 className="text-3xl font-bold leading-tight text-white">{item.title}</h2>
-                  <motion.div 
-                    initial={{ width: "0%" }}
-                    animate={{ width: "40%" }}
-                    transition={{ delay: 0.5, duration: 0.8 }}
-                    className="mt-2 h-1 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
-                  />
-                </motion.div>
-
-                {/* Tab navigation */}
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="mb-6 flex border-b border-slate-800"
-                >
-                  <button
-                    onClick={() => setActiveTab('details')}
-                    className={`relative px-4 py-2 text-sm font-medium ${
-                      activeTab === 'details' ? 'text-white' : 'text-slate-400 hover:text-slate-300'
-                    }`}
-                  >
-                    Details
-                    {activeTab === 'details' && (
-                      <motion.div
-                        layoutId="activeTabIndicator"
-                        className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-purple-500 to-blue-500"
-                      />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('preview')}
-                    className={`relative px-4 py-2 text-sm font-medium ${
-                      activeTab === 'preview' ? 'text-white' : 'text-slate-400 hover:text-slate-300'
-                    }`}
-                  >
-                    Preview
-                    {activeTab === 'preview' && (
-                      <motion.div
-                        layoutId="activeTabIndicator"
-                        className="absolute bottom-0 left-0 h-0.5 w-full bg-gradient-to-r from-purple-500 to-blue-500"
-                      />
-                    )}
-                  </button>
-                </motion.div>
-
-                {/* Content area */}
-                <div className="flex-grow">
-                  {activeTab === 'details' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {/* Description */}
-                      <p className="mb-6 text-slate-300">{item.description}</p>
-
-                      {/* Author with improved style */}
-                      <div className="mb-6 flex items-center rounded-lg bg-slate-800/30 p-3 backdrop-blur-sm">
-                        <div className="mr-3 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-600">
-                          <User className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-slate-400">Created by</p>
-                          <p className="font-medium text-white">{item.author.substring(0, 6)}...{item.author.substring(item.author.length - 4)}</p>
-                        </div>
-                      </div>
-
-                      {/* Details */}
-                      <div className="mb-6 grid grid-cols-2 gap-4">
-                        <motion.div 
-                          initial={{ opacity: 0, y: 10 }} 
-                          animate={{ opacity: 1, y: 0 }} 
-                          transition={{ delay: 0.1 }}
-                          className="rounded-lg bg-slate-800/50 p-4 backdrop-blur-sm"
-                        >
-                          <p className="text-sm text-slate-400">Format</p>
-                          <p className="font-medium text-white">Digital Content</p>
-                        </motion.div>
-                        <motion.div 
-                          initial={{ opacity: 0, y: 10 }} 
-                          animate={{ opacity: 1, y: 0 }} 
-                          transition={{ delay: 0.2 }}
-                          className="rounded-lg bg-slate-800/50 p-4 backdrop-blur-sm"
-                        >
-                          <p className="text-sm text-slate-400">Category</p>
-                          <p className="font-medium text-white">{item.category}</p>
-                        </motion.div>
-                        <motion.div 
-                          initial={{ opacity: 0, y: 10 }} 
-                          animate={{ opacity: 1, y: 0 }} 
-                          transition={{ delay: 0.3 }}
-                          className="rounded-lg bg-slate-800/50 p-4 backdrop-blur-sm"
-                        >
-                          <p className="text-sm text-slate-400">Blockchain</p>
-                          <p className="font-medium text-white">Ethereum</p>
-                        </motion.div>
-                        <motion.div 
-                          initial={{ opacity: 0, y: 10 }} 
-                          animate={{ opacity: 1, y: 0 }} 
-                          transition={{ delay: 0.4 }}
-                          className="rounded-lg bg-slate-800/50 p-4 backdrop-blur-sm"
-                        >
-                          <p className="text-sm text-slate-400">Created</p>
-                          <p className="font-medium text-white">
-                            {item.createdAt 
-                              ? new Date(item.createdAt).toLocaleDateString() 
-                              : "Recently"}
-                          </p>
-                        </motion.div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {activeTab === 'preview' && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                      className="flex h-[300px] flex-col items-center justify-center rounded-lg bg-slate-800/20 p-6 text-center backdrop-blur-sm"
-                    >
-                      <Info className="mb-4 h-10 w-10 text-slate-400" />
-                      <h3 className="mb-2 text-xl font-medium text-white">Preview Sample</h3>
-                      <p className="text-slate-400">
-                        Preview content is available after connecting your wallet.
-                      </p>
-                      <Button 
-                        variant="outline" 
-                        className="mt-4 border-slate-700 text-white hover:border-purple-500 hover:bg-purple-500/10 hover:text-purple-300"
-                      >
-                        <BookOpen className="mr-2 h-4 w-4" />
-                        Access Preview
-                      </Button>
-                    </motion.div>
+          {/* Content section */}
+          <div className="flex w-full flex-col p-6 md:w-1/2 md:overflow-y-auto">
+            <div className="mb-2 flex items-center">
+              {item.rating !== undefined && (
+                <div className="ml-auto flex items-center">
+                  <Star className="mr-1 h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-medium text-white">{item.rating.toFixed(1)}</span>
+                  {item.sales !== undefined && (
+                    <>
+                      <span className="mx-2 text-slate-500">•</span>
+                      <span className="text-sm text-slate-400">{item.sales} sales</span>
+                    </>
                   )}
                 </div>
+              )}
+            </div>
 
-                {/* Price and purchase */}
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="mt-6 flex items-center justify-between rounded-lg bg-slate-800/30 p-4 backdrop-blur-sm"
-                >
-                  <div>
-                    <p className="text-sm text-slate-400">Price</p>
-                    <p className="text-2xl font-bold text-white">{item.price}</p>
-                  </div>
-                  <div className="flex space-x-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="rounded-full bg-slate-700/80 p-2 text-white backdrop-blur-sm"
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </motion.button>
-                    <motion.div
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                    >
-                      <Button 
-                        onClick={handlePurchase} 
-                        disabled={isPurchasing || (!!currentAccount && currentAccount.toLowerCase() === item.author.toLowerCase())}
-                        className="relative px-6 py-2 font-medium"
-                        style={{
-                          background: "linear-gradient(to right, rgb(126, 34, 206), rgb(79, 70, 229))"
-                        }}
-                      >
-                        <span className="absolute -inset-0.5 -z-10 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 opacity-30 blur-md"></span>
-                        {isPurchasing ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processing...
-                          </>
-                        ) : currentAccount && currentAccount.toLowerCase() === item.author.toLowerCase() ? (
-                          "You own this"
-                        ) : (
-                          <>
-                            Purchase Now
-                            <ChevronRight className="ml-1 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
-                    </motion.div>
-                  </div>
-                </motion.div>
+            <h2 className="mb-4 text-2xl font-bold text-white">{item.title}</h2>
+
+            <p className="mb-6 text-slate-300">{item.description}</p>
+
+            {/* Author */}
+            <div className="mb-6 flex items-center">
+              <div className="mr-3 h-10 w-10 overflow-hidden rounded-full border border-slate-700">
+                <div style={getProfileImage(item.author)}></div>
+              </div>
+              <div>
+                <p className="text-sm text-slate-400">Created by</p>
+                <p className="font-medium text-white">{item.author.substring(0, 6)}...{item.author.substring(item.author.length - 4)}</p>
               </div>
             </div>
-          </motion.div>
+
+            {/* Details */}
+            <div className="mb-6 grid grid-cols-2 gap-4">
+              <div className="rounded-lg bg-slate-800 p-4">
+                <p className="text-sm text-slate-400">Format</p>
+                <p className="font-medium text-white">Digital Content</p>
+              </div>
+              <div className="rounded-lg bg-slate-800 p-4">
+                <p className="text-sm text-slate-400">Category</p>
+                <p className="font-medium text-white">{item.category}</p>
+              </div>
+              <div className="rounded-lg bg-slate-800 p-4">
+                <p className="text-sm text-slate-400">Blockchain</p>
+                <p className="font-medium text-white">Ethereum</p>
+              </div>
+              <div className="rounded-lg bg-slate-800 p-4">
+                <p className="text-sm text-slate-400">Created</p>
+                <p className="font-medium text-white">
+                  {item.createdAt 
+                    ? new Date(item.createdAt).toLocaleDateString() 
+                    : "Recently"}
+                </p>
+              </div>
+            </div>
+
+            {/* Preview button */}
+            <Button variant="outline" className="mb-6 border-slate-700 text-white">
+              <BookOpen className="mr-2 h-4 w-4" />
+              Preview Sample
+            </Button>
+
+            {/* Price and purchase */}
+            <div className="mt-auto flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-400">Price</p>
+                <p className="text-2xl font-bold text-white">{item.price}</p>
+              </div>
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="border-slate-700 text-white hover:bg-slate-800"
+                  onClick={handleShare}
+                  disabled={isSharing}
+                >
+                  {isSharing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isCopied ? (
+                    <CheckCheck className="h-4 w-4 text-green-400" />
+                  ) : (
+                    <Share2 className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button 
+                  onClick={handlePurchase} 
+                  disabled={isPurchasing || (!!currentAccount && currentAccount.toLowerCase() === item.author.toLowerCase())}
+                  className="relative bg-gradient-to-r from-purple-600 to-blue-600"
+                >
+                  <span className="absolute -inset-0.5 -z-10 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 opacity-30 blur-sm"></span>
+                  {isPurchasing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : currentAccount && currentAccount.toLowerCase() === item.author.toLowerCase() ? (
+                    "You own this"
+                  ) : (
+                    "Purchase Now"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-    </AnimatePresence>
+      </motion.div>
+    </div>
   )
 }
 

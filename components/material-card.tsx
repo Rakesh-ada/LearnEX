@@ -5,7 +5,6 @@ import { motion } from "framer-motion"
 import { FileText, Video, Calendar } from "lucide-react"
 import Image from "next/image"
 import { getIPFSGatewayUrl, isValidIPFSCid } from "@/lib/pinning-service"
-import { generatePixelThumbnail } from "@/lib/pixel-thumbnail-generator"
 
 interface MaterialCardProps {
   material: {
@@ -28,7 +27,6 @@ export default function MaterialCard({ material, onClick }: MaterialCardProps) {
   
   const hasThumbnail = material.thumbnailHash && isValidIPFSCid(material.thumbnailHash)
   const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(material.thumbnailHash!) : ""
-  const pixelThumbnailUrl = generatePixelThumbnail(material.title, material.type)
 
   return (
     <motion.div
@@ -63,35 +61,24 @@ export default function MaterialCard({ material, onClick }: MaterialCardProps) {
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
             </>
           ) : (
-            <>
-              {/* 8-bit Pixel Art Thumbnail */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900">
-                <div className="flex h-full items-center justify-center">
-                  <div className="relative h-4/5 w-4/5 overflow-hidden rounded-md border border-white/10">
-                    <Image
-                      src={pixelThumbnailUrl}
-                      alt={material.title}
-                      width={300}
-                      height={200}
-                      className="h-full w-full"
-                    />
-                    
-                    {/* Type icon overlay */}
-                    <div className="absolute bottom-2 left-2 flex items-center rounded bg-black/60 p-1 backdrop-blur-sm">
-                      {material.type === "pdf" ? (
-                        <FileText className="h-3 w-3 text-purple-400" />
-                      ) : material.type === "video" ? (
-                        <Video className="h-3 w-3 text-blue-400" />
-                      ) : (
-                        <FileText className="h-3 w-3 text-slate-400" />
-                      )}
-                      <span className="ml-1 text-[10px] text-white/70">{material.type}</span>
-                    </div>
-                  </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900">
+              {material.type === "pdf" ? (
+                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-purple-900/40 to-blue-900/40">
+                  <FileText className="h-16 w-16 text-purple-400" />
+                  <div className="mt-2 text-sm font-medium text-purple-400">PDF Document</div>
                 </div>
-              </div>
-              <div className="absolute bottom-1 right-1 z-10 rounded-sm bg-black/70 px-1.5 py-0.5 text-[10px] text-white/70">8-bit</div>
-            </>
+              ) : material.type === "video" ? (
+                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-blue-900/40 to-cyan-900/40">
+                  <Video className="h-16 w-16 text-blue-400" />
+                  <div className="mt-2 text-sm font-medium text-blue-400">Video Lecture</div>
+                </div>
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-slate-800/40 to-slate-900/40">
+                  <FileText className="h-16 w-16 text-slate-400" />
+                  <div className="mt-2 text-sm font-medium text-slate-400">Document</div>
+                </div>
+              )}
+            </div>
           )}
           <div className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {material.type.toUpperCase()}

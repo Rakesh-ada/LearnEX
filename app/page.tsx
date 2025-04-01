@@ -221,7 +221,7 @@ export default function Home() {
             <div className="mb-6 flex items-center md:mb-0">
               <span className="text-2xl font-bold">
                 <span className="text-white">Learn</span>
-                <span className="text-[#8A6FE8]">EX</span>
+                <span className="bg-gradient-to-r from-purple-500 to-blue-400 bg-clip-text text-transparent">EX</span>
               </span>
             </div>
             <div className="mb-6 flex space-x-6 md:mb-0">

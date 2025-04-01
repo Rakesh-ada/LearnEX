@@ -143,14 +143,41 @@ export default function UploadPage() {
             
             {/* Security note at bottom */}
             <div className="mt-8 rounded-lg bg-gradient-to-r from-purple-900/20 to-blue-900/20 p-6 border border-purple-800/50">
-              <h3 className="mb-3 text-lg font-semibold text-purple-300">Security Information</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <p className="text-sm text-slate-300">
-                  <strong className="text-purple-400">Content Integrity:</strong> Each file gets a unique Content Identifier (CID) derived from its content. Any change to the file results in a completely different CID.
-                </p>
-                <p className="text-sm text-slate-300">
-                  <strong className="text-blue-400">Decentralized Access:</strong> While content on IPFS is public, it can only be discovered by those who know the CID, which is stored securely on the blockchain.
-                </p>
+              <h3 className="mb-5 text-xl font-semibold text-purple-300 text-center">Security Information</h3>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="rounded-lg border border-slate-700/50 bg-slate-900/50 p-5 flex flex-col items-center">
+                  <h4 className="mb-3 flex items-center justify-center text-purple-400">
+                    <svg className="mr-2 h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 16V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 8H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    IPFS Content Storage
+                  </h4>
+                  <p className="text-sm text-slate-300 text-center">
+                    All study materials are stored on IPFS (InterPlanetary File System), a distributed and decentralized storage network. 
+                    Content is addressed by its hash, making it tamper-proof and permanently accessible as long as at least one node 
+                    on the network has a copy. Each file gets a unique Content Identifier (CID) derived from its content hash,
+                    and any change to the file results in a completely different CID.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-slate-700/50 bg-slate-900/50 p-5 flex flex-col items-center">
+                  <h4 className="mb-3 flex items-center justify-center text-purple-400">
+                    <svg className="mr-2 h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M16.2426 7.75736C16.5858 8.10051 16.8536 8.50491 17.0304 8.94759C17.2071 9.39026 17.2894 9.86316 17.2728 10.338C17.2561 10.8129 17.1409 11.2781 16.9344 11.7067C16.7279 12.1352 16.4345 12.518 16.0711 12.8321C15.7077 13.1463 15.2825 13.3864 14.8246 13.5379C14.3667 13.6894 13.886 13.7489 13.41 13.7127C12.934 13.6764 12.47 13.5452 12.0463 13.3265C11.6225 13.1077 11.2484 12.8061 10.9426 12.4393" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M8.5 9L7 7.5L8.5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M7 16H17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Blockchain Integration
+                  </h4>
+                  <p className="text-sm text-slate-300 text-center">
+                    The content identifier (CID) from IPFS is stored on the blockchain, creating an immutable record of ownership. 
+                    While the content on IPFS is technically public, it can only be discovered by those who know the exact CID, 
+                    ensuring your materials remain private unless shared. This blockchain record also enables secure transactions
+                    and verifiable ownership of your educational content.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

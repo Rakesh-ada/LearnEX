@@ -2,10 +2,9 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Star, ChevronRight } from "lucide-react"
+import { Star } from "lucide-react"
 import Image from "next/image"
 import { getIPFSGatewayUrl, isValidIPFSCid } from "@/lib/pinning-service"
-import { generatePixelThumbnail } from "@/lib/pixel-thumbnail-generator"
 
 interface NFTCardProps {
   item: {
@@ -21,6 +20,7 @@ interface NFTCardProps {
     sales?: number
   }
   onClick: () => void
+  index?: number
 }
 
 // Function to get gradient based on subject category
@@ -60,148 +60,406 @@ function getSubjectGradient(subject: string): string {
   }
 }
 
-export default function NFTCard({ item, onClick }: NFTCardProps) {
+// Puzzle piece component
+const PuzzlePiece = ({ 
+  animationDelay, 
+  children 
+}: { 
+  animationDelay: number;
+  children: React.ReactNode;
+}) => {
+  return (
+    <motion.div
+      className="absolute"
+      initial={{ opacity: 0, scale: 0.8, rotate: Math.random() * 20 - 10 }}
+      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 260,
+        damping: 20,
+        delay: animationDelay,
+      }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+export default function NFTCard({ item, onClick, index = 0 }: NFTCardProps) {
   const [thumbnailError, setThumbnailError] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
-  
-  // Determine which thumbnail to use
   const hasThumbnail = item.thumbnailHash && isValidIPFSCid(item.thumbnailHash)
   const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(item.thumbnailHash!) : ""
   
-  // Generate a pixel art thumbnail as fallback
-  const pixelThumbnailUrl = generatePixelThumbnail(item.title, item.category)
+  // Create a 3x3 grid for puzzle animation
+  const baseDelay = 0.05 + (index * 0.03); // Add slight delay based on card index for staggered effect
+  const puzzlePieces = [];
+  const rows = 3;
+  const cols = 3;
   
-  // Default thumbnail URL for use if both IPFS and pixel art fail
-  const defaultThumbnailUrl = "/thumbnails/default.svg"
-  
-  useEffect(() => {
-    // Reset thumbnail error state when item changes
-    setThumbnailError(false)
-  }, [item.id, item.thumbnailHash])
+  for (let i = 0; i < rows * cols; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const delay = baseDelay + (row * 0.05) + (col * 0.05);
+    
+    puzzlePieces.push(
+      <PuzzlePiece key={i} animationDelay={delay}>
+        <div 
+          className="absolute" 
+          style={{
+            top: `${(row / rows) * 100}%`,
+            left: `${(col / cols) * 100}%`,
+            width: `${100 / cols}%`,
+            height: `${100 / rows}%`,
+          }}
+        />
+      </PuzzlePiece>
+    );
+  }
   
   return (
     <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, delay: baseDelay * 0.5 }}
       className={`group relative h-full cursor-pointer overflow-hidden rounded-xl border border-slate-800/50 bg-gradient-to-br ${getSubjectGradient(
         item.category
       )} p-5 backdrop-blur-sm transition-all duration-300 hover:border-slate-700 hover:shadow-lg hover:shadow-purple-500/10`}
       onClick={onClick}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={{ 
-        scale: 1.03,
-        transition: { duration: 0.3 }
-      }}
     >
-      {/* Enhanced background pattern with subtle animation */}
-      <motion.div 
-        className="absolute inset-0 opacity-10 mix-blend-overlay"
+      {/* Blockchain pattern overlay with improved opacity */}
+      <div 
+        className="absolute inset-0 opacity-10 mix-blend-overlay transition-opacity duration-300 group-hover:opacity-20"
         style={{
-          backgroundImage: "url('/backgrounds/grid-pattern.svg')",
+          backgroundImage: "url('/backgrounds/blockchain-pattern.svg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
-        animate={{
-          opacity: isHovered ? 0.2 : 0.1,
-          scale: isHovered ? 1.05 : 1,
-        }}
-        transition={{ duration: 0.5 }}
       />
       
       <div className="relative z-10">
-        {/* Image container with improved animations and fixed aspect ratio */}
-        <motion.div 
-          className="relative mb-5 overflow-hidden rounded-lg ring-1 ring-white/10"
-          style={{ aspectRatio: "1/1" }}
-          whileHover={{ boxShadow: "0 8px 32px rgba(123, 97, 255, 0.2)" }}
-        >
+        {/* Image container with improved shadows */}
+        <div className="relative mb-5 aspect-square overflow-hidden rounded-lg ring-1 ring-white/10">
+          {/* Puzzle animation container */}
+          <div className="absolute inset-0 z-20 pointer-events-none">
+            {puzzlePieces}
+          </div>
+          
           {hasThumbnail && !thumbnailError ? (
-            <div className="relative w-full h-full">
+            <>
               <Image
                 src={thumbnailUrl}
                 alt={item.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 300px"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                width={300}
+                height={300}
+                className="h-full w-full object-cover"
                 onError={() => setThumbnailError(true)}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/60"></div>
-            </div>
-          ) : (
-            <>
-              {/* 8-bit Pixel Art Thumbnail with enhanced presentation */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-[2px]">
-                <motion.div 
-                  className="flex h-full items-center justify-center"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="relative h-4/5 w-4/5 overflow-hidden rounded-md border border-white/10 shadow-[0_0_15px_rgba(123,97,255,0.15)]">
-                    <Image
-                      src={pixelThumbnailUrl}
-                      alt={item.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 300px"
-                      className="object-contain"
-                      priority={true}
-                    />
-                  </div>
-                </motion.div>
-              </div>
-              <div className="absolute bottom-1 right-1 z-20 rounded-sm bg-black/70 px-1.5 py-0.5 text-[10px] text-white/70 backdrop-blur-sm">8-bit</div>
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50"></div>
             </>
+          ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-800/70 to-slate-900/70 backdrop-blur-[2px]">
+              {/* Category-based icon/background */}
+              <div className="flex h-full items-center justify-center">
+                {item.category?.toLowerCase() === "mathematics" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-blue-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M12 2v20M2 12h20" />
+                      <path d="M19 5L5 19M5 5l14 14" />
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-blue-400">Mathematics</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "chemistry" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-green-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M9 3h6m-3 0v6m-8 2h2m4 0h-2v8l-2 2m14-10h2m-4 0h-2v8l2 2m-7-6h4" />
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-green-400">Chemistry</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "physics" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-indigo-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <circle cx="12" cy="12" r="8" />
+                      <path d="M5 12h14" />
+                      <path d="M12 5v14" />
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-indigo-400">Physics</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "biology" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-emerald-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M3 12h4l3 8l4-16l3 8h4"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-emerald-400">Biology</div>
+                  </div>
+                )}
+                {(item.category?.toLowerCase() === "computer science" || item.category?.toLowerCase() === "computer-science") && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-cyan-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <rect x="3" y="4" width="18" height="12" rx="2" ry="2"></rect>
+                      <line x1="2" y1="20" x2="22" y2="20"></line>
+                      <line x1="12" y1="16" x2="12" y2="20"></line>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-cyan-400">Computer Science</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "literature" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-amber-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-amber-400">Literature</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "history" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-orange-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-orange-400">History</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "economics" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-lime-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="12" y1="2" x2="12" y2="22"></line>
+                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-lime-400">Economics</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "blockchain" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-purple-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="2" y="7" width="6" height="6" rx="1"></rect>
+                      <rect x="16" y="7" width="6" height="6" rx="1"></rect>
+                      <rect x="9" y="7" width="6" height="6" rx="1"></rect>
+                      <rect x="9" y="16" width="6" height="6" rx="1"></rect>
+                      <path d="M5 13v2"></path>
+                      <path d="M19 13v2"></path>
+                      <path d="M12 13v2"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-purple-400">Blockchain</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "programming" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-blue-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="16 18 22 12 16 6"></polyline>
+                      <polyline points="8 6 2 12 8 18"></polyline>
+                      <line x1="19" y1="12" x2="5" y2="12"></line>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-blue-400">Programming</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "design" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-pink-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <circle cx="12" cy="12" r="6"></circle>
+                      <circle cx="12" cy="12" r="2"></circle>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-pink-400">Design</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "business" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-indigo-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-indigo-400">Business</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "science" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-cyan-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 3v3a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V3"></path>
+                      <line x1="12" y1="12" x2="12" y2="21"></line>
+                      <path d="M20 16.2A5 5 0 0 1 16.8 20H7.2A5 5 0 0 1 4 16.2V7.8A5 5 0 0 1 7.2 4h9.6A5 5 0 0 1 20 7.8v8.4z"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-cyan-400">Science</div>
+                  </div>
+                )}
+                {item.category?.toLowerCase() === "language" && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-yellow-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M5 8h14M5 12h14M5 16h6"></path>
+                      <path d="M15 16l4 4"></path>
+                      <path d="M19 16l-4 4"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-yellow-400">Language</div>
+                  </div>
+                )}
+                {!["mathematics", "chemistry", "physics", "biology", 
+                  "computer science", "computer-science", "literature", "history", 
+                  "economics", "blockchain", "programming", "design", "business",
+                  "science", "language"].includes(item.category?.toLowerCase()) && (
+                  <div className="flex h-full w-full flex-col items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-16 w-16 text-purple-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    <div className="mt-2 text-sm font-medium text-purple-400">{item.category}</div>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
-          {/* Category badge with improved styling */}
-          <div className="absolute bottom-3 left-3 z-10 rounded-md bg-black/80 px-3 py-1.5 text-xs font-medium text-white/90 backdrop-blur-sm shadow-sm shadow-black/50">
+        </div>
+
+        {/* Title and details */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: baseDelay + 0.2 }}
+        >
+          <h3 className="mb-1 line-clamp-1 font-medium text-white">{item.title}</h3>
+          <p className="mb-3 line-clamp-2 text-sm text-white/70">{item.description}</p>
+        </motion.div>
+
+        {/* Price and category */}
+        <motion.div 
+          className="mt-3 flex items-center justify-between"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: baseDelay + 0.3 }}
+        >
+          <div className="flex items-center">
+            <div className="flex flex-col">
+              <span className="text-xs text-white/60">Price</span>
+              <span className="font-medium text-white">{item.price}</span>
+            </div>
+          </div>
+          <div className="rounded-full bg-white/10 px-2 py-1 text-xs text-white/80">
             {item.category}
           </div>
         </motion.div>
-
-        {/* Content section with improved spacing and typography */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-bold leading-tight text-white/90 transition-colors duration-200 group-hover:text-white line-clamp-1">
-            {item.title}
-          </h3>
-          <p className="line-clamp-2 text-sm leading-relaxed text-slate-300/80 transition-colors duration-200 group-hover:text-slate-300">
-            {item.description}
-          </p>
-
-          {/* Divider for better visual separation */}
-          <div className="border-t border-white/10 my-2 opacity-70"></div>
-
-          {/* Rating section with improved alignment */}
-          {typeof item.rating === 'number' && (
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-1.5">
-                <Star className="h-4 w-4 fill-yellow-400/90 text-yellow-400" />
-                <span className="text-sm font-medium text-white/90">{item.rating.toFixed(1)}</span>
-              </div>
-              {typeof item.sales === 'number' && (
-                <div className="flex items-center space-x-1.5">
-                  <span className="text-slate-500">•</span>
-                  <span className="text-sm text-slate-400/90">{item.sales} sales</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Price and Author with improved layout */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="text-lg font-bold text-white/90 transition-colors duration-200 group-hover:text-white">
-              {item.price}
-            </div>
-            <div className="truncate text-xs text-slate-400/90 transition-colors duration-200 group-hover:text-slate-400">
-              by {item.author.substring(0, 6)}...
-            </div>
-          </div>
-        </div>
-        
-        {/* View details indicator that appears on hover */}
-        <div className="absolute bottom-4 right-4 opacity-0 transform translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-          <div className="flex items-center text-xs font-medium text-white/90 bg-purple-600/80 px-2 py-1 rounded-md backdrop-blur-sm">
-            <span>View</span>
-            <ChevronRight className="h-3 w-3 ml-1" />
-          </div>
-        </div>
       </div>
     </motion.div>
   )

@@ -1,19 +1,18 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import SpaceBackground from "@/components/space-background"
 import NFTCard from "@/components/nft-card"
 import NFTModal from "@/components/nft-modal"
-import { Search, SlidersHorizontal, Loader2, ArrowUpDown, Filter, Star, Tag, Clock, ShoppingBag, Award } from "lucide-react"
+import { Search, SlidersHorizontal, Loader2, ArrowUpDown, ChevronDown } from "lucide-react"
 import { getAllMaterials } from "@/lib/blockchain"
 import { useWallet } from "@/hooks/use-wallet"
 import ClientOnly from "@/lib/client-only"
 import SimpleFallback from "@/components/simple-fallback"
-import { Badge } from "@/components/ui/badge"
 
 interface MaterialItem {
   id: string
@@ -46,41 +45,60 @@ const CATEGORIES = [
   "Other"
 ]
 
-// Animation variants
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.3
-    }
+// Function to get gradient based on subject category
+function getCategoryGradient(subject: string): string {
+  switch (subject?.toLowerCase()) {
+    case 'all':
+      return 'from-purple-600 via-violet-500 to-blue-500' // Default all categories
+    case 'mathematics':
+      return 'from-blue-600 via-indigo-500 to-purple-500'
+    case 'chemistry':
+      return 'from-green-500 via-teal-500 to-cyan-500'
+    case 'physics':
+      return 'from-purple-600 via-indigo-500 to-blue-500'
+    case 'biology':
+      return 'from-green-600 via-emerald-500 to-teal-500'
+    case 'computer science':
+      return 'from-blue-600 via-indigo-500 to-violet-500'
+    case 'literature':
+      return 'from-amber-500 via-orange-500 to-red-500'
+    case 'history':
+      return 'from-red-600 via-rose-500 to-pink-500'
+    case 'economics':
+      return 'from-emerald-600 via-green-500 to-teal-500'
+    case 'blockchain':
+      return 'from-purple-600 via-violet-500 to-blue-500'
+    case 'programming':
+      return 'from-blue-500 via-cyan-500 to-teal-500'
+    case 'design':
+      return 'from-pink-500 via-purple-500 to-indigo-500'
+    case 'business':
+      return 'from-blue-500 via-indigo-500 to-purple-500'
+    case 'science':
+      return 'from-cyan-500 via-blue-500 to-indigo-500'
+    case 'language':
+      return 'from-yellow-500 via-orange-500 to-red-500'
+    default:
+      return 'from-slate-600 via-slate-500 to-gray-500' // For "Other" or any undefined
   }
-};
-
-const itemVariant = {
-  hidden: { y: 20, opacity: 0 },
-  show: { y: 0, opacity: 1, transition: { type: "spring", stiffness: 300, damping: 25 } }
-};
-
-const fadeIn = {
-  hidden: { opacity: 0, y: -10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-};
+}
 
 export default function MarketplacePage() {
   const { currentAccount } = useWallet()
+  const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState("")
   const [category, setCategory] = useState("All")
   const [sortBy, setSortBy] = useState("popular")
   const [materials, setMaterials] = useState<MaterialItem[]>([])
   const [filteredItems, setFilteredItems] = useState<MaterialItem[]>([])
+  const [displayedItems, setDisplayedItems] = useState<MaterialItem[]>([])
   const [selectedItem, setSelectedItem] = useState<MaterialItem | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  const [itemsPerPage, setItemsPerPage] = useState(12)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -123,6 +141,24 @@ export default function MarketplacePage() {
     fetchMaterials()
   }, [])
 
+  // Handle URL item parameter
+  useEffect(() => {
+    if (!searchParams) return;
+    
+    const itemIdParam = searchParams.get("item")
+    
+    if (itemIdParam && materials.length > 0) {
+      // Find the item with the matching ID
+      const foundItem = materials.find(item => item.id === itemIdParam)
+      
+      if (foundItem) {
+        // Open the modal with the found item
+        setSelectedItem(foundItem)
+        setIsModalOpen(true)
+      }
+    }
+  }, [searchParams, materials])
+
   useEffect(() => {
     let items = [...materials]
 
@@ -151,7 +187,18 @@ export default function MarketplacePage() {
     }
 
     setFilteredItems(items)
+    setCurrentPage(1)
   }, [searchTerm, category, sortBy, materials])
+
+  // Update displayed items based on pagination
+  useEffect(() => {
+    const endIndex = currentPage * itemsPerPage;
+    setDisplayedItems(filteredItems.slice(0, endIndex));
+  }, [filteredItems, currentPage, itemsPerPage]);
+
+  const loadMoreItems = () => {
+    setCurrentPage(prev => prev + 1);
+  };
 
   const openModal = (item: MaterialItem) => {
     setSelectedItem(item)
@@ -163,38 +210,8 @@ export default function MarketplacePage() {
     setSelectedItem(null)
   }
 
-  // Function to get a color for the category badge
-  const getCategoryColor = (category: string): string => {
-    const categoryMap: Record<string, string> = {
-      "blockchain": "bg-purple-600 hover:bg-purple-700",
-      "programming": "bg-blue-600 hover:bg-blue-700",
-      "design": "bg-pink-600 hover:bg-pink-700",
-      "business": "bg-emerald-600 hover:bg-emerald-700",
-      "mathematics": "bg-amber-600 hover:bg-amber-700",
-      "science": "bg-cyan-600 hover:bg-cyan-700",
-      "computer science": "bg-indigo-600 hover:bg-indigo-700",
-      "computer-science": "bg-indigo-600 hover:bg-indigo-700",
-      "physics": "bg-blue-600 hover:bg-blue-700",
-      "chemistry": "bg-green-600 hover:bg-green-700",
-      "biology": "bg-teal-600 hover:bg-teal-700"
-    }
-    
-    const normalizedCategory = category.toLowerCase();
-    return categoryMap[normalizedCategory] || "bg-slate-600 hover:bg-slate-700";
-  }
-
-  // Function to format the date
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    }).format(date);
-  }
-
   return (
-    <main className="min-h-screen pt-16">
+    <main className="min-h-screen pt-12"> {/* Reduced from pt-16 */}
       <ClientOnly fallback={<SimpleFallback />}>
         <SpaceBackground 
           density={1500} 
@@ -207,31 +224,13 @@ export default function MarketplacePage() {
         />
       </ClientOnly>
 
-      <section className="relative py-10">
+      <section className="relative py-8"> {/* Reduced from py-16 */}
         <div className="container mx-auto px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-slate-900/0 to-transparent" />
           
           <div className="relative z-10">
-            {/* Header with title */}
-            <motion.div 
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              className="mb-10 text-center"
-            >
-              <h1 className="text-4xl font-bold text-white mb-3">Educational Marketplace</h1>
-              <p className="text-lg text-slate-300 max-w-2xl mx-auto">
-                Discover and purchase high-quality educational materials across various subjects
-              </p>
-            </motion.div>
-            
             <div className="relative z-10">
-              <motion.div 
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="mx-auto mb-8 max-w-3xl"
-              >
+              <div className="mx-auto mb-6 max-w-6xl"> {/* Increased from max-w-5xl */}
                 <div className="flex flex-col gap-4 md:flex-row md:items-center">
                   <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
@@ -256,9 +255,9 @@ export default function MarketplacePage() {
                         >
                           <div className="flex items-center gap-2 text-sm">
                             <ArrowUpDown className="h-4 w-4 text-purple-400/80" />
-                            {sortBy === "newest" ? "Newest" : 
-                             sortBy === "price-low" ? "Lowest" :
-                             sortBy === "price-high" ? "Highest" : "Sort By"}
+                            {sortBy === "newest" ? "New " : 
+                             sortBy === "price-low" ? "Low " :
+                             sortBy === "price-high" ? "High " : "Sort"}
                           </div>
                         </SelectTrigger>
                         <SelectContent 
@@ -287,198 +286,122 @@ export default function MarketplacePage() {
                       </Select>
                     </div>
                   </div>
-                  
-                  {/* Mobile filter toggle button */}
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} className="md:hidden">
-                    <Button
-                      variant="outline"
-                      className="w-full border-slate-700 text-white hover:border-purple-500 hover:bg-purple-500/20"
-                      onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    >
-                      <SlidersHorizontal className="h-4 w-4 mr-2" />
-                      Filters {category !== "All" && `(${category})`}
-                    </Button>
-                  </motion.div>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
             {isFilterOpen && (
-              <motion.div 
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mt-4 rounded-md border border-slate-700 bg-slate-900/90 p-4 backdrop-blur-md md:hidden overflow-hidden"
-              >
+              <div className="mt-4 rounded-md border border-slate-700 bg-slate-900 p-4 md:hidden">
                 <h3 className="mb-2 font-medium text-white">Categories</h3>
                 <div className="flex flex-wrap gap-1">
                   {CATEGORIES.map((cat) => (
-                    <motion.div key={cat} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button
+                      key={cat}
                       variant={category === cat ? "default" : "outline"}
                       size="sm"
-                        className={`${category === cat ? "bg-purple-600 hover:bg-purple-700" : "border-slate-700 text-white hover:bg-slate-800"} text-xs rounded-md px-3 py-1.5 h-auto transition-all duration-200`}
+                      className={`${
+                        category === cat 
+                          ? `bg-gradient-to-r ${getCategoryGradient(cat)} border-0 text-white` 
+                          : 'border-slate-700 text-white hover:bg-black/20'
+                      } text-xs px-2 py-1 h-auto`}
                       onClick={() => setCategory(cat)}
                     >
                       {cat}
                     </Button>
-                    </motion.div>
                   ))}
                 </div>
-              </motion.div>
+              </div>
             )}
 
-            <motion.div 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="mb-8 hidden md:block"
-            >
-              <div className="flex flex-wrap justify-center gap-2">
+            <div className="mb-6 hidden md:block"> {/* Reduced from mb-8 */}
+              <div className="flex flex-wrap justify-center gap-1">
                 {CATEGORIES.map((cat) => (
-                  <motion.div 
-                    key={cat} 
-                    whileHover={{ scale: 1.05 }} 
-                    whileTap={{ scale: 0.95 }}
-                  >
                   <Button
+                    key={cat}
                     variant={category === cat ? "default" : "outline"}
                     size="sm"
-                      className={`${
-                        category === cat 
-                          ? "bg-purple-600 hover:bg-purple-700" 
-                          : "border-slate-700 text-white hover:bg-slate-800"
-                      } text-xs font-medium rounded-md px-3 py-1.5 h-auto transition-all duration-200`}
+                    className={`${
+                      category === cat 
+                        ? `bg-gradient-to-r ${getCategoryGradient(cat)} border-0 text-white` 
+                        : 'border-slate-700 text-white hover:bg-black/20'
+                    } text-xs px-2 py-1 h-auto transition-all duration-300`}
                     onClick={() => setCategory(cat)}
                   >
                     {cat}
                   </Button>
-                  </motion.div>
                 ))}
               </div>
-            </motion.div>
+            </div>
 
-            {isLoading ? (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex h-60 items-center justify-center"
-              >
+            <div className="relative z-10 pt-2"> {/* Added pt-2 */}
+              {isLoading && (
+                <div className="flex min-h-[400px] items-center justify-center">
                   <div className="flex flex-col items-center">
-                  <Loader2 className="h-12 w-12 animate-spin text-purple-500" />
-                  <p className="mt-4 text-slate-400">Loading materials...</p>
+                    <Loader2 className="mb-4 h-10 w-10 animate-spin text-purple-500" />
+                    <p className="text-white">Loading marketplace items...</p>
+                  </div>
                 </div>
-              </motion.div>
-            ) : error ? (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex h-60 flex-col items-center justify-center"
-              >
-                <div className="rounded-xl bg-red-900/20 p-8 text-center backdrop-blur-sm">
-                  <p className="mb-4 text-lg text-red-400">{error}</p>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              )}
+
+              {error && !isLoading && (
+                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-red-800 bg-black/50 p-8 backdrop-blur-sm">
+                  <p className="text-center text-red-400">{error}</p>
                   <Button 
+                    className="mt-4 bg-purple-600 hover:bg-purple-700"
                     onClick={() => window.location.reload()}
-                      className="bg-red-600 hover:bg-red-700"
                   >
                     Try Again
                   </Button>
-                  </motion.div>
                 </div>
-              </motion.div>
-            ) : filteredItems.length === 0 ? (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex h-60 flex-col items-center justify-center"
-              >
-                <div className="rounded-xl bg-slate-900/50 p-8 text-center backdrop-blur-sm">
-                  <p className="mb-4 text-lg text-slate-400">No materials found matching your criteria.</p>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      onClick={() => {
-                        setSearchTerm("")
-                        setCategory("All")
-                      }}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      Reset Filters
-                    </Button>
-                  </motion.div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div 
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-              >
-                {filteredItems.map((item) => (
-                  <motion.div 
-                    key={item.id}
-                    variants={itemVariant}
-                    onMouseEnter={() => setHoveredItem(item.id)}
-                    onMouseLeave={() => setHoveredItem(null)}
-                    className="h-full w-full"
-                  >
-                    <NFTCard
-                      item={item}
-                      onClick={() => openModal(item)}
-                    />
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-            
-            {/* Results count and pagination */}
-              {!isLoading && !error && filteredItems.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="mt-10 flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0"
-              >
-                <p className="text-sm text-slate-400">
-                  Showing <span className="font-medium text-white">{filteredItems.length}</span> of {materials.length} materials
-                </p>
-                
-                <div className="flex items-center space-x-2">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="border-slate-700 text-white hover:bg-slate-800"
-                      disabled
-                    >
-                      Previous
-                    </Button>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button 
-                      size="sm"
-                      className="bg-purple-600 hover:bg-purple-700"
-                      disabled
-                    >
-                      Load More
-                    </Button>
-                  </motion.div>
-                </div>
-              </motion.div>
               )}
+
+              {!isLoading && !error && filteredItems.length === 0 && (
+                <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-slate-800 bg-black/50 p-8 backdrop-blur-sm">
+                  <p className="text-center text-slate-400">
+                    {materials.length === 0 
+                      ? "No materials are currently listed in the marketplace." 
+                      : "No materials match your search criteria."}
+                  </p>
+                  {!currentAccount && materials.length === 0 && (
+                    <p className="mt-4 text-center text-slate-400">
+                      Connect your wallet to list your own study materials.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {!isLoading && !error && filteredItems.length > 0 && (
+                <>
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"> {/* Reduced from gap-6 */}
+                    {displayedItems.map((item, index) => (
+                      <NFTCard key={item.id} item={item} onClick={() => openModal(item)} index={index} />
+                    ))}
+                  </div>
+                  
+                  {displayedItems.length < filteredItems.length && (
+                    <div className="flex justify-center mt-10">
+                      <Button 
+                        onClick={loadMoreItems}
+                        variant="outline" 
+                        className="group relative border border-purple-500/50 bg-black/30 text-white px-10 py-6 backdrop-blur-sm transition-all hover:bg-black/50"
+                      >
+                        <div className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500/20 to-blue-500/20 opacity-20 group-hover:opacity-30"></div>
+                        <div className="flex items-center gap-2">
+                          <span>Load More</span>
+                          <ChevronDown className="h-4 w-4 text-purple-400 animate-bounce" />
+                        </div>
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
       {selectedItem && (
-        <NFTModal
-          item={selectedItem}
-          isOpen={isModalOpen}
-          onClose={closeModal}
-        />
+        <NFTModal isOpen={isModalOpen} onClose={closeModal} item={selectedItem} />
       )}
     </main>
   )

@@ -53,9 +53,7 @@ const formSchema = z.object({
 export default function UploadMaterialForm() {
   const { currentAccount, connect } = useWallet()
   const [file, setFile] = useState<File | null>(null)
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
-  const [thumbnailError, setThumbnailError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [pinningProgress, setPinningProgress] = useState(0)
@@ -157,31 +155,6 @@ export default function UploadMaterialForm() {
     setFile(selectedFile)
   }
 
-  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    setThumbnailError(null)
-
-    if (!selectedFile) {
-      setThumbnailFile(null)
-      return
-    }
-
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      setThumbnailError("Thumbnail size exceeds 5MB limit")
-      setThumbnailFile(null)
-      return
-    }
-
-    const fileType = selectedFile.type
-    if (!fileType.includes("image")) {
-      setThumbnailError("Only image files are supported for thumbnails")
-      setThumbnailFile(null)
-      return
-    }
-
-    setThumbnailFile(selectedFile)
-  }
-
   const getFileTypeIcon = () => {
     if (!file) return null
     
@@ -270,40 +243,9 @@ export default function UploadMaterialForm() {
         throw new Error("Failed to pin content to IPFS");
       }
 
-      let thumbnailHash = ""
-      if (thumbnailFile) {
-        try {
-          setPinningProgress(85)
-          
-          const thumbnailResponse = await pinFileToIPFS(thumbnailFile, (progress) => {
-            setPinningProgress(85 + Math.floor(progress * 0.1))
-          })
-          
-          thumbnailHash = thumbnailResponse.url
-          
-          setPinningProgress(95)
-          
-          toast({
-            title: "Thumbnail Pinned Successfully",
-            description: "Your thumbnail has been pinned to IPFS.",
-          });
-        } catch (error) {
-          console.error("Error pinning thumbnail to IPFS:", error);
-          toast({
-            title: "Thumbnail Upload Failed",
-            description: "Continuing with listing without a thumbnail.",
-            variant: "destructive",
-          });
-        }
-      } else {
-        thumbnailHash = "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
-        
-        toast({
-          title: "Using 8-bit Thumbnail",
-          description: "A unique 8-bit pixel thumbnail will be generated based on your material's title.",
-        });
-      }
-
+      // Default thumbnail using IPFS hash for SVG images
+      const thumbnailHash = "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
+      
       const previewHash = `ipfs://Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
 
       try {
@@ -357,7 +299,6 @@ export default function UploadMaterialForm() {
             
             form.reset();
             setFile(null);
-            setThumbnailFile(null);
           } else {
             throw new Error(result.error || "Failed to list material on the blockchain");
           }
@@ -369,7 +310,6 @@ export default function UploadMaterialForm() {
           
           form.reset();
           setFile(null);
-          setThumbnailFile(null);
         } else {
           throw new Error("Failed to list material on the blockchain");
         }
@@ -411,7 +351,6 @@ export default function UploadMaterialForm() {
             
             form.reset();
             setFile(null);
-            setThumbnailFile(null);
           } else {
             throw new Error(debugResult.error || "Failed to list material on the blockchain");
           }
@@ -832,7 +771,7 @@ export default function UploadMaterialForm() {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <FormLabel>File</FormLabel>
-                  <div className="rounded-lg border border-dashed border-slate-700 p-6">
+                  <div className="rounded-lg border border-dashed border-slate-700 p-8 min-h-[310px] flex items-center justify-center">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <Upload className="h-8 w-8 text-slate-500" />
                       <p className="text-sm text-slate-400">
@@ -917,74 +856,7 @@ export default function UploadMaterialForm() {
                     </div>
                   )}
                 </div>
-
-                <div className="space-y-2">
-                  <FormLabel>Thumbnail</FormLabel>
-                  <div className="rounded-lg border border-dashed border-slate-700 p-6">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <Upload className="h-8 w-8 text-slate-500" />
-                      <p className="text-sm text-slate-400">
-                        Drag and drop your thumbnail here, or click to browse
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Supported formats: JPG, PNG (Max 5MB)
-                      </p>
-                      <Input
-                        type="file"
-                        className="hidden"
-                        id="thumbnail-upload"
-                        accept=".jpg,.png"
-                        onChange={handleThumbnailChange}
-                        disabled={isUploading}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-2"
-                        onClick={() => document.getElementById("thumbnail-upload")?.click()}
-                        disabled={isUploading}
-                      >
-                        Select Thumbnail
-                      </Button>
-                    </div>
-                  </div>
-
-                  {thumbnailError && (
-                    <Alert variant="destructive" className="mt-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Error</AlertTitle>
-                      <AlertDescription>{thumbnailError}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {thumbnailFile && (
-                    <div className="mt-4 rounded-lg bg-slate-800 p-3">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-white truncate">
-                            {thumbnailFile.name}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {formatFileSize(thumbnailFile.size)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
-
-            <div className="pt-4">
-              <Alert className="bg-slate-800 text-slate-300 border-purple-800">
-                <AlertTriangle className="h-4 w-4 text-purple-400" />
-                <AlertTitle className="text-white">IPFS Pinning Notice</AlertTitle>
-                <AlertDescription className="text-slate-400">
-                  Your content will be pinned to IPFS (InterPlanetary File System), a distributed storage system.
-                  The content identifier (CID) will be stored on the blockchain, allowing buyers to access your
-                  material directly. Content on IPFS is public but can only be discovered by those who know the CID.
-                </AlertDescription>
-              </Alert>
             </div>
 
             <Button
