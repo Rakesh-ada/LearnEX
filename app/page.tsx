@@ -17,83 +17,53 @@ export default function Home() {
     featuredRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  const text = "Buy, Sell & Trade Study Materials as Secure NFTs!"
-  const words = text.split(" ")
-
   return (
     <main className="relative min-h-screen">
       <ClientOnly fallback={<SimpleFallback />}>
         <SpaceBackground colorTheme="purple" shootingStars={true} cosmicDust={true} />
       </ClientOnly>
 
-      {/* Hero Section */}
+      {/* Hero Section - Cursor.com Style */}
       <section className="relative flex min-h-screen flex-col items-center justify-center px-4 pt-16">
         <div className="container mx-auto flex flex-col items-center text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="mb-6 inline-block rounded-full bg-gradient-to-r from-purple-500 to-blue-500 px-4 py-1 text-sm font-medium text-white"
+            className="max-w-3xl"
           >
-            The Future of Educational Content
+            <h1 className="mb-6 text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white">
+              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">Web3</span> Study Material Marketplace
+            </h1>
+            
+            <p className="mb-10 mx-auto max-w-2xl text-xl text-slate-300">
+              Built to make learning extraordinarily productive, LearnEX is the best way to access and share study materials.
+            </p>
           </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="mb-6 text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl"
-          >
-            <span className="block">Decentralized</span>
-            <span className="block bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">
-              Study Material Marketplace
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            className="mb-10 max-w-2xl text-lg text-slate-300 relative"
-          >
-            {words.map((word, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{
-                  duration: 0.1,
-                  delay: 0.4 + (i * 0.15),
-                  ease: "linear"
-                }}
-                className="inline-block mr-1.5"
-              >
-                {word}
-              </motion.span>
-            ))}
-          </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
             className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0"
           >
             <Link href="/marketplace">
-              <Button size="lg" className="group relative bg-gradient-to-r from-purple-500 to-blue-500 text-white">
-                <span className="absolute -inset-0.5 -z-10 rounded-lg bg-gradient-to-r from-purple-500 to-blue-500 opacity-30 blur transition duration-1000 group-hover:opacity-50 group-hover:blur-md"></span>
-                Explore Study Materials
-                <ChevronRight className="ml-2 h-4 w-4" />
+              <Button variant="cursor-style" size="cursor-lg">
+                Explore Marketplace
               </Button>
             </Link>
+            <Link href="/upload">
             <Button
               variant="outline"
-              size="lg"
-              onClick={scrollToFeatured}
-              className="border-purple-500 bg-black/50 text-white backdrop-blur-sm"
+                size="cursor-lg"
+                className="border-slate-700 text-white hover:bg-slate-800/50"
             >
-              Learn More
+                Upload Materials
             </Button>
+            </Link>
           </motion.div>
+          
+          
         </div>
 
         {/* Scroll indicator */}
@@ -113,13 +83,13 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Features Section */}
+      {/* Features Section - Cursor.com Style */}
       <section ref={featuredRef} className="relative py-20">
         <div className="container mx-auto px-4">
           <div className="mb-16 text-center">
             <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl">How It Works</h2>
             <p className="mx-auto max-w-2xl text-slate-300">
-             
+              LearnEX lets you access, create, and share educational content with blockchain security.
             </p>
           </div>
 
@@ -183,33 +153,154 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Testimonials Section - Cursor.com Style */}
       <section className="relative py-20">
         <div className="container mx-auto px-4">
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900 to-blue-900 p-8 sm:p-12">
-            <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-purple-500 opacity-20 blur-3xl"></div>
-            <div className="absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-blue-500 opacity-20 blur-3xl"></div>
+          <div className="mb-16 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl">Loved by students worldwide</h2>
+            <p className="mx-auto max-w-2xl text-slate-300">
+              Students and educators around the world reach for LearnEX by choice.
+            </p>
+          </div>
 
-            <div className="relative z-10 flex flex-col items-center justify-between gap-8 text-center md:flex-row md:text-left">
-              <div>
-                <h2 className="mb-4 text-2xl font-bold text-white sm:text-3xl">Ready to get started?</h2>
-                <p className="max-w-md text-blue-100">
-                  Join our decentralized marketplace today and start buying or selling educational content securely.
-                </p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Testimonial 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="group flex flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <p className="mb-6 text-slate-300">
+                "LearnEX is at least a 2x improvement over traditional study materials. It's amazing having an AI guide, and is an incredible accelerator for me and my study group."
+              </p>
+              <div className="mt-auto flex items-center">
+                <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-blue-600 to-purple-600"></div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-white">Emma Johnson</h4>
+                  <p className="text-sm text-slate-400">Computer Science Student, MIT</p>
+                </div>
               </div>
-              <div className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
-                <Link href="/marketplace">
-                  <Button size="lg" className="bg-white text-blue-900 hover:bg-blue-50">
-                    Explore Marketplace
-                  </Button>
-                </Link>
-                <Link href="/upload">
-                  <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
-                    Upload Materials
-                  </Button>
-                </Link>
+            </motion.div>
+
+            {/* Testimonial 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="group flex flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <p className="mb-6 text-slate-300">
+                "The content quality on LearnEX occasionally is so exceptional it defies reality - I consistently find study materials that anticipate exactly what I need to know for exams."
+              </p>
+              <div className="mt-auto flex items-center">
+                <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-green-600 to-teal-600"></div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-white">Marcus Chen</h4>
+                  <p className="text-sm text-slate-400">Physics Major, Stanford</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Testimonial 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="group flex flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <p className="mb-6 text-slate-300">
+                "LearnEX is hands down my biggest workflow improvement in years. The blockchain verification ensures I'm getting quality content from verified sources."
+              </p>
+              <div className="mt-auto flex items-center">
+                <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-amber-500 to-orange-600"></div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-white">Sarah Patel</h4>
+                  <p className="text-sm text-slate-400">MBA Student, Harvard</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Testimonial 4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="group flex flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <p className="mb-6 text-slate-300">
+                "I love studying with LearnEX materials. The platform is steps ahead of traditional resources, suggesting content that matches my learning style perfectly."
+              </p>
+              <div className="mt-auto flex items-center">
+                <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-purple-600 to-pink-600"></div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-white">James Wilson</h4>
+                  <p className="text-sm text-slate-400">Biology Researcher, Oxford</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Testimonial 5 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="group flex flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <p className="mb-6 text-slate-300">
+                "LearnEX is so good, and literally gets better every week with new content. The NFT ownership model means I truly own my digital textbooks."
+              </p>
+              <div className="mt-auto flex items-center">
+                <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-blue-600 to-indigo-600"></div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-white">Alex Rodriguez</h4>
+                  <p className="text-sm text-slate-400">Economics Student, Berkeley</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Testimonial 6 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="group flex flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-6 backdrop-blur-sm hover:border-purple-500/30 hover:shadow-lg hover:shadow-purple-500/10"
+            >
+              <p className="mb-6 text-slate-300">
+                "LearnEX is awesome! Someone finally put blockchain security into educational content in a seamless way. It's so elegant and easy. I'm completely hooked."
+              </p>
+              <div className="mt-auto flex items-center">
+                <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-teal-600 to-emerald-600"></div>
+                <div className="ml-3">
+                  <h4 className="font-semibold text-white">Olivia Thompson</h4>
+                  <p className="text-sm text-slate-400">Chemistry PhD, Cambridge</p>
+                </div>
+              </div>
+            </motion.div>
               </div>
             </div>
+      </section>
+
+      {/* CTA Section - Cursor.com Style */}
+      <section className="relative py-16">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center text-center">
+            <h2 className="mb-6 text-3xl font-bold text-white sm:text-4xl">Build your knowledge faster</h2>
+            <p className="mb-8 max-w-2xl text-lg text-slate-300">
+              Intelligent, secure, and decentralized, LearnEX is the best way to access study materials.
+            </p>
+            
+            <Link href="/marketplace">
+              <Button variant="cursor-style" size="cursor-lg">
+                Start Exploring
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

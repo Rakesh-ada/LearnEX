@@ -3,12 +3,10 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import SpaceBackground from "@/components/space-background"
 import NFTCard from "@/components/nft-card"
 import NFTModal from "@/components/nft-modal"
-import { Search, SlidersHorizontal, Loader2, ArrowUpDown, ChevronDown } from "lucide-react"
+import Loader from "@/components/ui/cube-loader"
 import { getAllMaterials } from "@/lib/blockchain"
 import { useWallet } from "@/hooks/use-wallet"
 import ClientOnly from "@/lib/client-only"
@@ -49,37 +47,37 @@ const CATEGORIES = [
 function getCategoryGradient(subject: string): string {
   switch (subject?.toLowerCase()) {
     case 'all':
-      return 'from-purple-600 via-violet-500 to-blue-500' // Default all categories
+      return 'from-purple-700 via-violet-600 to-blue-600' // Default all categories
     case 'mathematics':
-      return 'from-blue-600 via-indigo-500 to-purple-500'
+      return 'from-blue-700 via-indigo-600 to-purple-600'
     case 'chemistry':
-      return 'from-green-500 via-teal-500 to-cyan-500'
+      return 'from-green-700 via-teal-600 to-cyan-600'
     case 'physics':
-      return 'from-purple-600 via-indigo-500 to-blue-500'
+      return 'from-purple-700 via-indigo-600 to-blue-600'
     case 'biology':
-      return 'from-green-600 via-emerald-500 to-teal-500'
+      return 'from-green-700 via-emerald-600 to-teal-600'
     case 'computer science':
-      return 'from-blue-600 via-indigo-500 to-violet-500'
+      return 'from-blue-700 via-indigo-600 to-violet-600'
     case 'literature':
-      return 'from-amber-500 via-orange-500 to-red-500'
+      return 'from-amber-700 via-orange-600 to-red-600'
     case 'history':
-      return 'from-red-600 via-rose-500 to-pink-500'
+      return 'from-red-700 via-rose-600 to-pink-600'
     case 'economics':
-      return 'from-emerald-600 via-green-500 to-teal-500'
+      return 'from-emerald-700 via-green-600 to-teal-600'
     case 'blockchain':
-      return 'from-purple-600 via-violet-500 to-blue-500'
+      return 'from-purple-700 via-violet-600 to-blue-600'
     case 'programming':
-      return 'from-blue-500 via-cyan-500 to-teal-500'
+      return 'from-blue-700 via-cyan-600 to-teal-600'
     case 'design':
-      return 'from-pink-500 via-purple-500 to-indigo-500'
+      return 'from-pink-700 via-purple-600 to-indigo-600'
     case 'business':
-      return 'from-blue-500 via-indigo-500 to-purple-500'
+      return 'from-blue-700 via-indigo-600 to-purple-600'
     case 'science':
-      return 'from-cyan-500 via-blue-500 to-indigo-500'
+      return 'from-cyan-700 via-blue-600 to-indigo-600'
     case 'language':
-      return 'from-yellow-500 via-orange-500 to-red-500'
+      return 'from-yellow-700 via-orange-600 to-red-600'
     default:
-      return 'from-slate-600 via-slate-500 to-gray-500' // For "Other" or any undefined
+      return 'from-slate-700 via-slate-600 to-gray-600' // For "Other" or any undefined
   }
 }
 
@@ -88,17 +86,35 @@ export default function MarketplacePage() {
   const searchParams = useSearchParams()
   const [searchTerm, setSearchTerm] = useState("")
   const [category, setCategory] = useState("All")
-  const [sortBy, setSortBy] = useState("popular")
+  const [sortBy, setSortBy] = useState("newest")
   const [materials, setMaterials] = useState<MaterialItem[]>([])
   const [filteredItems, setFilteredItems] = useState<MaterialItem[]>([])
   const [displayedItems, setDisplayedItems] = useState<MaterialItem[]>([])
   const [selectedItem, setSelectedItem] = useState<MaterialItem | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [itemsPerPage, setItemsPerPage] = useState(12)
   const [currentPage, setCurrentPage] = useState(1)
+  
+  // Get search term from URL parameters
+  useEffect(() => {
+    if (searchParams) {
+      // Get search param
+      const search = searchParams.get("search")
+      if (search) {
+        setSearchTerm(search)
+      } else {
+        setSearchTerm("")
+      }
+      
+      // Get sort param
+      const sort = searchParams.get("sort")
+      if (sort && ["newest", "price-low", "price-high"].includes(sort)) {
+        setSortBy(sort)
+      }
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const fetchMaterials = async () => {
@@ -211,7 +227,7 @@ export default function MarketplacePage() {
   }
 
   return (
-    <main className="min-h-screen pt-12"> {/* Reduced from pt-16 */}
+    <main className="min-h-screen pt-12">
       <ClientOnly fallback={<SimpleFallback />}>
         <SpaceBackground 
           density={1500} 
@@ -224,96 +240,23 @@ export default function MarketplacePage() {
         />
       </ClientOnly>
 
-      <section className="relative py-8"> {/* Reduced from py-16 */}
+      <section className="relative py-8">
         <div className="container mx-auto px-4">
           <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 via-slate-900/0 to-transparent" />
           
           <div className="relative z-10">
-            <div className="relative z-10">
-              <div className="mx-auto mb-6 max-w-6xl"> {/* Increased from max-w-5xl */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-center">
-                  <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-4 z-20">
-                      <Search className="h-5 w-5 text-purple-400/90" />
-                    </div>
-                    
-                    <Input
-                      type="text"
-                      placeholder="Search study materials..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-12 w-full rounded-xl border border-slate-700/50 bg-slate-900/50 pl-12 pr-[140px] text-white 
-                        shadow-lg shadow-purple-500/5 backdrop-blur-sm placeholder:text-slate-400 
-                        focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/10"
-                    />
-                    
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-                      <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger 
-                          className="h-9 w-[110px] border-0 bg-transparent text-white/80 
-                            hover:text-white focus:ring-0 focus:ring-offset-0"
-                        >
-                          <div className="flex items-center gap-2 text-sm">
-                            <ArrowUpDown className="h-4 w-4 text-purple-400/80" />
-                            {sortBy === "newest" ? "New " : 
-                             sortBy === "price-low" ? "Low " :
-                             sortBy === "price-high" ? "High " : "Sort"}
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent 
-                          className="rounded-lg border border-slate-700/50 bg-slate-900/90 
-                            text-white shadow-xl shadow-purple-500/10 backdrop-blur-md min-w-[140px]"
-                        >
-                          <SelectItem 
-                            value="newest"
-                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
-                          >
-                            Newest First
-                          </SelectItem>
-                          <SelectItem 
-                            value="price-low"
-                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
-                          >
-                            Price: Lowest
-                          </SelectItem>
-                          <SelectItem 
-                            value="price-high"
-                            className="hover:bg-purple-500/20 focus:bg-purple-500/20"
-                          >
-                            Price: Highest
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
+            <div className="mx-auto mb-6 max-w-6xl flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-col">
+                
+                {searchTerm && (
+                  <p className="text-purple-400">
+                    Showing results for "{searchTerm}"
+                  </p>
+                )}
               </div>
             </div>
 
-            {isFilterOpen && (
-              <div className="mt-4 rounded-md border border-slate-700 bg-slate-900 p-4 md:hidden">
-                <h3 className="mb-2 font-medium text-white">Categories</h3>
-                <div className="flex flex-wrap gap-1">
-                  {CATEGORIES.map((cat) => (
-                    <Button
-                      key={cat}
-                      variant={category === cat ? "default" : "outline"}
-                      size="sm"
-                      className={`${
-                        category === cat 
-                          ? `bg-gradient-to-r ${getCategoryGradient(cat)} border-0 text-white` 
-                          : 'border-slate-700 text-white hover:bg-black/20'
-                      } text-xs px-2 py-1 h-auto`}
-                      onClick={() => setCategory(cat)}
-                    >
-                      {cat}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="mb-6 hidden md:block"> {/* Reduced from mb-8 */}
+            <div className="mb-6">
               <div className="flex flex-wrap justify-center gap-1">
                 {CATEGORIES.map((cat) => (
                   <Button
@@ -324,7 +267,7 @@ export default function MarketplacePage() {
                       category === cat 
                         ? `bg-gradient-to-r ${getCategoryGradient(cat)} border-0 text-white` 
                         : 'border-slate-700 text-white hover:bg-black/20'
-                    } text-xs px-2 py-1 h-auto transition-all duration-300`}
+                    } text-[14px] px-2 py-1 h-auto transition-all duration-300`}
                     onClick={() => setCategory(cat)}
                   >
                     {cat}
@@ -333,12 +276,14 @@ export default function MarketplacePage() {
               </div>
             </div>
 
-            <div className="relative z-10 pt-2"> {/* Added pt-2 */}
+            <div className="relative z-10 pt-2">
               {isLoading && (
                 <div className="flex min-h-[400px] items-center justify-center">
                   <div className="flex flex-col items-center">
-                    <Loader2 className="mb-4 h-10 w-10 animate-spin text-purple-500" />
-                    <p className="text-white">Loading marketplace items...</p>
+                    <div className="flex items-center justify-center h-20 w-20 mb-6">
+                      <Loader size="lg" color="purple" />
+                    </div>
+                   
                   </div>
                 </div>
               )}
@@ -372,24 +317,20 @@ export default function MarketplacePage() {
 
               {!isLoading && !error && filteredItems.length > 0 && (
                 <>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"> {/* Reduced from gap-6 */}
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {displayedItems.map((item, index) => (
                       <NFTCard key={item.id} item={item} onClick={() => openModal(item)} index={index} />
                     ))}
                   </div>
                   
-                  {displayedItems.length < filteredItems.length && (
-                    <div className="flex justify-center mt-10">
+                  {/* Load More Button */}
+                  {filteredItems.length > displayedItems.length && (
+                    <div className="mt-8 flex justify-center">
                       <Button 
+                        variant="gradient-outline"
                         onClick={loadMoreItems}
-                        variant="outline" 
-                        className="group relative border border-purple-500/50 bg-black/30 text-white px-10 py-6 backdrop-blur-sm transition-all hover:bg-black/50"
                       >
-                        <div className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500/20 to-blue-500/20 opacity-20 group-hover:opacity-30"></div>
-                        <div className="flex items-center gap-2">
-                          <span>Load More</span>
-                          <ChevronDown className="h-4 w-4 text-purple-400 animate-bounce" />
-                        </div>
+                        Load More
                       </Button>
                     </div>
                   )}

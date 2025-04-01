@@ -86,11 +86,9 @@ export default function FloatingUploadButton() {
           ref={buttonRef}
           type="submit"
           size="lg"
-          className="relative w-full bg-gradient-to-r from-purple-600 to-blue-600 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 sm:w-auto"
+          variant="gradient-outline"
+          className="relative w-full hover:shadow-lg hover:shadow-cyan-500/20 sm:w-auto"
         >
-          <span
-            className={`absolute -inset-1 -z-10 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 opacity-30 blur-md transition-opacity duration-300 ${isHovered ? "opacity-70" : "opacity-30"}`}
-          ></span>
           <Upload className="mr-2 h-5 w-5" />
           Upload & Mint NFT
         </Button>

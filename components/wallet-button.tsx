@@ -23,13 +23,14 @@ export default function WalletButton({ isMobile = false }: WalletButtonProps) {
   if (currentAccount) {
     return (
       <Button
-        variant="outline"
-        className={`relative border-purple-500 bg-black text-white ${isMobile ? "w-full" : ""} pr-2`}
+        variant="ghost"
+        className={`flex items-center ${isMobile ? "w-full" : ""} px-3 border border-transparent hover:border-slate-700 hover:bg-slate-900/50`}
       >
-        <div className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 opacity-20 blur-sm"></div>
-        <span className="truncate">{`${currentAccount.substring(0, 6)}...${currentAccount.substring(currentAccount.length - 4)}`}</span>
-        <div className="ml-2 h-6 w-6 overflow-hidden rounded-full border border-slate-700">
-          <div style={getProfileImage(currentAccount)}></div>
+        <div className="flex items-center justify-between w-full gap-3">
+          <span className="truncate">{`${currentAccount.substring(0, 6)}...${currentAccount.substring(currentAccount.length - 4)}`}</span>
+          <div className="h-8 w-8 overflow-hidden rounded-full border border-slate-700 flex-shrink-0">
+            <div style={getProfileImage(currentAccount)}></div>
+          </div>
         </div>
       </Button>
     )
@@ -37,12 +38,12 @@ export default function WalletButton({ isMobile = false }: WalletButtonProps) {
 
   return (
     <Button
-      variant="outline"
-      className={`relative border-purple-500 bg-black text-white ${isMobile ? "w-full" : ""}`}
+      variant="ghost"
+      className={`${isMobile ? "w-full" : ""} px-3 border border-violet-500/30 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20 hover:border-violet-500/50`}
       onClick={handleConnect}
       disabled={isConnecting}
     >
-      <div className="absolute inset-0 rounded-md bg-gradient-to-r from-purple-500 to-blue-500 opacity-20 blur-sm"></div>
+      <Wallet className="mr-2 h-4 w-4" />
       {isConnecting ? "Connecting..." : "Connect Wallet"}
     </Button>
   )

@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import MaterialCard from "@/components/material-card"
-import { BookOpen, FileText, Video, Download, Lock, Loader2 } from "lucide-react"
+import { BookOpen, FileText, Video, Download, Lock } from "lucide-react"
+import Loader from "@/components/ui/cube-loader"
 import { useWallet } from "@/hooks/use-wallet"
 import { getMyPurchasedMaterials, getContentHash } from "@/lib/blockchain"
 import { toast } from "@/hooks/use-toast"
@@ -150,8 +151,10 @@ export default function MyMaterialsPage() {
           <div className="rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900/50 to-black/50 p-8 backdrop-blur-sm">
             {isLoading ? (
               <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-slate-800/50 bg-black/30 p-8 backdrop-blur-sm">
-                <Loader2 className="mb-4 h-12 w-12 animate-spin text-purple-500" />
-                <p className="text-lg font-medium text-white">Loading your materials...</p>
+                <div className="flex items-center justify-center h-20 w-20 mb-6">
+                  <Loader size="lg" color="purple" />
+                </div>
+                
               </div>
             ) : !currentAccount ? (
               <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-slate-800/50 bg-black/30 p-12 backdrop-blur-sm">
@@ -162,7 +165,8 @@ export default function MyMaterialsPage() {
                 </p>
                 <Button 
                   onClick={connect}
-                  className="h-12 min-w-[200px] bg-gradient-to-r from-purple-600 to-blue-600 text-lg font-medium hover:from-purple-700 hover:to-blue-700"
+                  variant="gradient-outline"
+                  className="h-12 min-w-[200px] text-lg font-medium"
                 >
                   Connect Wallet
                 </Button>
@@ -203,7 +207,9 @@ export default function MyMaterialsPage() {
                 {isLoadingContent && (
                   <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="rounded-lg bg-slate-900 p-6 shadow-xl">
-                      <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-purple-500" />
+                      <div className="flex items-center justify-center h-12 w-12 mx-auto mb-4">
+                        <Loader size="default" color="purple" />
+                      </div>
                       <p className="text-center text-white">Loading content...</p>
                     </div>
                   </div>

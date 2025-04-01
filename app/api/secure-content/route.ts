@@ -1,59 +1,110 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidIPFSCid, fetchFromIPFS } from '@/lib/pinning-service';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { encrypt, decrypt } from '@/lib/encryption';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * Secure Content Proxy API
  * This API acts as a proxy to serve IPFS content without exposing the underlying CID.
- * It uses a token-based system for security and proper access control.
+ * It uses an encrypted token-based system with user authentication for security.
  */
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
+    // Rate limiting
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const ip = forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
+    const { success } = await rateLimit(ip);
     
-    // Get the token from query params
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    // Check user authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.address) {
+      return NextResponse.json(
+        { error: 'Please sign in to access this content.' },
+        { status: 401 }
+      );
+    }
+
+    const searchParams = request.nextUrl.searchParams;
     const token = searchParams.get('token');
     
     if (!token) {
       return NextResponse.json(
-        { error: 'Missing access token' },
+        { error: 'Missing access token. Please try accessing the content again.' },
         { status: 400 }
       );
     }
     
-    // Token structure: base64-encoded JSON with contentHash and expiry
+    // Decrypt and validate token
     let decodedData;
     try {
-      decodedData = JSON.parse(atob(token));
+      const decryptedToken = decrypt(token);
+      decodedData = JSON.parse(decryptedToken);
     } catch (e) {
+      console.error('Token decryption error:', e);
       return NextResponse.json(
-        { error: 'Invalid token format' },
+        { error: 'Invalid access token. Please try accessing the content again.' },
         { status: 400 }
       );
     }
     
-    const { contentHash, expiry, type } = decodedData;
+    const { contentHash, expiry, type, userId, nonce } = decodedData;
     
-    // Validate token expiry
-    if (expiry && new Date(expiry).getTime() < Date.now()) {
+    // Validate required fields
+    if (!contentHash || !type || !userId || !expiry || !nonce) {
       return NextResponse.json(
-        { error: 'Token expired' },
+        { error: 'Invalid token format. Please try accessing the content again.' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate user ownership
+    if (userId.toLowerCase() !== session.user.address.toLowerCase()) {
+      return NextResponse.json(
+        { error: 'You do not have permission to access this content.' },
+        { status: 403 }
+      );
+    }
+    
+    // Validate token expiry (max 1 hour)
+    const expiryDate = new Date(expiry);
+    if (isNaN(expiryDate.getTime()) || expiryDate.getTime() < Date.now()) {
+      return NextResponse.json(
+        { error: 'Access token has expired. Please try accessing the content again.' },
         { status: 401 }
       );
     }
     
     // Validate content hash format
-    if (!contentHash || !isValidIPFSCid(contentHash)) {
+    if (!isValidIPFSCid(contentHash)) {
       return NextResponse.json(
-        { error: 'Invalid content identifier' },
+        { error: 'Invalid content identifier. Please try accessing the content again.' },
         { status: 400 }
       );
     }
     
     // Fetch the content from IPFS
-    const contentBlob = await fetchFromIPFS(contentHash);
+    let contentBlob;
+    try {
+      contentBlob = await fetchFromIPFS(contentHash);
+    } catch (e) {
+      console.error('IPFS fetch error:', e);
+      return NextResponse.json(
+        { error: 'Failed to retrieve content. Please try again later.' },
+        { status: 500 }
+      );
+    }
     
     // Determine content type
-    let contentType = 'application/octet-stream'; // Default
+    let contentType = 'application/octet-stream';
     
     if (type === 'pdf') {
       contentType = 'application/pdf';
@@ -68,14 +119,20 @@ export async function GET(request: NextRequest) {
     return new NextResponse(arrayBuffer, {
       headers: {
         'Content-Type': contentType,
-        'Content-Disposition': 'inline', // For browser display
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Content-Disposition': 'inline',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'DENY',
+        'X-XSS-Protection': '1; mode=block',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
       },
     });
   } catch (error) {
     console.error('Error serving secure content:', error);
     return NextResponse.json(
-      { error: 'Failed to retrieve content' },
+      { error: 'An unexpected error occurred. Please try again later.' },
       { status: 500 }
     );
   }

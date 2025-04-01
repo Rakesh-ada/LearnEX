@@ -27,36 +27,36 @@ interface NFTCardProps {
 function getSubjectGradient(subject: string): string {
   switch (subject?.toLowerCase()) {
     case 'mathematics':
-      return 'from-blue-600 via-indigo-500 to-purple-500'
+      return 'from-blue-700 via-indigo-600 to-purple-600'
     case 'chemistry':
-      return 'from-green-500 via-teal-500 to-cyan-500'
+      return 'from-green-700 via-teal-600 to-cyan-600'
     case 'physics':
-      return 'from-purple-600 via-indigo-500 to-blue-500'
+      return 'from-purple-700 via-indigo-600 to-blue-600'
     case 'biology':
-      return 'from-green-600 via-emerald-500 to-teal-500'
+      return 'from-green-700 via-emerald-600 to-teal-600'
     case 'computer science':
     case 'computer-science':
-      return 'from-blue-600 via-indigo-500 to-violet-500'
+      return 'from-blue-700 via-indigo-600 to-violet-600'
     case 'literature':
-      return 'from-amber-500 via-orange-500 to-red-500'
+      return 'from-amber-700 via-orange-600 to-red-600'
     case 'history':
-      return 'from-red-600 via-rose-500 to-pink-500'
+      return 'from-red-700 via-rose-600 to-pink-600'
     case 'economics':
-      return 'from-emerald-600 via-green-500 to-teal-500'
+      return 'from-emerald-700 via-green-600 to-teal-600'
     case 'blockchain':
-      return 'from-purple-600 via-violet-500 to-blue-500'
+      return 'from-purple-700 via-violet-600 to-blue-600'
     case 'programming':
-      return 'from-blue-500 via-cyan-500 to-teal-500'
+      return 'from-blue-700 via-cyan-600 to-teal-600'
     case 'design':
-      return 'from-pink-500 via-purple-500 to-indigo-500'
+      return 'from-pink-700 via-purple-600 to-indigo-600'
     case 'business':
-      return 'from-blue-500 via-indigo-500 to-purple-500'
+      return 'from-blue-700 via-indigo-600 to-purple-600'
     case 'science':
-      return 'from-cyan-500 via-blue-500 to-indigo-500'
+      return 'from-cyan-700 via-blue-600 to-indigo-600'
     case 'language':
-      return 'from-yellow-500 via-orange-500 to-red-500'
+      return 'from-yellow-700 via-orange-600 to-red-600'
     default:
-      return 'from-purple-600 via-violet-500 to-blue-500' // Default gradient like in the image
+      return 'from-purple-700 via-violet-600 to-blue-600' // Default gradient
   }
 }
 
@@ -123,7 +123,7 @@ export default function NFTCard({ item, onClick, index = 0 }: NFTCardProps) {
       transition={{ duration: 0.3, delay: baseDelay * 0.5 }}
       className={`group relative h-full cursor-pointer overflow-hidden rounded-xl border border-slate-800/50 bg-gradient-to-br ${getSubjectGradient(
         item.category
-      )} p-5 backdrop-blur-sm transition-all duration-300 hover:border-slate-700 hover:shadow-lg hover:shadow-purple-500/10`}
+      )} p-5 backdrop-blur-sm transition-all duration-300 hover:border-slate-700 hover:shadow-lg hover:shadow-purple-500/10 hover:scale-[1.02] hover:-translate-y-1`}
       onClick={onClick}
     >
       {/* Blockchain pattern overlay with improved opacity */}
@@ -405,7 +405,7 @@ export default function NFTCard({ item, onClick, index = 0 }: NFTCardProps) {
                       <path d="M19 16l-4 4"></path>
                     </svg>
                     <div className="mt-2 text-sm font-medium text-yellow-400">Language</div>
-                  </div>
+              </div>
                 )}
                 {!["mathematics", "chemistry", "physics", "biology", 
                   "computer science", "computer-science", "literature", "history", 
@@ -426,12 +426,12 @@ export default function NFTCard({ item, onClick, index = 0 }: NFTCardProps) {
                       <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
                     </svg>
                     <div className="mt-2 text-sm font-medium text-purple-400">{item.category}</div>
-                  </div>
+          </div>
                 )}
               </div>
             </div>
           )}
-        </div>
+            </div>
 
         {/* Title and details */}
         <motion.div

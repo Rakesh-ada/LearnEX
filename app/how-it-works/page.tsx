@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Lock, ShieldCheck, Upload, Wallet } from "lucide-react"
+import GradientButtonExample from "@/components/gradient-button-example"
 
 export default function HowItWorksPage() {
   return (
@@ -184,6 +185,14 @@ export default function HowItWorksPage() {
                 </div>
               </CardContent>
             </Card>
+          </section>
+
+          {/* Add gradient button example section */}
+          <section className="py-16 bg-slate-900/50">
+            <div className="container mx-auto px-4">
+              <h2 className="mb-12 text-center text-3xl font-bold text-white">Button Styling Examples</h2>
+              <GradientButtonExample />
+            </div>
           </section>
         </div>
       </div>

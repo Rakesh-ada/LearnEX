@@ -84,6 +84,17 @@ const config: Config = {
             'background-position': 'right center'
           },
         },
+        "cube-spin": {
+          '0%': {
+            transform: 'rotate(45deg) rotateX(-25deg) rotateY(25deg)'
+          },
+          '50%': {
+            transform: 'rotate(45deg) rotateX(-385deg) rotateY(25deg)'
+          },
+          '100%': {
+            transform: 'rotate(45deg) rotateX(-385deg) rotateY(385deg)'
+          }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -91,10 +102,43 @@ const config: Config = {
         fadeIn: 'fadeIn 0.5s ease-out',
         slideUp: 'slideUp 0.5s ease-out forwards',
         'gradient': 'gradient 8s linear infinite',
+        'cube-spin': 'cube-spin 2s infinite ease',
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    function({ addUtilities }: { addUtilities: any }) {
+      const newUtilities = {
+        '.transform-style-preserve-3d': {
+          transformStyle: 'preserve-3d',
+        },
+        '.cube-face-1': {
+          transform: 'translateZ(-50%) rotateY(180deg)',
+        },
+        '.cube-face-2': {
+          transform: 'rotateY(-270deg) translateX(50%)',
+          transformOrigin: 'top right',
+        },
+        '.cube-face-3': {
+          transform: 'rotateY(270deg) translateX(-50%)',
+          transformOrigin: 'center left',
+        },
+        '.cube-face-4': {
+          transform: 'rotateX(90deg) translateY(-50%)',
+          transformOrigin: 'top center',
+        },
+        '.cube-face-5': {
+          transform: 'rotateX(-90deg) translateY(50%)',
+          transformOrigin: 'bottom center',
+        },
+        '.cube-face-6': {
+          transform: 'translateZ(50%)',
+        },
+      }
+      addUtilities(newUtilities)
+    }
+  ],
 }
 
 export default config

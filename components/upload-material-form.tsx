@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Loader2, Upload, FileText, Video, AlertTriangle, Bug } from "lucide-react"
+import Loader from "@/components/ui/cube-loader"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -528,8 +529,8 @@ export default function UploadMaterialForm() {
             <Button 
               onClick={handleSwitchNetwork} 
               disabled={isSwitchingNetwork}
-              variant="outline" 
-              className="mt-2 bg-red-900/50 hover:bg-red-800/50 border-red-700"
+              variant="gradient-purple" 
+              className="mt-2"
             >
               {isSwitchingNetwork ? (
                 <>
@@ -553,8 +554,8 @@ export default function UploadMaterialForm() {
             <Button 
               onClick={handleTestContract} 
               disabled={isTestingContract}
-              variant="outline" 
-              className="mt-2 bg-amber-900/50 hover:bg-amber-800/50 border-amber-700"
+              variant="gradient-purple" 
+              className="mt-2"
             >
               {isTestingContract ? (
                 <>
@@ -579,9 +580,8 @@ export default function UploadMaterialForm() {
               <Button 
                 onClick={handleTestContract} 
                 disabled={isTestingContract}
-                variant="outline" 
+                variant="gradient-subtle" 
                 size="sm"
-                className="bg-slate-800/50 hover:bg-slate-700/50 border-slate-700"
               >
                 {isTestingContract ? (
                   <>
@@ -596,9 +596,8 @@ export default function UploadMaterialForm() {
               <Button 
                 onClick={handleTestSimplified} 
                 disabled={isTestingSimplified}
-                variant="outline" 
+                variant="gradient-subtle" 
                 size="sm"
-                className="bg-slate-800/50 hover:bg-slate-700/50 border-slate-700"
               >
                 {isTestingSimplified ? (
                   <>
@@ -626,9 +625,8 @@ export default function UploadMaterialForm() {
                   console.log("Null:", typeof emptyThumbnail2, emptyThumbnail2 || "ipfs://QmdefaultEmptyThumbnailHash");
                   console.log("Empty URL object:", typeof emptyThumbnail3, emptyThumbnail3.url || "ipfs://QmdefaultEmptyThumbnailHash");
                 }}
-                variant="outline" 
+                variant="gradient-subtle" 
                 size="sm"
-                className="bg-slate-800/50 hover:bg-slate-700/50 border-slate-700"
               >
                 Test Thumbnail Handling
               </Button>
@@ -668,7 +666,8 @@ export default function UploadMaterialForm() {
             Please connect your wallet to upload study materials
           </p>
           <Button 
-            className="bg-purple-600 hover:bg-purple-700"
+            variant="cursor-style"
+            size="cursor-lg"
             onClick={handleConnectWallet}
           >
             Connect Wallet
@@ -791,10 +790,11 @@ export default function UploadMaterialForm() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="mt-2"
+                        className="mt-2 border-slate-700 hover:bg-slate-800/50 hover:text-purple-400 transition-all duration-300"
                         onClick={() => document.getElementById("file-upload")?.click()}
                         disabled={isUploading}
                       >
+                        <Upload className="h-4 w-4 mr-2" />
                         Select File
                       </Button>
                     </div>
@@ -861,16 +861,23 @@ export default function UploadMaterialForm() {
 
             <Button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              variant="cursor-style"
+              size="cursor-lg"
+              className="w-full"
               disabled={isUploading}
             >
               {isUploading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
+                <div className="flex items-center justify-center gap-2">
+                  <div className="flex items-center justify-center h-4 w-4">
+                    <Loader size="sm" color="cyan" />
+                  </div>
+                  <span>Processing...</span>
+                </div>
               ) : (
-                "Upload & Pin to IPFS"
+                <>
+                  <Upload className="h-5 w-5" />
+                  <span>Upload & Mint Material</span>
+                </>
               )}
             </Button>
           </form>
