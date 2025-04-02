@@ -29,6 +29,15 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
       try {
         setIsLoading(true)
         
+        if (!currentAccount) {
+          toast({
+            title: "Wallet Not Connected",
+            description: "Please connect your wallet to view this content.",
+            variant: "destructive",
+          })
+          return;
+        }
+        
         // Check if the hash is an IPFS hash
         if (contentHash.startsWith("ipfs://")) {
           // Validate CID
@@ -37,7 +46,7 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
           
           if (isValidCid) {
             // Generate secure URL
-            const secureUrl = getSecureContentUrl(contentHash, type)
+            const secureUrl = getSecureContentUrl(contentHash, type, currentAccount)
             setSecureContentUrl(secureUrl)
             
             // For PDFs, open directly in Chrome's viewer
@@ -59,7 +68,7 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
     }
 
     initializeContent()
-  }, [contentHash, title, type])
+  }, [contentHash, title, type, currentAccount])
 
   const handleOpenInChrome = () => {
     if (secureContentUrl) {
@@ -189,6 +198,20 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
             <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
             <span className="ml-2 text-white">Loading content...</span>
           </div>
+        ) : !currentAccount ? (
+          <div className="space-y-4">
+            <p className="text-sm text-white/80">
+              Please connect your wallet to view this content.
+            </p>
+            <Button 
+              variant="cursor-style"
+              size="default"
+              className="w-full"
+              onClick={onClose}
+            >
+              Close
+            </Button>
+          </div>
         ) : (
           <div className="space-y-4">
             <p className="text-sm text-white/80">
@@ -201,7 +224,9 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
             
             <div className="flex flex-col gap-2">
               <Button 
-                className="w-full bg-purple-600 hover:bg-purple-700"
+                variant="cursor-style"
+                size="default"
+                className="w-full"
                 onClick={handleOpenInChrome}
                 disabled={!secureContentUrl}
               >
@@ -224,7 +249,9 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
               </Button>
               
               <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                variant="gradient-purple"
+                size="default"
+                className="w-full"
                 onClick={handleDownloadContent}
                 disabled={isDownloading}
               >
@@ -234,7 +261,9 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
               
               {contentHash.startsWith("ipfs://") && (
                 <Button 
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  variant="gradient-subtle"
+                  size="default"
+                  className="w-full"
                   onClick={handlePinContent}
                   disabled={isPinned || isPinning}
                 >

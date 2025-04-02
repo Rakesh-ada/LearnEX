@@ -48,22 +48,22 @@ export function generateSecureToken(
  * 
  * @param contentHash - The IPFS content hash
  * @param type - The content type (pdf, video, etc.)
+ * @param userId - The user's wallet address
  * @param expiryMinutes - Optional expiry time in minutes (default: 60 minutes)
  * @returns The secure content URL
  */
 export function getSecureContentUrl(
   contentHash: string,
   type: string,
+  userId: string,
   expiryMinutes: number = 60
 ): string {
-  const { currentAccount } = useWallet();
-  
-  if (!currentAccount) {
-    throw new Error('Wallet must be connected to generate secure content URL');
+  if (!userId) {
+    throw new Error('User ID (wallet address) is required to generate secure content URL');
   }
   
   try {
-    const token = generateSecureToken(contentHash, type, currentAccount, expiryMinutes);
+    const token = generateSecureToken(contentHash, type, userId, expiryMinutes);
     return `/api/secure-content?token=${encodeURIComponent(token)}`;
   } catch (error) {
     console.error('Error generating secure content URL:', error);
@@ -91,7 +91,7 @@ export function useSecureContentUrl(
   }
   
   try {
-    const url = getSecureContentUrl(contentHash, type, expiryMinutes);
+    const url = getSecureContentUrl(contentHash, type, currentAccount, expiryMinutes);
     return { url, error: null };
   } catch (error) {
     console.error('Error generating secure content URL:', error);
