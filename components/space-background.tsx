@@ -225,22 +225,9 @@ function SpaceBackgroundContent({
     for (let i = 0; i < nebulaCount; i++) {
       // Use more complex geometry for nebulae
       const nebulaSize = Math.random() * 12 + 8 // Make them larger
-      let nebulaGeometry
       
-      // Create different types of nebula shapes
-      const nebulaType = Math.floor(Math.random() * 3)
-      if (nebulaType === 0) {
-        // Sphere nebula
-        nebulaGeometry = new THREE.SphereGeometry(nebulaSize, 32, 32)
-      } else if (nebulaType === 1) {
-        // Torus nebula (ring-like)
-        const torusRadius = nebulaSize * 0.7
-        const tubeRadius = nebulaSize * 0.3
-        nebulaGeometry = new THREE.TorusGeometry(torusRadius, tubeRadius, 16, 50)
-      } else {
-        // Icosahedron (more crystalline structure)
-        nebulaGeometry = new THREE.IcosahedronGeometry(nebulaSize, 1)
-      }
+      // Create icosahedron (crystalline structure) for all nebulae
+      const nebulaGeometry = new THREE.IcosahedronGeometry(nebulaSize, 2) // Increase detail level
 
       // Create a more interesting material with vibrant blue/purple colors
       let nebulaColor;
@@ -269,7 +256,7 @@ function SpaceBackgroundContent({
       const nebulaMaterial = new THREE.MeshBasicMaterial({
         color: nebulaColor,
         transparent: true,
-        opacity: 0.1 + Math.random() * 0.07, // Slightly more visible
+        opacity: 0.15 + Math.random() * 0.1, // Increased opacity for better visibility
         wireframe: true,
         // Use different wireframe densities
         wireframeLinewidth: 0.5 + Math.random() * 0.5,
