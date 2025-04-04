@@ -24,15 +24,23 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
   const [secureContentUrl, setSecureContentUrl] = useState<string | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const [isMobileDevice, setIsMobileDevice] = useState(false)
+  const [hasMetaMask, setHasMetaMask] = useState(false)
 
-  // Detect mobile device on component mount
+  // Detect mobile device and MetaMask on component mount
   useEffect(() => {
     const checkMobile = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
       return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
     };
     
+    const checkMetaMask = () => {
+      return typeof window !== 'undefined' && 
+        typeof window.ethereum !== 'undefined' && 
+        (window.ethereum.isMetaMask || false);
+    };
+    
     setIsMobileDevice(checkMobile());
+    setHasMetaMask(checkMetaMask());
   }, []);
 
   useEffect(() => {
@@ -109,6 +117,33 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
 
   const handleConnect = async () => {
     try {
+      // If MetaMask isn't installed, redirect to download page
+      if (!hasMetaMask) {
+        if (isMobileDevice) {
+          // Check if on Android or iOS
+          const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+          const isAndroid = /android/i.test(userAgent.toLowerCase());
+          
+          if (isAndroid) {
+            // Redirect to Google Play Store for MetaMask
+            window.location.href = "https://play.google.com/store/apps/details?id=io.metamask";
+          } else {
+            // Redirect to App Store for MetaMask
+            window.location.href = "https://apps.apple.com/us/app/metamask-blockchain-wallet/id1438144202";
+          }
+          return;
+        } else {
+          // Redirect to MetaMask website for browser extension
+          window.open("https://metamask.io/download/", "_blank");
+          toast({
+            title: "MetaMask Required",
+            description: "Please install the MetaMask extension and refresh this page.",
+          });
+          return;
+        }
+      }
+      
+      // If MetaMask is installed, proceed with connection
       await connect();
       toast({
         title: "Wallet Connected",
@@ -271,7 +306,9 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
         ) : !currentAccount ? (
           <div className="space-y-4">
             <p className="text-sm text-white/80">
-              Please connect your wallet to view this content.
+              {!hasMetaMask 
+                ? "You need MetaMask to view this content."
+                : "Please connect your wallet to view this content."}
             </p>
             
             <div className="flex flex-col gap-2">
@@ -283,10 +320,25 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
                 disabled={isConnecting}
               >
                 <Wallet className="mr-2 h-4 w-4" />
-                {isConnecting ? "Connecting..." : `Connect ${isMobileDevice ? "Mobile " : ""}Wallet`}
+                {isConnecting 
+                  ? "Connecting..." 
+                  : !hasMetaMask
+                    ? `Install MetaMask${isMobileDevice ? " App" : ""}`
+                    : `Connect ${isMobileDevice ? "Mobile " : ""}Wallet`}
               </Button>
               
-              {isMobileDevice && (
+              {!hasMetaMask && (
+                <div className="rounded-md bg-slate-800/70 p-3 mt-2 text-xs text-slate-300">
+                  <p className="mb-1">
+                    {isMobileDevice
+                      ? "You'll be redirected to the app store to install MetaMask."
+                      : "You'll be redirected to the MetaMask website to install the browser extension."}
+                  </p>
+                  <p>After installation, please return to this page and refresh.</p>
+                </div>
+              )}
+              
+              {isMobileDevice && hasMetaMask && (
                 <p className="text-xs text-center text-purple-300 mt-1">
                   Your mobile wallet app will open automatically
                 </p>
