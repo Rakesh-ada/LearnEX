@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, FileText, Video, Download } from "lucide-react"
+import { Loader2, FileText, Video, Download, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import { useWallet } from "@/hooks/use-wallet"
-import { pinByHash, isValidIPFSCid, fetchFromIPFS } from "@/lib/pinning-service"
-import { getSecureContentUrl } from "@/lib/secure-content"
+import { pinByHash, isValidIPFSCid } from "@/lib/pinning-service"
 
 interface ContentViewerProps {
   contentHash: string
@@ -16,18 +15,31 @@ interface ContentViewerProps {
 }
 
 export default function ContentViewer({ contentHash, title, type, onClose }: ContentViewerProps) {
-  const { currentAccount } = useWallet()
+  const { currentAccount, connect, isConnecting } = useWallet()
   const [isLoading, setIsLoading] = useState(true)
   const [isValidIpfs, setIsValidIpfs] = useState(false)
   const [isPinning, setIsPinning] = useState(false)
   const [isPinned, setIsPinned] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [secureContentUrl, setSecureContentUrl] = useState<string | null>(null)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [isMobileDevice, setIsMobileDevice] = useState(false)
+
+  // Detect mobile device on component mount
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    };
+    
+    setIsMobileDevice(checkMobile());
+  }, []);
 
   useEffect(() => {
     const initializeContent = async () => {
       try {
         setIsLoading(true)
+        setAuthError(null)
         
         if (!currentAccount) {
           toast({
@@ -38,25 +50,50 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
           return;
         }
         
-        // Check if the hash is an IPFS hash
-        if (contentHash.startsWith("ipfs://")) {
-          // Validate CID
-          const isValidCid = isValidIPFSCid(contentHash)
-          setIsValidIpfs(isValidCid)
+        console.log("Initializing content with hash:", contentHash);
+        
+        // Check if the hash is valid
+        if (!contentHash) {
+          setAuthError("Missing content hash");
+          return;
+        }
+        
+        // Validate the IPFS hash and prepare for direct access
+        const isValidCid = isValidIPFSCid(contentHash)
+        console.log("Is valid CID:", isValidCid);
+        setIsValidIpfs(isValidCid)
+        
+        if (!isValidCid) {
+          setAuthError("Invalid content hash format");
+          return;
+        }
+        
+        try {
+          // Extract the CID from the content hash
+          const normalizedHash = contentHash.startsWith('ipfs://') 
+            ? contentHash.substring(7) 
+            : contentHash;
           
-          if (isValidCid) {
-            // Generate secure URL
-            const secureUrl = getSecureContentUrl(contentHash, type, currentAccount)
-            setSecureContentUrl(secureUrl)
-            
-            // For PDFs, open directly in Chrome's viewer
-            if (type === "pdf") {
-              window.open(secureUrl, "_blank")
-            }
+          // Generate direct URL to IPFS gateway
+          const directUrl = `https://gateway.ipfs.io/ipfs/${normalizedHash}`;
+          console.log("Generated direct URL:", directUrl);
+          setSecureContentUrl(directUrl);
+          
+          // For PDFs, open directly in Chrome's viewer
+          if (type === "pdf") {
+            window.open(directUrl, "_blank");
           }
+        } catch (error) {
+          console.error("Content access error:", error);
+          setAuthError("Failed to access content. Please try again.");
+          toast({
+            title: "Error Accessing Content",
+            description: error instanceof Error ? error.message : "Unknown error",
+            variant: "destructive",
+          });
         }
       } catch (err) {
-        console.error("Error initializing content:", err)
+        console.error("Error initializing content:", err);
         toast({
           title: "Error",
           description: "Failed to initialize content viewer.",
@@ -69,6 +106,28 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
 
     initializeContent()
   }, [contentHash, title, type, currentAccount])
+
+  const handleConnect = async () => {
+    try {
+      await connect();
+      toast({
+        title: "Wallet Connected",
+        description: "Your wallet has been connected successfully.",
+      });
+    } catch (error) {
+      console.error("Wallet connection error:", error);
+      toast({
+        title: "Connection Failed",
+        description: "Failed to connect your wallet. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }
+
+  const handleSignIn = () => {
+    // Redirect to sign in page
+    window.location.href = `/auth/signin?redirect=${encodeURIComponent(window.location.pathname)}`
+  }
 
   const handleOpenInChrome = () => {
     if (secureContentUrl) {
@@ -93,9 +152,20 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
     try {
       setIsDownloading(true)
       
-      if (contentHash.startsWith("ipfs://") && isValidIpfs) {
-        // Fetch the actual content from IPFS
-        const blob = await fetchFromIPFS(contentHash)
+      if (isValidIpfs) {
+        // Get the normalized hash
+        const normalizedHash = contentHash.startsWith('ipfs://') 
+          ? contentHash.substring(7) 
+          : contentHash;
+        
+        // Fetch directly from IPFS gateway
+        const response = await fetch(`https://gateway.ipfs.io/ipfs/${normalizedHash}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch content: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
         
         // Determine the file extension based on the content type
         let fileExtension = '.txt'
@@ -203,8 +273,44 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
             <p className="text-sm text-white/80">
               Please connect your wallet to view this content.
             </p>
+            
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="cursor-style"
+                size="default"
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                onClick={handleConnect}
+                disabled={isConnecting}
+              >
+                <Wallet className="mr-2 h-4 w-4" />
+                {isConnecting ? "Connecting..." : `Connect ${isMobileDevice ? "Mobile " : ""}Wallet`}
+              </Button>
+              
+              {isMobileDevice && (
+                <p className="text-xs text-center text-purple-300 mt-1">
+                  Your mobile wallet app will open automatically
+                </p>
+              )}
+              
+              <Button 
+                variant="outline"
+                size="default"
+                className="w-full mt-2"
+                onClick={onClose}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : authError ? (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-red-900/20 p-3 border border-red-900/40">
+              <p className="text-sm text-white/80">
+                {authError}
+              </p>
+            </div>
             <Button 
-              variant="cursor-style"
+              variant="outline"
               size="default"
               className="w-full"
               onClick={onClose}
@@ -216,10 +322,10 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
           <div className="space-y-4">
             <p className="text-sm text-white/80">
               {type === "pdf" 
-                ? "The PDF has been opened in Chrome's built-in PDF viewer. If it didn't open, click the button below."
+                ? "PDF opened in new tab. Click below if it didn't open automatically."
                 : type === "video"
-                ? "Click below to view or download this video content."
-                : "Click below to view or download this content."}
+                ? "View or download your video content."
+                : "View or download your content."}
             </p>
             
             <div className="flex flex-col gap-2">
@@ -233,17 +339,17 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
                 {type === "pdf" ? (
                   <>
                     <FileText className="mr-2 h-4 w-4" />
-                    Open PDF in Chrome
+                    Open in Browser
                   </>
                 ) : type === "video" ? (
                   <>
                     <Video className="mr-2 h-4 w-4" />
-                    Open Video
+                    View Video
                   </>
                 ) : (
                   <>
                     <FileText className="mr-2 h-4 w-4" />
-                    Open Content
+                    View Content
                   </>
                 )}
               </Button>
@@ -256,10 +362,10 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
                 disabled={isDownloading}
               >
                 <Download className="mr-2 h-4 w-4" />
-                {isDownloading ? "Downloading..." : `Download ${type.toUpperCase()}`}
+                {isDownloading ? "Downloading..." : "Download to Device"}
               </Button>
               
-              {contentHash.startsWith("ipfs://") && (
+              {isValidIpfs && (
                 <Button 
                   variant="gradient-subtle"
                   size="default"
@@ -268,7 +374,7 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
                   disabled={isPinned || isPinning}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  {isPinned ? "Saved" : isPinning ? "Saving..." : "Save for Offline"}
+                  {isPinned ? "Saved Successfully" : isPinning ? "Saving..." : "Save for Offline"}
                 </Button>
               )}
             </div>

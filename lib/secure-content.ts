@@ -7,6 +7,23 @@ import { useWallet } from '@/hooks/use-wallet';
  */
 
 /**
+ * Normalizes an IPFS content hash to a consistent format
+ * Handles both ipfs:// and direct CID formats
+ * 
+ * @param contentHash - The IPFS content hash in any format
+ * @returns The normalized content hash
+ */
+function normalizeContentHash(contentHash: string): string {
+  // Remove ipfs:// prefix if present
+  if (contentHash.startsWith('ipfs://')) {
+    return contentHash;
+  }
+  
+  // Add ipfs:// prefix if not present
+  return `ipfs://${contentHash}`;
+}
+
+/**
  * Generates a secure access token for content
  * The token is an encrypted JSON object containing the content hash, user ID, and expiry time
  * 
@@ -26,12 +43,15 @@ export function generateSecureToken(
     throw new Error('Missing required parameters for token generation');
   }
 
+  // Normalize the content hash
+  const normalizedContentHash = normalizeContentHash(contentHash);
+  
   // Calculate expiry time
   const expiry = new Date(Date.now() + expiryMinutes * 60 * 1000).toISOString();
   
   // Create token data
   const tokenData = {
-    contentHash,
+    contentHash: normalizedContentHash,
     type,
     expiry,
     userId,
@@ -39,8 +59,13 @@ export function generateSecureToken(
     nonce: Math.random().toString(36).substring(2, 15)
   };
   
-  // Encrypt token data
-  return encrypt(JSON.stringify(tokenData));
+  try {
+    // Encrypt token data
+    return encrypt(JSON.stringify(tokenData));
+  } catch (error) {
+    console.error('Error encrypting token data:', error);
+    throw new Error('Failed to generate secure token');
+  }
 }
 
 /**
@@ -60,6 +85,10 @@ export function getSecureContentUrl(
 ): string {
   if (!userId) {
     throw new Error('User ID (wallet address) is required to generate secure content URL');
+  }
+  
+  if (!contentHash) {
+    throw new Error('Content hash is required to generate secure content URL');
   }
   
   try {

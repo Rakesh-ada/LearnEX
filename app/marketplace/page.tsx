@@ -302,11 +302,82 @@ export default function MarketplacePage() {
 
               {!isLoading && !error && filteredItems.length === 0 && (
                 <div className="flex min-h-[400px] flex-col items-center justify-center rounded-lg border border-slate-800 bg-black/50 p-8 backdrop-blur-sm">
-                  <p className="text-center text-slate-400">
-                    {materials.length === 0 
-                      ? "No materials are currently listed in the marketplace." 
-                      : "No materials match your search criteria."}
-                  </p>
+                  {materials.length === 0 ? (
+                    <p className="text-center text-slate-400">
+                      No materials are currently listed in the marketplace.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <div className="mb-6 w-64 h-64">
+                        <svg className="w-full h-full" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          {/* Enhanced Search Results Not Found SVG */}
+                          {/* Large magnifying glass */}
+                          <circle cx="120" cy="120" r="50" stroke="#A855F7" strokeWidth="4" fill="#0F172A" fillOpacity="0.7" />
+                          <circle cx="120" cy="120" r="47" stroke="#6366F1" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="4 4" />
+                          <line x1="157" y1="157" x2="190" y2="190" stroke="#A855F7" strokeWidth="8" strokeLinecap="round" />
+                          <line x1="120" y1="90" x2="120" y2="150" stroke="#6366F1" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.4" />
+                          <line x1="90" y1="120" x2="150" y2="120" stroke="#6366F1" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.4" />
+                          
+                          {/* Handle of magnifying glass */}
+                          <path d="M185 185 L205 205" stroke="#8B5CF6" strokeWidth="6" strokeLinecap="round" />
+                          
+                          {/* Subtle glow around magnifying glass */}
+                          <circle cx="120" cy="120" r="55" fill="url(#purpleGlow)" fillOpacity="0.15" />
+                          
+                          {/* Expanded cosmic particle field */}
+                          <circle cx="40" cy="40" r="4" fill="#8B5CF6">
+                            <animate attributeName="opacity" values="0.4;1;0.4" dur="3s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="190" cy="60" r="5" fill="#A855F7">
+                            <animate attributeName="opacity" values="0.5;1;0.5" dur="2.5s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="220" cy="140" r="3" fill="#6366F1">
+                            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="4s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="30" cy="170" r="4" fill="#EC4899">
+                            <animate attributeName="opacity" values="0.3;0.9;0.3" dur="3.2s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="160" cy="30" r="5" fill="#8B5CF6">
+                            <animate attributeName="opacity" values="0.4;1;0.4" dur="2.8s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="70" cy="210" r="3" fill="#6366F1">
+                            <animate attributeName="opacity" values="0.5;1;0.5" dur="3.5s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="210" cy="210" r="4" fill="#A855F7">
+                            <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2.7s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx="20" cy="100" r="3" fill="#EC4899">
+                            <animate attributeName="opacity" values="0.4;0.8;0.4" dur="3.3s" repeatCount="indefinite" />
+                          </circle>
+                          
+                          {/* Additional animated sparkles */}
+                          <path d="M195 75L197 80L202 82L197 84L195 89L193 84L188 82L193 80L195 75Z" fill="#8B5CF6">
+                            <animate attributeName="opacity" values="0.3;1;0.3" dur="3s" repeatCount="indefinite" />
+                          </path>
+                          <path d="M65 30L67 35L72 37L67 39L65 44L63 39L58 37L63 35L65 30Z" fill="#EC4899">
+                            <animate attributeName="opacity" values="0.4;1;0.4" dur="4s" repeatCount="indefinite" />
+                          </path>
+                          <path d="M170 200L172 205L177 207L172 209L170 214L168 209L163 207L168 205L170 200Z" fill="#6366F1">
+                            <animate attributeName="opacity" values="0.5;1;0.5" dur="3.5s" repeatCount="indefinite" />
+                          </path>
+                          <path d="M35 210L37 215L42 217L37 219L35 224L33 219L28 217L33 215L35 210Z" fill="#A855F7">
+                            <animate attributeName="opacity" values="0.4;0.9;0.4" dur="2.8s" repeatCount="indefinite" />
+                          </path>
+                          <path d="M110 25L112 30L117 32L112 34L110 39L108 34L103 32L108 30L110 25Z" fill="#6366F1">
+                            <animate attributeName="opacity" values="0.3;0.8;0.3" dur="3.2s" repeatCount="indefinite" />
+                          </path>
+                          
+                          {/* Gradient definitions */}
+                          <defs>
+                            <radialGradient id="purpleGlow" cx="0.5" cy="0.5" r="0.5" gradientUnits="objectBoundingBox">
+                              <stop offset="0%" stopColor="#A855F7" />
+                              <stop offset="100%" stopColor="#A855F7" stopOpacity="0" />
+                            </radialGradient>
+                          </defs>
+                        </svg>
+                      </div>
+                    </div>
+                  )}
                   {!currentAccount && materials.length === 0 && (
                     <p className="mt-4 text-center text-slate-400">
                       Connect your wallet to list your own study materials.

@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidIPFSCid, fetchFromIPFS } from '@/lib/pinning-service';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { encrypt, decrypt } from '@/lib/encryption';
 import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * Secure Content Proxy API
  * This API acts as a proxy to serve IPFS content without exposing the underlying CID.
- * It uses an encrypted token-based system with user authentication for security.
+ * It uses an encrypted token-based system with wallet authentication for security.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -21,15 +19,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
         { status: 429 }
-      );
-    }
-
-    // Check user authentication
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.address) {
-      return NextResponse.json(
-        { error: 'Please sign in to access this content.' },
-        { status: 401 }
       );
     }
 
@@ -66,10 +55,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Validate user ownership
-    if (userId.toLowerCase() !== session.user.address.toLowerCase()) {
+    // Note: We no longer validate against a session - just check that we have wallet address
+    if (!userId) {
       return NextResponse.json(
-        { error: 'You do not have permission to access this content.' },
+        { error: 'Invalid wallet address in token.' },
         { status: 403 }
       );
     }
