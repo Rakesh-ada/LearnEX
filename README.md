@@ -52,13 +52,14 @@ Study Marketplace allows creators to list educational materials on the blockchai
 4. Update the `.env.local` file with your contract address and Pinata API keys:
    ```
    # Contract Information
-   NEXT_PUBLIC_CONTRACT_ADDRESS=0x775FeDAACfa5976E366A341171F3A59bcce383d0
+   NEXT_PUBLIC_CONTRACT_ADDRESS=0xe12D1e1698d7E07206b5C6C49466631c4dDfbF1B
    NEXT_PUBLIC_CHAIN_ID=656476  # edu-chain network ID
 
    # IPFS Configuration
    NEXT_PUBLIC_PINATA_API_KEY=your_pinata_api_key
-   NEXT_PUBLIC_PINATA_SECRET_API_KEY=your_pinata_secret_key
+   NEXT_PUBLIC_PINATA_API_SECRET=your_pinata_api_secret
    NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt
+   NEXT_PUBLIC_PLATFORM_FEE_PERCENT=2.5
    ```
 
 ### Deployment to GitHub
@@ -78,13 +79,14 @@ If you plan to deploy this project to GitHub Pages or use GitHub Actions for CI/
      NEXT_PUBLIC_PINATA_API_KEY: ${{ secrets.NEXT_PUBLIC_PINATA_API_KEY }}
      NEXT_PUBLIC_PINATA_API_SECRET: ${{ secrets.NEXT_PUBLIC_PINATA_API_SECRET }}
      NEXT_PUBLIC_PINATA_JWT: ${{ secrets.NEXT_PUBLIC_PINATA_JWT }}
-     NEXT_PUBLIC_CONTRACT_ADDRESS: "0x775FeDAACfa5976E366A341171F3A59bcce383d0"
+     NEXT_PUBLIC_CONTRACT_ADDRESS: "0xe12D1e1698d7E07206b5C6C49466631c4dDfbF1B"
      NEXT_PUBLIC_CHAIN_ID: "656476"
+     NEXT_PUBLIC_PLATFORM_FEE_PERCENT: "2.5"
    ```
 
 ### Smart Contract Deployment
 
-The contract is currently deployed at address `0x775FeDAACfa5976E366A341171F3A59bcce383d0` on the edu-chain network.
+The contract is currently deployed at address `0xe12D1e1698d7E07206b5C6C49466631c4dDfbF1B` on the edu-chain network.
 
 If you need to deploy your own contract:
 

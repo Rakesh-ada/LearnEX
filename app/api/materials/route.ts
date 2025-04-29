@@ -132,7 +132,6 @@ export async function POST(request: NextRequest) {
         category,
         contentHashStr,
         previewHashStr,
-        thumbnailHashStr,
         price
       );
       

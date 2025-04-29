@@ -2,12 +2,11 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title StudyMarketplace
- * @dev Smart contract for a decentralized study material marketplace
- * @notice Current contract address: 0xe12D1e1698d7E07206b5C6C49466631c4dDfbF1B
- * @notice ABI Version: 1.0.0
+ * @title SchoolLibrary
+ * @dev Smart contract for a school library with restricted upload permissions
+ * @notice This contract maintains the same ABI as StudyMarketplace for compatibility
  */
-contract StudyMarketplace {
+contract SchoolLibrary {
     // Struct to represent a study material
     struct StudyMaterial {
         uint256 id;
@@ -35,7 +34,7 @@ contract StudyMarketplace {
     // Platform fee percentage (in basis points, 100 = 1%)
     uint256 public platformFeePercent = 250; // 2.5%
     
-    // Platform fee recipient address
+    // Platform fee recipient address (contract owner/school library admin)
     address payable public platformFeeRecipient;
     
     // Mapping from material ID to StudyMaterial
@@ -60,7 +59,7 @@ contract StudyMarketplace {
     event MaterialRemoved(uint256 indexed id);
     
     /**
-     * @dev Constructor sets the platform fee recipient
+     * @dev Constructor sets the platform fee recipient (owner)
      */
     constructor(address payable _platformFeeRecipient) {
         platformFeeRecipient = _platformFeeRecipient;
@@ -68,7 +67,7 @@ contract StudyMarketplace {
     }
     
     /**
-     * @dev List a new study material
+     * @dev List a new study material - restricted to contract owner
      */
     function listMaterial(
         string memory _title,
@@ -78,6 +77,8 @@ contract StudyMarketplace {
         string memory _previewHash,
         uint256 _price
     ) external returns (uint256) {
+        // Only allow contract owner (school library admin) to list materials
+        require(msg.sender == platformFeeRecipient, "Only school library admin can upload materials");
         require(bytes(_title).length > 0, "Title cannot be empty");
         require(bytes(_contentHash).length > 0, "Content hash cannot be empty");
         
@@ -86,7 +87,7 @@ contract StudyMarketplace {
         
         materials[materialId] = StudyMaterial({
             id: materialId,
-            owner: payable(msg.sender),
+            owner: payable(platformFeeRecipient), // Always set owner to admin
             title: _title,
             description: _description,
             category: _category,
@@ -97,10 +98,10 @@ contract StudyMarketplace {
             createdAt: block.timestamp
         });
         
-        ownedMaterials[msg.sender].push(materialId);
+        ownedMaterials[platformFeeRecipient].push(materialId);
         allMaterialIds.push(materialId);
         
-        emit MaterialListed(materialId, msg.sender, _title, _price);
+        emit MaterialListed(materialId, platformFeeRecipient, _title, _price);
         
         return materialId;
     }
@@ -128,17 +129,12 @@ contract StudyMarketplace {
         // For paid content
         require(msg.value >= material.price, "Insufficient payment");
         
-        // Calculate platform fee
-        uint256 platformFee = (material.price * platformFeePercent) / 10000;
-        uint256 sellerAmount = material.price - platformFee;
+        // Calculate platform fee - in this case, the entire payment goes to the school library
+        uint256 platformFee = material.price;
         
-        // Direct transfer to platform fee recipient
+        // Direct transfer to platform fee recipient (school library)
         (bool platformFeeSent, ) = platformFeeRecipient.call{value: platformFee}("");
-        require(platformFeeSent, "Failed to send platform fee");
-        
-        // Direct transfer to material owner
-        (bool sellerPaid, ) = material.owner.call{value: sellerAmount}("");
-        require(sellerPaid, "Failed to send payment to seller");
+        require(platformFeeSent, "Failed to send payment to school library");
         
         // Refund excess payment
         if (msg.value > material.price) {
@@ -154,7 +150,7 @@ contract StudyMarketplace {
     }
     
     /**
-     * @dev Update a study material's details
+     * @dev Update a study material's details - restricted to contract owner
      */
     function updateMaterial(
         uint256 _materialId,
@@ -164,7 +160,8 @@ contract StudyMarketplace {
     ) external {
         StudyMaterial storage material = materials[_materialId];
         
-        require(msg.sender == material.owner, "Only owner can update");
+        // Only allow contract owner to update materials
+        require(msg.sender == platformFeeRecipient, "Only school library admin can update materials");
         require(material.isActive, "Material is not active");
         require(bytes(_title).length > 0, "Title cannot be empty");
         
@@ -176,12 +173,13 @@ contract StudyMarketplace {
     }
     
     /**
-     * @dev Remove a study material from the marketplace
+     * @dev Remove a study material from the library - restricted to contract owner
      */
     function removeMaterial(uint256 _materialId) external {
         StudyMaterial storage material = materials[_materialId];
         
-        require(msg.sender == material.owner, "Only owner can remove");
+        // Only allow contract owner to remove materials
+        require(msg.sender == platformFeeRecipient, "Only school library admin can remove materials");
         require(material.isActive, "Material is already inactive");
         
         material.isActive = false;
@@ -193,7 +191,7 @@ contract StudyMarketplace {
      * @dev Update platform fee percentage (only owner)
      */
     function updatePlatformFee(uint256 _newFeePercent) external {
-        require(msg.sender == platformFeeRecipient, "Only platform owner can update fee");
+        require(msg.sender == platformFeeRecipient, "Only school library admin can update fee");
         require(_newFeePercent <= 1000, "Fee cannot exceed 10%");
         
         platformFeePercent = _newFeePercent;
@@ -246,8 +244,8 @@ contract StudyMarketplace {
      */
     function getContentHash(uint256 _materialId) external view returns (string memory) {
         require(
-            msg.sender == materials[_materialId].owner || hasPurchased[msg.sender][_materialId],
-            "Only owner or purchaser can access content"
+            msg.sender == platformFeeRecipient || hasPurchased[msg.sender][_materialId],
+            "Only school library admin or purchaser can access content"
         );
         
         return materials[_materialId].contentHash;
@@ -330,5 +328,14 @@ contract StudyMarketplace {
             material.owner,
             materialExists
         );
+    }
+    
+    /**
+     * @dev Check if an address is authorized to upload materials
+     * @param _address The address to check
+     * @return True if address is authorized (only the owner), false otherwise
+     */
+    function isApprovedCreator(address _address) external view returns (bool) {
+        return _address == platformFeeRecipient;
     }
 } 

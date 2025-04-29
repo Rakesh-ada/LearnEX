@@ -2,8 +2,20 @@ import { ethers } from 'ethers';
 import { CONTRACT_ABI } from './contract-abi';
 import { isValidIPFSCid } from './pinning-service';
 
-// Deployed contract address from environment variable
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x775FeDAACfa5976E366A341171F3A59bcce383d0';
+// Deployed contract address from environment variable or default
+const DEFAULT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0xe12D1e1698d7E07206b5C6C49466631c4dDfbF1B';
+
+// Function to get the current contract address
+export const getCurrentContractAddress = (): string => {
+  if (typeof window !== 'undefined') {
+    // Try to get the current contract address from localStorage
+    const savedAddress = localStorage.getItem('currentContractAddress');
+    if (savedAddress) {
+      return savedAddress;
+    }
+  }
+  return DEFAULT_CONTRACT_ADDRESS;
+};
 
 /**
  * Get an ethers provider instance
@@ -23,11 +35,14 @@ export const getContract = async (withSigner = false) => {
   if (!provider) return null;
 
   try {
+    // Use the current contract address from context or localStorage
+    const contractAddress = getCurrentContractAddress();
+    
     if (withSigner) {
       const signer = await provider.getSigner();
-      return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+      return new ethers.Contract(contractAddress, CONTRACT_ABI, signer);
     } else {
-      return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      return new ethers.Contract(contractAddress, CONTRACT_ABI, provider);
     }
   } catch (error) {
     console.error('Error getting contract instance:', error);
@@ -44,12 +59,42 @@ export const listMaterialOnChain = async (
   category: string,
   contentHash: string,
   previewHash: string,
-  thumbnailHash: string,
   price: string
 ): Promise<number | null> => {
   try {
-    const contract = await getContract(true);
-    if (!contract) throw new Error('Contract not available');
+    // Get provider and signer directly for better control
+    const provider = getProvider();
+    if (!provider) throw new Error('Provider not available');
+
+    // Check network first
+    const network = await provider.getNetwork();
+    console.log('Connected to network:', {
+      name: network.name,
+      chainId: network.chainId.toString()
+    });
+
+    // Get signer with proper error handling
+    let signer;
+    try {
+      signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      console.log('Using signer address:', address);
+      
+      // Check balance
+      const balance = await provider.getBalance(address);
+      console.log('Account balance:', ethers.formatEther(balance), 'ETH');
+      
+      if (balance < ethers.parseEther('0.01')) {
+        console.warn('Warning: Account has low balance');
+      }
+    } catch (error) {
+      console.error('Error getting signer:', error);
+      throw new Error('Failed to get signer');
+    }
+
+    // Create contract instance directly
+    const contractAddress = getCurrentContractAddress();
+    const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, signer);
 
     // Convert price from ETH to wei
     const priceInWei = ethers.parseEther(price);
@@ -61,38 +106,45 @@ export const listMaterialOnChain = async (
     const safeContentHash = String(contentHash);
     const safePreviewHash = String(previewHash || '');
     
-    // Fix: Use a valid IPFS hash for default thumbnail
-    // This uses a real, pinned empty image as fallback instead of the placeholder text
-    const safeThumbnailHash = thumbnailHash && isValidIPFSCid(thumbnailHash) 
-      ? String(thumbnailHash) 
-      : "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
-
     console.log('Listing material with parameters:', {
       title: safeTitle,
       description: safeDescription,
       category: safeCategory,
       contentHash: safeContentHash,
       previewHash: safePreviewHash,
-      thumbnailHash: safeThumbnailHash,
       price: priceInWei.toString()
     });
 
     // Try to estimate gas first to check if the transaction will succeed
+    let gasEstimate;
     try {
-      const gasEstimate = await contract.listMaterial.estimateGas(
+      gasEstimate = await contract.listMaterial.estimateGas(
         safeTitle,
         safeDescription,
         safeCategory,
         safeContentHash,
         safePreviewHash,
-        safeThumbnailHash,
         priceInWei
       );
       console.log('Gas estimate:', gasEstimate.toString());
     } catch (estimateError) {
       console.error('Gas estimation failed:', estimateError);
-      // Continue anyway, but log the error
+      
+      // Extract more detailed error message
+      let errorMessage = 'Unknown error during gas estimation';
+      if (estimateError.error && estimateError.error.message) {
+        errorMessage = estimateError.error.message;
+      } else if (estimateError.message) {
+        errorMessage = estimateError.message;
+      }
+      
+      console.error(`Gas estimation failed: ${errorMessage}`);
+      // Continue anyway, with a higher gas limit
     }
+
+    // Use a higher gas limit than the estimate or a default high value
+    const gasLimit = gasEstimate ? BigInt(Number(gasEstimate) * 2) : BigInt(3000000);
+    console.log('Using gas limit:', gasLimit.toString());
 
     // Call the contract function with explicit gas limit
     const tx = await contract.listMaterial(
@@ -101,10 +153,9 @@ export const listMaterialOnChain = async (
       safeCategory,
       safeContentHash,
       safePreviewHash,
-      safeThumbnailHash,
       priceInWei,
       {
-        gasLimit: 3000000 // Set a high gas limit to ensure the transaction has enough gas
+        gasLimit
       }
     );
 
@@ -112,7 +163,7 @@ export const listMaterialOnChain = async (
 
     // Wait for the transaction to be mined
     const receipt = await tx.wait();
-    console.log('Transaction confirmed:', receipt);
+    console.log('Transaction confirmed in block:', receipt.blockNumber);
 
     // Find the MaterialListed event in the transaction receipt
     const event = receipt.logs
@@ -126,11 +177,26 @@ export const listMaterialOnChain = async (
       })[0];
 
     // Return the material ID from the event
-    return event ? Number(event.id) : null;
+    if (event) {
+      console.log('Material listed with ID:', event.id.toString());
+      return Number(event.id);
+    } else {
+      console.warn('Transaction succeeded but no MaterialListed event found');
+      return null;
+    }
   } catch (error: any) {
     console.error('Error listing material on chain:', error);
     
     // Try to get more detailed error information
+    let errorMessage = 'Unknown error during transaction';
+    if (error.error && error.error.message) {
+      errorMessage = error.error.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    console.error(`Transaction failed: ${errorMessage}`);
+    
     if (error.transaction) {
       console.error('Transaction data:', error.transaction);
     }
@@ -376,7 +442,7 @@ export const verifyContract = async (): Promise<boolean> => {
     try {
       const contractAddress = await contract.getContractAddress();
       console.log('Contract address from contract:', contractAddress);
-      console.log('Expected contract address:', CONTRACT_ADDRESS);
+      console.log('Expected contract address:', DEFAULT_CONTRACT_ADDRESS);
     } catch (error) {
       console.warn('Could not get contract address, but continuing anyway');
     }
@@ -483,17 +549,17 @@ export const testContractConnection = async (): Promise<{ success: boolean, mess
     
     // Step 2: Check if contract code exists at the address
     try {
-      const code = await provider.getCode(CONTRACT_ADDRESS);
+      const code = await provider.getCode(DEFAULT_CONTRACT_ADDRESS);
       if (code === '0x') {
         return { 
           success: false, 
-          message: `No contract code found at address ${CONTRACT_ADDRESS} on network ${network.name}. The contract might not be deployed on this network.`, 
+          message: `No contract code found at address ${DEFAULT_CONTRACT_ADDRESS} on network ${network.name}. The contract might not be deployed on this network.`, 
           details: {
             network: {
               name: network.name,
               chainId: network.chainId.toString()
             },
-            contractAddress: CONTRACT_ADDRESS,
+            contractAddress: DEFAULT_CONTRACT_ADDRESS,
             code: 'No code found'
           } 
         };
@@ -523,15 +589,15 @@ export const testContractConnection = async (): Promise<{ success: boolean, mess
     try {
       contractAddress = await contract.getContractAddress();
       console.log('Contract address from contract:', contractAddress);
-      console.log('Expected contract address:', CONTRACT_ADDRESS);
+      console.log('Expected contract address:', DEFAULT_CONTRACT_ADDRESS);
       
-      if (contractAddress.toLowerCase() !== CONTRACT_ADDRESS.toLowerCase()) {
+      if (contractAddress.toLowerCase() !== DEFAULT_CONTRACT_ADDRESS.toLowerCase()) {
         console.warn('Contract address mismatch!');
         return { 
           success: false, 
-          message: `Contract address mismatch! Expected: ${CONTRACT_ADDRESS}, Got: ${contractAddress}`, 
+          message: `Contract address mismatch! Expected: ${DEFAULT_CONTRACT_ADDRESS}, Got: ${contractAddress}`, 
           details: {
-            expected: CONTRACT_ADDRESS,
+            expected: DEFAULT_CONTRACT_ADDRESS,
             actual: contractAddress
           } 
         };
@@ -586,9 +652,8 @@ export const testContractConnection = async (): Promise<{ success: boolean, mess
       'getMyListedMaterials',
       'getMyPurchasedMaterials',
       'getMaterialDetails',
-      'getContentHash',
-      'getThumbnailHash',
-      'getMaterialThumbnailInfo'
+      'getContentHash'
+      // getThumbnailHash removed as it's no longer expected
     ];
     
     const missingFunctions = [];
@@ -619,7 +684,7 @@ export const testContractConnection = async (): Promise<{ success: boolean, mess
         console.log('listMaterial parameters:', listMaterialFunction.inputs.map((input: any) => `${input.name}: ${input.type}`));
         
         // Check if the function has the expected number of parameters
-        const expectedParamCount = 7; // title, description, category, contentHash, previewHash, thumbnailHash, price
+        const expectedParamCount = 6; // title, description, category, contentHash, previewHash, price
         if (listMaterialFunction.inputs.length !== expectedParamCount) {
           return { 
             success: false, 
@@ -647,7 +712,6 @@ export const testContractConnection = async (): Promise<{ success: boolean, mess
         "Test Category",
         "ipfs://test-content-hash",
         "ipfs://test-preview-hash",
-        "ipfs://test-thumbnail-hash",
         ethers.parseEther("0.01")
       );
       console.log('Static call to listMaterial succeeded!');
@@ -688,7 +752,6 @@ export const debugContractTransaction = async (
   category: string,
   contentHash: string,
   previewHash: string,
-  thumbnailHash: string,
   price: string
 ): Promise<any> => {
   try {
@@ -727,12 +790,12 @@ export const debugContractTransaction = async (
     
     console.log('Step 3: Checking contract code at address');
     try {
-      const code = await provider.getCode(CONTRACT_ADDRESS);
+      const code = await provider.getCode(DEFAULT_CONTRACT_ADDRESS);
       if (code === '0x') {
-        console.error('No contract found at address:', CONTRACT_ADDRESS);
+        console.error('No contract found at address:', DEFAULT_CONTRACT_ADDRESS);
         return { 
           success: false, 
-          error: `No contract code at address ${CONTRACT_ADDRESS} on network ${network.name} (${network.chainId})` 
+          error: `No contract code at address ${DEFAULT_CONTRACT_ADDRESS} on network ${network.name} (${network.chainId})` 
         };
       }
       console.log('Contract code exists at address');
@@ -742,7 +805,7 @@ export const debugContractTransaction = async (
     }
     
     console.log('Step 4: Creating contract instance');
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    const contract = new ethers.Contract(DEFAULT_CONTRACT_ADDRESS, CONTRACT_ABI, signer);
     
     console.log('Step 5: Preparing transaction parameters');
     // Convert price from ETH to wei
@@ -755,7 +818,6 @@ export const debugContractTransaction = async (
       category,
       contentHash,
       previewHash,
-      thumbnailHash,
       price: priceInWei.toString()
     });
     
@@ -768,7 +830,6 @@ export const debugContractTransaction = async (
         category,
         contentHash,
         previewHash,
-        thumbnailHash,
         priceInWei
       );
       console.log('Gas estimate:', gasEstimate.toString());
@@ -804,7 +865,6 @@ export const debugContractTransaction = async (
         category,
         contentHash,
         previewHash,
-        thumbnailHash,
         priceInWei,
         {
           gasLimit
@@ -886,16 +946,16 @@ export const verifyContractABI = async (): Promise<any> => {
     });
     
     // Check if contract exists at the address
-    const code = await provider.getCode(CONTRACT_ADDRESS);
+    const code = await provider.getCode(DEFAULT_CONTRACT_ADDRESS);
     if (code === '0x') {
       return { 
         success: false, 
-        error: `No contract code at address ${CONTRACT_ADDRESS} on network ${network.name} (${network.chainId})` 
+        error: `No contract code at address ${DEFAULT_CONTRACT_ADDRESS} on network ${network.name} (${network.chainId})` 
       };
     }
     
     // Create contract instance
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+    const contract = new ethers.Contract(DEFAULT_CONTRACT_ADDRESS, CONTRACT_ABI, provider);
     
     // List of functions to check
     const functionsToCheck = [
@@ -905,7 +965,6 @@ export const verifyContractABI = async (): Promise<any> => {
       'getMyPurchasedMaterials',
       'getMaterialDetails',
       'getContentHash',
-      'getThumbnailHash',
       'getActiveMaterials'
     ];
     
@@ -963,5 +1022,104 @@ export const verifyContractABI = async (): Promise<any> => {
   } catch (error: any) {
     console.error('Error verifying contract ABI:', error);
     return { success: false, error: 'Error verifying contract ABI', details: error };
+  }
+};
+
+/**
+ * Check if current user can upload materials
+ * This can be used to verify if the contract restricts uploads to certain addresses
+ */
+export const canUploadMaterials = async (): Promise<boolean> => {
+  try {
+    const contract = await getContract(true);
+    if (!contract) return false;
+
+    // Get signer from provider instead of contract runner
+    const provider = getProvider();
+    if (!provider) return false;
+    
+    const signer = await provider.getSigner();
+    const userAddress = await signer.getAddress();
+    
+    console.log('Checking if user can upload materials:', userAddress);
+    
+    // STEP 1: First check if this is a SchoolLibrary contract by looking for isApprovedCreator
+    try {
+      if (typeof contract.isApprovedCreator === 'function') {
+        console.log('SchoolLibrary contract detected (has isApprovedCreator function)');
+        // This is a SchoolLibrary contract - only admins can upload
+        const isApproved = await contract.isApprovedCreator(userAddress);
+        console.log('User approval status for SchoolLibrary:', isApproved);
+        return isApproved;
+      }
+    } catch (error) {
+      console.log('No isApprovedCreator function found, not a SchoolLibrary contract');
+    }
+    
+    // STEP 2: Check platformFeeRecipient to further identify contract type
+    try {
+      if (typeof contract.platformFeeRecipient === 'function') {
+        const owner = await contract.platformFeeRecipient();
+        console.log('Contract owner/platformFeeRecipient:', owner);
+        
+        // Try to get contract version to check ABI compatibility
+        try {
+          const contractVersion = await contract.getContractVersion();
+          console.log('Contract version:', contractVersion);
+          
+          // If we get here and there's no isApprovedCreator, this should be a StudyMarketplace
+          console.log('StudyMarketplace contract detected (has getContractVersion but no isApprovedCreator)');
+          return true; // Allow uploads for StudyMarketplace
+        } catch (error) {
+          console.log('Error getting contract version, proceeding with further checks:', error);
+        }
+      }
+    } catch (error) {
+      console.log('Error checking platformFeeRecipient, proceeding with further checks:', error);
+    }
+    
+    // STEP 3: Final check - perform gas estimation to detect permission errors
+    try {
+      console.log('Attempting gas estimation as final permission check');
+      await contract.listMaterial.estimateGas(
+        "Test Title",
+        "Test Description",
+        "Test",
+        "ipfs://QmTest",
+        "ipfs://QmTest",
+        0 // 0 ETH price
+      );
+      
+      // If gas estimation succeeds, this means the user can upload
+      console.log('Gas estimation succeeded, user can upload');
+      return true;
+    } catch (error: any) {
+      console.error('Gas estimation failed. Checking error message:', error);
+      
+      const errorMsg = String(error).toLowerCase();
+      
+      // Check for specific error messages indicating permission issues
+      if (
+        errorMsg.includes('revert') && 
+        (
+          errorMsg.includes('not authorized') || 
+          errorMsg.includes('only owner') || 
+          errorMsg.includes('only school library admin') ||
+          errorMsg.includes('admin') ||
+          errorMsg.includes('permission')
+        )
+      ) {
+        console.log('Permission-related error detected, user cannot upload');
+        return false;
+      }
+      
+      // For other types of errors (not permission-related), default to allowing the attempt
+      console.log('Non-permission error detected, allowing upload attempt');
+      return true;
+    }
+  } catch (error) {
+    console.error('Unexpected error checking upload rights:', error);
+    // Be conservative - restrict uploads if we encounter an unexpected error
+    return false;
   }
 }; 

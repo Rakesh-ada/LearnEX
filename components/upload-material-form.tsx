@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Loader2, Upload, FileText, Video, AlertTriangle, Bug } from "lucide-react"
-import Loader from "@/components/ui/cube-loader"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -34,7 +33,7 @@ import {
   listMaterialWithFallback,
   verifyContractFunctions 
 } from "@/lib/blockchain"
-import { verifyContract, checkUserBalance, checkNetwork, switchToCorrectNetwork, testContractConnection } from "@/lib/contract"
+import { verifyContract, checkUserBalance, checkNetwork, switchToCorrectNetwork, testContractConnection, canUploadMaterials, getProvider, getContract } from "@/lib/contract"
 import { toast } from "@/hooks/use-toast"
 import { pinFileToIPFS } from "@/lib/pinning-service"
 
@@ -45,9 +44,9 @@ const formSchema = z.object({
   price: z.string().refine(
     (val) => {
       const num = parseFloat(val)
-      return !isNaN(num) && num > 0
+      return !isNaN(num) && num >= 0
     },
-    { message: "Price must be a positive number" }
+    { message: "Price must be a non-negative number" }
   ),
 })
 
@@ -69,6 +68,9 @@ export default function UploadMaterialForm() {
   const [contractTestResult, setContractTestResult] = useState<any>(null)
   const [isTestingSimplified, setIsTestingSimplified] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
+  const [canUpload, setCanUpload] = useState<boolean | null>(null)
+  const [isCheckingUploadRights, setIsCheckingUploadRights] = useState(false)
+  const [contractType, setContractType] = useState<string | null>(null)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -118,6 +120,38 @@ export default function UploadMaterialForm() {
             variant: "destructive",
           })
         }
+
+        // Detect contract type
+        await detectContractType();
+
+        // Check if user can upload materials
+        setIsCheckingUploadRights(true);
+        try {
+          const canUploadResult = await canUploadMaterials();
+          setCanUpload(canUploadResult);
+          
+          if (!canUploadResult) {
+            if (contractType === "SchoolLibrary") {
+              toast({
+                title: "School Library Mode",
+                description: "This contract is configured as a School Library. Only the administrator can upload materials.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Upload Restricted",
+                description: "Your account does not have permission to upload materials. The contract may restrict uploads to approved users only.",
+                variant: "destructive",
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error checking upload rights:", error);
+          // Default to allowing uploads if we can't determine
+          setCanUpload(true);
+        } finally {
+          setIsCheckingUploadRights(false);
+        }
       } catch (error) {
         console.error("Error verifying contract or checking network:", error)
         setContractVerified(false)
@@ -130,6 +164,110 @@ export default function UploadMaterialForm() {
       checkContractAndNetwork()
     }
   }, [currentAccount])
+
+  // New function to detect contract type with better error handling
+  const detectContractType = async () => {
+    try {
+      setIsCheckingUploadRights(true);
+      const provider = getProvider();
+      if (!provider) {
+        console.error("Provider not available");
+        setContractType("Unknown");
+        return;
+      }
+      
+      const contract = await getContract();
+      if (!contract) {
+        console.error("Contract not available");
+        setContractType("Unknown");
+        return;
+      }
+      
+      // Try to determine contract type
+      let detectedType = "Unknown";
+      let adminAddress = null;
+      
+      // Check if this is a school library contract
+      const hasIsApprovedCreator = typeof contract.isApprovedCreator === 'function';
+      
+      if (hasIsApprovedCreator) {
+        detectedType = "SchoolLibrary";
+        console.log("Detected contract type: School Library");
+        
+        // Check if current user is the admin
+        const signer = await provider.getSigner();
+        const userAddress = await signer.getAddress();
+        
+        try {
+          // Try to get platformFeeRecipient (admin address)
+          if (typeof contract.platformFeeRecipient === 'function') {
+            adminAddress = await contract.platformFeeRecipient();
+            console.log("Admin address:", adminAddress);
+          }
+          
+          const isAdmin = await contract.isApprovedCreator(userAddress);
+          console.log(`User is${isAdmin ? '' : ' not'} the admin of the School Library contract`);
+          
+          // Force check upload permissions
+          const canUploadResult = await canUploadMaterials();
+          setCanUpload(canUploadResult);
+          
+          if (!canUploadResult && isAdmin) {
+            // This is a serious error - the user should be able to upload but can't
+            console.error("Critical permission mismatch: User is admin but canUploadMaterials returned false");
+            toast({
+              title: "Permission Error",
+              description: "You appear to be the admin but upload permissions are restricted. Please enable debug mode and try the permission check.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error checking admin status:", error);
+        }
+      } else {
+        // Check for StudyMarketplace characteristics
+        try {
+          if (typeof contract.getContractVersion === 'function') {
+            const versionInfo = await contract.getContractVersion();
+            console.log("Contract version info:", versionInfo);
+            detectedType = "StudyMarketplace";
+            
+            // Force check upload permissions for marketplace too
+            const canUploadResult = await canUploadMaterials();
+            setCanUpload(canUploadResult);
+            
+            if (!canUploadResult) {
+              // This is unexpected - regular marketplace should allow uploads
+              console.error("Unexpected permission restriction in StudyMarketplace");
+              toast({
+                title: "Permission Warning",
+                description: "Upload appears to be restricted in a standard marketplace. Enable debug mode to troubleshoot.",
+                variant: "destructive",
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error checking contract version:", error);
+        }
+      }
+      
+      setContractType(detectedType);
+      
+      // Log contract detection results
+      console.log({
+        detectedContractType: detectedType,
+        hasIsApprovedCreatorFunction: hasIsApprovedCreator,
+        adminAddress: adminAddress || "Unknown",
+        uploadPermission: canUpload
+      });
+      
+    } catch (error) {
+      console.error("Error in detectContractType:", error);
+      setContractType("Unknown");
+    } finally {
+      setIsCheckingUploadRights(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -180,6 +318,15 @@ export default function UploadMaterialForm() {
         toast({
           title: "Wallet Not Connected",
           description: "Please connect your wallet to list a material",
+          variant: "destructive",
+        })
+        return
+      }
+
+      if (canUpload === false) {
+        toast({
+          title: "Upload Restricted",
+          description: "Your account does not have permission to upload materials.",
           variant: "destructive",
         })
         return
@@ -244,9 +391,7 @@ export default function UploadMaterialForm() {
         throw new Error("Failed to pin content to IPFS");
       }
 
-      // Default thumbnail using IPFS hash for SVG images
-      const thumbnailHash = "ipfs://QmWKXehzY7QpBt9Nh34GJ28Y4sHCUFDGJuP3Y5cM9oBZa3";
-      
+      // Generate a random preview hash for testing
       const previewHash = `ipfs://Qm${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
 
       try {
@@ -256,7 +401,6 @@ export default function UploadMaterialForm() {
           category: values.category,
           contentHash,
           previewHash,
-          thumbnailHash,
           price: values.price
         });
 
@@ -287,7 +431,6 @@ export default function UploadMaterialForm() {
           values.category,
           contentHash,
           previewHash,
-          thumbnailHash,
           values.price
         );
 
@@ -316,53 +459,17 @@ export default function UploadMaterialForm() {
         }
       } catch (error: any) {
         console.error("Error listing material on blockchain:", error);
-        let errorMessage = "There was an error listing your material on the blockchain.";
+        let txErrorMessage = "You don't have permission to upload materials, or there was an error in the transaction.";
         
         if (error.message) {
-          errorMessage += ` Error: ${error.message}`;
+          txErrorMessage += ` Error: ${error.message}`;
         }
         
         toast({
           title: "Blockchain Transaction Failed",
-          description: errorMessage,
+          description: txErrorMessage,
           variant: "destructive",
         });
-
-        toast({
-          title: "Trying Alternative Method",
-          description: "Attempting to list your material using a different method...",
-        });
-
-        try {
-          const debugResult = await debugListMaterial(
-            values.title,
-            values.description,
-            values.category,
-            contentHash,
-            previewHash,
-            thumbnailHash,
-            values.price
-          );
-
-          if (debugResult.success) {
-            toast({
-              title: "Material Listed Successfully",
-              description: `Your study material has been listed on the marketplace with ID: ${debugResult.materialId}`,
-            });
-            
-            form.reset();
-            setFile(null);
-          } else {
-            throw new Error(debugResult.error || "Failed to list material on the blockchain");
-          }
-        } catch (debugError: any) {
-          console.error("Debug listing also failed:", debugError);
-          toast({
-            title: "All Attempts Failed",
-            description: "We tried multiple methods to list your material, but all failed. Please try again later.",
-            variant: "destructive",
-          });
-        }
       }
     } catch (error) {
       console.error("Error uploading material:", error);
@@ -477,7 +584,6 @@ export default function UploadMaterialForm() {
         "Test",
         "ipfs://test-content-hash",
         "ipfs://test-preview-hash",
-        "ipfs://test-thumbnail-hash",
         "0.01"
       );
 
@@ -507,6 +613,17 @@ export default function UploadMaterialForm() {
 
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
+  };
+
+  // Update the display message for upload permissions
+  const getUploadRestrictionMessage = () => {
+    if (contractType === "SchoolLibrary") {
+      return "This contract is configured as a School Library. Only the administrator can upload materials.";
+    } else if (contractType === "StudyMarketplace") {
+      return "Your account does not have permission to upload materials. This is unexpected for a standard marketplace. Please contact support or enable debug mode to troubleshoot.";
+    } else {
+      return "Your account does not have permission to upload materials. The contract type could not be determined.";
+    }
   };
 
   return (
@@ -570,6 +687,18 @@ export default function UploadMaterialForm() {
         </Alert>
       )}
 
+      {canUpload === false && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>
+            {contractType === "SchoolLibrary" ? "School Library Mode" : "Upload Restricted"}
+          </AlertTitle>
+          <AlertDescription>
+            {getUploadRestrictionMessage()}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {debugMode && (
         <Alert className="mb-4 bg-amber-900/30 border-amber-700">
           <Bug className="h-4 w-4" />
@@ -594,14 +723,14 @@ export default function UploadMaterialForm() {
               </Button>
               
               <Button 
-                onClick={handleTestSimplified} 
-                disabled={isTestingSimplified}
                 variant="gradient-subtle" 
                 size="sm"
+                onClick={handleTestSimplified}
+                disabled={isTestingSimplified}
               >
                 {isTestingSimplified ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Testing...
                   </>
                 ) : (
@@ -610,27 +739,107 @@ export default function UploadMaterialForm() {
               </Button>
               
               <Button 
-                onClick={() => {
-                  toast({
-                    title: "Testing Empty Thumbnail",
-                    description: "Checking console output for thumbnail handling...",
-                  });
-                  
-                  const emptyThumbnail1 = "";
-                  const emptyThumbnail2 = null;
-                  const emptyThumbnail3 = { url: "" };
-                  
-                  console.log("Empty thumbnail handling test:");
-                  console.log("Empty string:", typeof emptyThumbnail1, emptyThumbnail1 || "ipfs://QmdefaultEmptyThumbnailHash");
-                  console.log("Null:", typeof emptyThumbnail2, emptyThumbnail2 || "ipfs://QmdefaultEmptyThumbnailHash");
-                  console.log("Empty URL object:", typeof emptyThumbnail3, emptyThumbnail3.url || "ipfs://QmdefaultEmptyThumbnailHash");
-                }}
-                variant="gradient-subtle" 
+                variant="outline" 
                 size="sm"
+                onClick={async () => {
+                  try {
+                    await detectContractType();
+                    const canUploadResult = await canUploadMaterials();
+                    setCanUpload(canUploadResult);
+                    
+                  toast({
+                      title: `Contract Type: ${contractType || "Unknown"}`,
+                      description: `Upload permission: ${canUploadResult ? "Allowed" : "Restricted"}`,
+                    });
+                  } catch (error) {
+                    console.error("Error checking permissions:", error);
+                    toast({
+                      title: "Permission Check Failed",
+                      description: "Could not determine upload permissions",
+                      variant: "destructive",
+                    });
+                  }
+                }}
               >
-                Test Thumbnail Handling
+                Check Permissions
+              </Button>
+              
+              <Button 
+                variant={canUpload ? "default" : "destructive"}
+                size="sm"
+                onClick={async () => {
+                  try {
+                    setIsCheckingUploadRights(true);
+                    // Reset permissions state
+                    setCanUpload(null);
+                    setContractType(null);
+                    setContractVerified(null);
+                    
+                    // Force reconnection to contract
+                    toast({
+                      title: "Refreshing Contract Connection",
+                      description: "Reconnecting and checking permissions...",
+                    });
+                    
+                    // Wait for contract verification
+                    const isVerified = await verifyContract();
+                    setContractVerified(isVerified);
+                    
+                    // Detect contract type
+                    await detectContractType();
+                    
+                    // Re-check permissions one more time
+                    const canUploadResult = await canUploadMaterials();
+                    setCanUpload(canUploadResult);
+                    
+                    toast({
+                      title: "Refresh Complete",
+                      description: `Contract: ${contractType}, Upload: ${canUploadResult ? "Allowed" : "Restricted"}`,
+                      variant: canUploadResult ? "default" : "destructive",
+                    });
+                  } catch (error) {
+                    console.error("Error during permission refresh:", error);
+                    toast({
+                      title: "Refresh Failed",
+                      description: "Could not refresh contract connection",
+                      variant: "destructive",
+                    });
+                  } finally {
+                    setIsCheckingUploadRights(false);
+                  }
+                }}
+              >
+                Force Refresh
               </Button>
             </div>
+            
+            {contractType && (
+              <div className="mt-2 p-3 bg-slate-900/70 rounded text-xs">
+                <h3 className="font-bold mb-1 text-sm text-violet-400">Contract Diagnostics</h3>
+                <div className={`mb-2 p-2 rounded ${canUpload ? "bg-green-900/40 border border-green-700" : "bg-red-900/40 border border-red-700"}`}>
+                  <p className="font-bold">{canUpload ? "✅ UPLOAD PERMITTED" : "❌ UPLOAD RESTRICTED"}</p>
+                  <p className="text-xs">{canUpload 
+                    ? "This account can upload materials" 
+                    : contractType === "SchoolLibrary" 
+                      ? "This is expected - only admin can upload to School Library" 
+                      : "This is unexpected - regular marketplace should allow uploads"}
+                  </p>
+                </div>
+                
+                <p><strong>Contract Type:</strong> {contractType}</p>
+                <p><strong>Contract Verified:</strong> {contractVerified === null ? "Unknown" : contractVerified ? "Yes ✅" : "No ❌"}</p>
+                <p><strong>Network:</strong> {currentNetwork || "Unknown"}</p>
+                <p><strong>Connected Account:</strong> {currentAccount ? `${currentAccount.substring(0, 6)}...${currentAccount.substring(currentAccount.length - 4)}` : "None"}</p>
+                
+                <hr className="my-2 border-slate-700" />
+                <p className="text-amber-300 text-xs">
+                  If permissions are incorrect, check:
+                  <br />1. You're connected to the right account
+                  <br />2. The contract type is correctly detected
+                  <br />3. Try refreshing the connection
+                </p>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -757,8 +966,11 @@ export default function UploadMaterialForm() {
                       <FormItem>
                         <FormLabel>Price (ETH)</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.001" min="0.001" {...field} />
+                          <Input type="number" step="0.001" min="0" {...field} />
                         </FormControl>
+                        <FormDescription className="text-xs text-muted-foreground">
+                          Set to 0 for free materials
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -861,16 +1073,12 @@ export default function UploadMaterialForm() {
 
             <Button
               type="submit"
-              variant="cursor-style"
-              size="cursor-lg"
+              disabled={isUploading || !contractVerified || isCorrectNetwork === false || !canUpload}
               className="w-full"
-              disabled={isUploading}
+              variant="gradient-purple"
             >
               {isUploading ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="flex items-center justify-center h-4 w-4">
-                    <Loader size="sm" color="cyan" />
-                  </div>
                   <span>Processing...</span>
                 </div>
               ) : (

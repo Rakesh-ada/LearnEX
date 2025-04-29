@@ -62,8 +62,6 @@ export default function Home() {
             </Button>
             </Link>
           </motion.div>
-          
-          
         </div>
 
         {/* Scroll indicator */}
