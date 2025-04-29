@@ -81,6 +81,8 @@ function getCategoryGradient(subject: string): string {
   }
 }
 
+const PAGE_SIZE = 20;
+
 export default function MarketplacePage() {
   const { currentAccount } = useWallet()
   const searchParams = useSearchParams()
@@ -88,14 +90,12 @@ export default function MarketplacePage() {
   const [category, setCategory] = useState("All")
   const [sortBy, setSortBy] = useState("newest")
   const [materials, setMaterials] = useState<MaterialItem[]>([])
-  const [filteredItems, setFilteredItems] = useState<MaterialItem[]>([])
-  const [displayedItems, setDisplayedItems] = useState<MaterialItem[]>([])
   const [selectedItem, setSelectedItem] = useState<MaterialItem | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [itemsPerPage, setItemsPerPage] = useState(12)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
   
   // Get search term from URL parameters
   useEffect(() => {
@@ -116,46 +116,56 @@ export default function MarketplacePage() {
     }
   }, [searchParams])
 
+  // Place all useEffect hooks here, before any functions or rendering logic
   useEffect(() => {
-    const fetchMaterials = async () => {
-      try {
-        setIsLoading(true)
-        const fetchedMaterials = await getAllMaterials(0, 50)
-        
-        const formattedMaterials = fetchedMaterials
-          .filter(material => 
-            material?.id &&
-            material?.title?.trim() &&
-            material?.description?.trim() &&
-            material?.price &&
-            material?.owner?.trim() &&
-            material?.category?.trim() &&
-            material?.createdAt
-          )
-          .map(material => ({
-            id: material.id.toString(),
-            title: material.title.trim(),
-            description: material.description.trim(),
-            price: `${material.price} ETH`,
-            author: material.owner.trim(),
-            category: material.category.trim(),
-            image: "/placeholder.svg?height=400&width=400",
-            createdAt: material.createdAt,
-            isActive: material.isActive ?? true
-          }))
-        
-        setMaterials(formattedMaterials)
-        setError(null)
-      } catch (err) {
-        console.error("Error fetching materials:", err)
-        setError("Failed to load marketplace items. Please try again later.")
-      } finally {
-        setIsLoading(false)
-      }
-    }
+    setMaterials([]);
+    setPage(0);
+    setHasMore(true);
+    setError(null);
+  }, [searchTerm, category, sortBy]);
 
-    fetchMaterials()
-  }, [])
+  useEffect(() => {
+    if (page === 0) {
+      fetchMaterials(0, true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, searchTerm, category, sortBy]);
+
+  // Fetch materials in pages
+  const fetchMaterials = async (pageToFetch = 0, reset = false) => {
+    setIsLoading(true)
+    try {
+      const fetchedMaterials = await getAllMaterials(pageToFetch * PAGE_SIZE, PAGE_SIZE)
+      const formattedMaterials = fetchedMaterials
+        .filter(material => 
+          material?.id &&
+          material?.title?.trim() &&
+          material?.description?.trim() &&
+          material?.price &&
+          material?.owner?.trim() &&
+          material?.category?.trim() &&
+          material?.createdAt
+        )
+        .map(material => ({
+          id: material.id.toString(),
+          title: material.title.trim(),
+          description: material.description.trim(),
+          price: `${material.price} ETH`,
+          author: material.owner.trim(),
+          category: material.category.trim(),
+          image: "/placeholder.svg?height=400&width=400",
+          createdAt: material.createdAt,
+          isActive: material.isActive ?? true
+        }))
+      setMaterials(prev => reset ? formattedMaterials : [...prev, ...formattedMaterials])
+      setHasMore(formattedMaterials.length === PAGE_SIZE)
+      setError(null)
+    } catch (err) {
+      setError("Failed to load marketplace items. Please try again later.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Handle URL item parameter
   useEffect(() => {
@@ -175,46 +185,26 @@ export default function MarketplacePage() {
     }
   }, [searchParams, materials])
 
-  useEffect(() => {
-    let items = [...materials]
-
-    if (searchTerm) {
-      items = items.filter(
-        (item) =>
-          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.category.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
-    }
-
-    if (category !== "All") {
-      items = items.filter((item) => 
+  // Filtering and sorting (apply to all loaded materials)
+  const filteredItems = materials.filter(
+    (item) =>
+      (!searchTerm ||
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (category === "All" ||
         item.category.toLowerCase() === category.toLowerCase() ||
-        (item.category.toLowerCase() === 'computer-science' && category.toLowerCase() === 'computer science')
-      )
-    }
-
+        (item.category.toLowerCase() === 'computer-science' && category.toLowerCase() === 'computer science'))
+  ).sort((a, b) => {
     if (sortBy === "price-low") {
-      items.sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
+      return parseFloat(a.price) - parseFloat(b.price)
     } else if (sortBy === "price-high") {
-      items.sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+      return parseFloat(b.price) - parseFloat(a.price)
     } else if (sortBy === "newest") {
-      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     }
-
-    setFilteredItems(items)
-    setCurrentPage(1)
-  }, [searchTerm, category, sortBy, materials])
-
-  // Update displayed items based on pagination
-  useEffect(() => {
-    const endIndex = currentPage * itemsPerPage;
-    setDisplayedItems(filteredItems.slice(0, endIndex));
-  }, [filteredItems, currentPage, itemsPerPage]);
-
-  const loadMoreItems = () => {
-    setCurrentPage(prev => prev + 1);
-  };
+    return 0;
+  });
 
   const openModal = (item: MaterialItem) => {
     setSelectedItem(item)
@@ -224,6 +214,14 @@ export default function MarketplacePage() {
   const closeModal = () => {
     setIsModalOpen(false)
     setSelectedItem(null)
+  }
+
+  // Load more handler
+  const loadMoreItems = () => {
+    if (!isLoading && hasMore) {
+      fetchMaterials(page + 1)
+      setPage(prev => prev + 1)
+    }
   }
 
   return (
@@ -389,19 +387,14 @@ export default function MarketplacePage() {
               {!isLoading && !error && filteredItems.length > 0 && (
                 <>
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {displayedItems.map((item, index) => (
+                    {filteredItems.map((item, index) => (
                       <NFTCard key={item.id} item={item} onClick={() => openModal(item)} index={index} />
                     ))}
                   </div>
-                  
-                  {/* Load More Button */}
-                  {filteredItems.length > displayedItems.length && (
+                  {hasMore && (
                     <div className="mt-8 flex justify-center">
-                      <Button 
-                        variant="gradient-outline"
-                        onClick={loadMoreItems}
-                      >
-                        Load More
+                      <Button onClick={loadMoreItems} disabled={isLoading}>
+                        {isLoading ? "Loading..." : "Load More"}
                       </Button>
                     </div>
                   )}
