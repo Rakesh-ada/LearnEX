@@ -31,17 +31,19 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import "@/styles/pdf-viewer.css"
 
-// Set up the PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
+// Set a dummy worker source or disable worker to avoid the CDN errors
+if (typeof window !== 'undefined') {
+  // This effectively bypasses the worker requirement
+  pdfjs.GlobalWorkerOptions.workerSrc = '';
+}
 
 interface PdfViewerWithAiProps {
   pdfUrl: string
   title: string
   onClose: () => void
-  onOpenInBrowser?: () => void
 }
 
-export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowser }: PdfViewerWithAiProps) {
+export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWithAiProps) {
   // PDF viewer state
   const [numPages, setNumPages] = useState<number | null>(null)
   const [pageNumber, setPageNumber] = useState(1)
@@ -241,6 +243,8 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
     let isMounted = true;
     
     const attemptToLoadPdf = async () => {
+      if (!isMounted) return;
+      
       setIsLoading(true);
       setError(null);
       setIframeLoading(true);
@@ -250,73 +254,17 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
         const formattedUrl = formatIpfsUrl(pdfUrl);
         console.log(`Formatted PDF URL: ${formattedUrl}`);
         
-        // Try to load the PDF with react-pdf first
-        if (formattedUrl.startsWith('blob:')) {
-          // If it's already a blob URL, use it directly
-          setLocalPdfUrl(formattedUrl);
-          setIsLoading(false);
-        } else {
-          // Try a simple HEAD request to see if the PDF is accessible
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-          
-          try {
-            // Just check if the URL is reachable
-            const response = await fetch(formattedUrl, { 
-              method: 'HEAD',
-              signal: controller.signal
-            });
-            
-            clearTimeout(timeoutId);
-            
-            if (!response.ok) {
-              console.error(`PDF URL response not OK: ${response.status} ${response.statusText}`);
-              
-              if (response.status === 422) {
-                throw new Error("Invalid CID format or content not available on IPFS");
-              }
-              
-              if (response.status === 401 && formattedUrl.includes('gateway.pinata.cloud')) {
-                throw new Error("Pinata gateway authentication required. This may be a private pin.");
-              }
-              
-              throw new Error(`HTTP error: ${response.status}`);
-            }
-            
-            // If we can reach it, set it as the URL, but don't download it
-            setLocalPdfUrl(formattedUrl);
-            setIsLoading(false);
-          } catch (err) {
-            console.log('Head request failed, using iframe fallback:', err);
-            
-            // If the main gateway fails, try Cloudflare as a fallback
-            if (formattedUrl.includes('gateway.pinata.cloud') || formattedUrl.includes('gateway.ipfs.io')) {
-              // Extract the CID - assuming the URL format is consistent
-              const parts = formattedUrl.split('/ipfs/');
-              if (parts.length > 1) {
-                const cid = parts[1];
-                const alternateUrl = `https://cloudflare-ipfs.com/ipfs/${cid}`;
-                console.log(`Trying alternate gateway: ${alternateUrl}`);
-                
-                setLocalPdfUrl(alternateUrl);
-              } else {
-                // If we can't parse the URL properly, just use the original
-                setLocalPdfUrl(formattedUrl);
-              }
-            } else {
-              setLocalPdfUrl(formattedUrl);
-            }
-            
-            setUseIframeViewer(true);
-            setIsLoading(false);
-          }
-        }
+        // Always use iframe viewer to avoid PDF.js worker issues
+        setLocalPdfUrl(formattedUrl);
+        setUseIframeViewer(true);
+        setIsLoading(false);
+        
       } catch (err) {
+        if (!isMounted) return;
+        
         console.error("Error setting up PDF viewer:", err);
-        if (isMounted) {
-          setError(`Failed to load PDF: ${err instanceof Error ? err.message : 'Unknown error'}`);
-          setIsLoading(false);
-        }
+        setError(`Failed to load PDF: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setIsLoading(false);
       }
     };
     
@@ -370,16 +318,6 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                 <p className="text-red-500 mb-4">{error}</p>
                 <div className="flex gap-3">
                 <Button variant="outline" onClick={onClose}>Close</Button>
-                  {onOpenInBrowser && (
-                    <Button 
-                      variant="default" 
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                      onClick={onOpenInBrowser}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open in Browser
-                    </Button>
-                  )}
                 </div>
               </div>
             ) : useIframeViewer ? (
@@ -404,7 +342,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center pdf-container">
                 <Document
                   file={localPdfUrl}
                   onLoadSuccess={onDocumentLoadSuccess}
@@ -428,6 +366,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
                     canvasBackground="#fff"
+                    key={`page_${pageNumber}_scale_${scale}_rotation_${rotation}`}
                   />
                 </Document>
               </div>
@@ -544,7 +483,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
         </div>
         
         {/* Controls */}
-        <div className="flex items-center justify-between p-4 border-t border-white/10 bg-gradient-to-r from-slate-900 to-slate-800">
+        <div className="flex items-center justify-between p-4 border-t border-white/10 bg-gradient-to-r from-slate-900 to-slate-800 pdf-controls">
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
@@ -614,20 +553,6 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                 <Maximize className="h-5 w-5" />
               )}
             </Button>
-            
-            <div className="h-6 border-l border-white/20 mx-2"></div>
-            
-            {onOpenInBrowser && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onOpenInBrowser}
-                className="text-white hover:bg-white/10 flex items-center gap-1"
-              >
-                <ExternalLink className="h-4 w-4" />
-                <span className="hidden sm:inline">Open in Browser</span>
-              </Button>
-            )}
           </div>
         </div>
       </div>
