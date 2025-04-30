@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import "@/styles/pdf-viewer.css"
 
 // Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`
@@ -391,11 +392,15 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                   </div>
                 )}
                 <iframe 
-                  src={pdfUrl}
+                  src={`${localPdfUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
                   className="w-full h-full border-0 bg-white rounded-lg shadow-lg"
                   title={title}
                   onLoad={handleIframeLoad}
                   onError={handleIframeError}
+                  style={{
+                    overflow: 'hidden'
+                  }}
+                  frameBorder="0"
                 />
               </div>
             ) : (
@@ -409,6 +414,11 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                     setUseIframeViewer(true);
                   }}
                   className="pdf-document"
+                  options={{
+                    cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+                    cMapPacked: true,
+                    standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/'
+                  }}
                 >
                   <Page
                     pageNumber={pageNumber}
@@ -417,6 +427,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                     className="pdf-page shadow-xl"
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
+                    canvasBackground="#fff"
                   />
                 </Document>
               </div>
@@ -602,14 +613,6 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
               ) : (
                 <Maximize className="h-5 w-5" />
               )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDownload}
-              className="text-white hover:bg-white/10"
-            >
-              <Download className="h-5 w-5" />
             </Button>
             
             <div className="h-6 border-l border-white/20 mx-2"></div>

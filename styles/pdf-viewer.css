@@ -1,20 +1,41 @@
-/* PDF Viewer Styles */
+/* PDF Viewer styles */
 .pdf-document {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .pdf-page {
-  margin-bottom: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  overflow: hidden;
+  margin: 10px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background-color: white;
 }
 
-.pdf-page canvas {
-  border-radius: 8px;
-  background-color: white;
+/* Hide chrome PDF viewer header */
+iframe {
+  /* This removes the default Chrome PDF viewer UI */
+  border: none !important;
+  outline: none !important;
+}
+
+/* Custom styles for the PDF container */
+.pdf-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: #2d3748;
+  overflow: auto;
+  position: relative;
+}
+
+/* For hiding PDF iframe UI */
+@media print {
+  header, footer, nav, .controls, .toolbar {
+    display: none !important;
+  }
 }
 
 /* AI Assistant Styles */
