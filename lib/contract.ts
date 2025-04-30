@@ -105,7 +105,7 @@ export const listMaterialOnChain = async (
     const safeCategory = String(category);
     const safeContentHash = String(contentHash);
     const safePreviewHash = String(previewHash || '');
-    
+
     console.log('Listing material with parameters:', {
       title: safeTitle,
       description: safeDescription,

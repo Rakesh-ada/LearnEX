@@ -87,10 +87,8 @@ export default function ContentViewer({ contentHash, title, type, onClose }: Con
           console.log("Generated direct URL:", directUrl);
           setSecureContentUrl(directUrl);
           
-          // For PDFs, open directly in Chrome's viewer
-          if (type === "pdf") {
-            window.open(directUrl, "_blank");
-          }
+          // For PDFs, we'll use our custom viewer with AI assistant
+          // The URL is still set for other components to use
         } catch (error) {
           console.error("Content access error:", error);
           setAuthError("Failed to access content. Please try again.");

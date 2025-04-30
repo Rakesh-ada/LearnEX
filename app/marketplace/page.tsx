@@ -133,39 +133,39 @@ export default function MarketplacePage() {
 
   // Fetch materials in pages
   const fetchMaterials = async (pageToFetch = 0, reset = false) => {
-    setIsLoading(true)
+        setIsLoading(true)
     try {
       const fetchedMaterials = await getAllMaterials(pageToFetch * PAGE_SIZE, PAGE_SIZE)
-      const formattedMaterials = fetchedMaterials
-        .filter(material => 
-          material?.id &&
-          material?.title?.trim() &&
-          material?.description?.trim() &&
-          material?.price &&
-          material?.owner?.trim() &&
-          material?.category?.trim() &&
-          material?.createdAt
-        )
-        .map(material => ({
-          id: material.id.toString(),
-          title: material.title.trim(),
-          description: material.description.trim(),
-          price: `${material.price} ETH`,
-          author: material.owner.trim(),
-          category: material.category.trim(),
-          image: "/placeholder.svg?height=400&width=400",
-          createdAt: material.createdAt,
-          isActive: material.isActive ?? true
-        }))
+        const formattedMaterials = fetchedMaterials
+          .filter(material => 
+            material?.id &&
+            material?.title?.trim() &&
+            material?.description?.trim() &&
+            material?.price &&
+            material?.owner?.trim() &&
+            material?.category?.trim() &&
+            material?.createdAt
+          )
+          .map(material => ({
+            id: material.id.toString(),
+            title: material.title.trim(),
+            description: material.description.trim(),
+            price: `${material.price} ETH`,
+            author: material.owner.trim(),
+            category: material.category.trim(),
+            image: "/placeholder.svg?height=400&width=400",
+            createdAt: material.createdAt,
+            isActive: material.isActive ?? true
+          }))
       setMaterials(prev => reset ? formattedMaterials : [...prev, ...formattedMaterials])
       setHasMore(formattedMaterials.length === PAGE_SIZE)
-      setError(null)
-    } catch (err) {
-      setError("Failed to load marketplace items. Please try again later.")
-    } finally {
-      setIsLoading(false)
+        setError(null)
+      } catch (err) {
+        setError("Failed to load marketplace items. Please try again later.")
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }
 
   // Handle URL item parameter
   useEffect(() => {
@@ -187,10 +187,10 @@ export default function MarketplacePage() {
 
   // Filtering and sorting (apply to all loaded materials)
   const filteredItems = materials.filter(
-    (item) =>
+        (item) =>
       (!searchTerm ||
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category.toLowerCase().includes(searchTerm.toLowerCase())) &&
       (category === "All" ||
         item.category.toLowerCase() === category.toLowerCase() ||
@@ -246,11 +246,6 @@ export default function MarketplacePage() {
             <div className="mx-auto mb-6 max-w-6xl flex flex-wrap items-center justify-between gap-4">
               <div className="flex flex-col">
                 
-                {searchTerm && (
-                  <p className="text-purple-400">
-                    Showing results for "{searchTerm}"
-                  </p>
-                )}
               </div>
             </div>
 

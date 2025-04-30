@@ -676,7 +676,7 @@ export const listMaterial = async (
       previewHash: previewHashStr,
       price
     });
-
+    
     // Call the contract function with properly formatted parameters
     const materialId = await contractListMaterialOnChain(
       title,
@@ -690,7 +690,7 @@ export const listMaterial = async (
     // Check if materialId is valid
     if (materialId !== null) {
       console.log('Successfully listed material with ID:', materialId);
-      return materialId;
+    return materialId;
     } else {
       console.warn('Material listing completed but returned null ID');
       return null;
@@ -890,7 +890,7 @@ export const listMaterialOnChainDebug = async (
     // Process the hash values to ensure they're strings
     const contentHashStr = typeof contentHash === 'string' ? contentHash : contentHash.url;
     const previewHashStr = previewHash ? (typeof previewHash === 'string' ? previewHash : previewHash.url) : '';
-    
+
     console.log('Debug - Listing material with parameters:');
     console.log('Title:', title);
     console.log('Description:', description);
@@ -929,7 +929,7 @@ export const debugListMaterial = async (
     // Process the hash values to ensure they're strings
     const contentHashStr = typeof contentHash === 'string' ? contentHash : contentHash.url;
     const previewHashStr = previewHash ? (typeof previewHash === 'string' ? previewHash : previewHash.url) : '';
-    
+
     console.log('=== DEBUG LIST MATERIAL ===');
     console.log('Processed parameters:');
     console.log('Title:', title);
@@ -1013,14 +1013,14 @@ export const listMaterialWithFallback = async (
     const previewHashStr = previewHash ? (typeof previewHash === 'string' ? previewHash : previewHash.url) : '';
     
     // Call the contract function 
-    return await contractListMaterialOnChain(
-      title,
-      description,
-      category,
-      contentHashStr,
-      previewHashStr,
-      price
-    );
+      return await contractListMaterialOnChain(
+        title,
+        description,
+        category,
+        contentHashStr,
+        previewHashStr,
+        price
+      );
   } catch (error) {
     console.error('Error in listMaterialWithFallback:', error);
     

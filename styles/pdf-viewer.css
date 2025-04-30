@@ -1,0 +1,66 @@
+/* PDF Viewer Styles */
+.pdf-document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pdf-page {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pdf-page canvas {
+  border-radius: 8px;
+  background-color: white;
+}
+
+/* AI Assistant Styles */
+.ai-panel {
+  transition: all 0.3s ease;
+}
+
+.ai-message {
+  animation: fadeIn 0.3s ease;
+}
+
+.ai-suggestion {
+  transition: all 0.2s ease;
+}
+
+.ai-suggestion:hover {
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar styles */
+.pdf-viewer-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pdf-viewer-container::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 4px;
+}
+
+.pdf-viewer-container::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 4px;
+}
+
+.pdf-viewer-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
+}

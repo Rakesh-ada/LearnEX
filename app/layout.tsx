@@ -1,12 +1,14 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Space_Grotesk } from "next/font/google"
 import "./globals.css"
+import "@/styles/pdf-viewer.css"
 import Navbar from "@/components/navbar"
 import Link from "next/link"
 import Providers from "@/components/providers"
 import Script from "next/script"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space-grotesk" })
 
 export const metadata: Metadata = {
   title: "LearnEX - Decentralized Study Marketplace",
@@ -19,8 +21,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={inter.className}>
+    <html lang="en" className={`dark ${inter.variable} ${spaceGrotesk.variable}`}>
+      <body className="bg-mesh-gradient">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-[100px] z-0"></div>
         <Providers>
           <Navbar />
           <main className="flex-1 relative z-10">{children}</main>

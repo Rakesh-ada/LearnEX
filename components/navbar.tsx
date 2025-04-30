@@ -357,13 +357,17 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 z-50 w-full border-b border-slate-800/60 bg-black/90 backdrop-blur-xl">
+    <nav className="fixed top-0 z-50 w-full border-b border-white/10 bg-black/40 backdrop-blur-xl">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-transparent to-blue-600/20 opacity-80"></div>
+        <div className="absolute bottom-0 h-[1px] w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+      </div>
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-10">
         <Link href="/" className="flex items-center group">
-            <span className="text-2xl font-bold">
-              <span className="text-white group-hover:text-gray-200 transition-colors">Learn</span>
-              <span className="bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:to-blue-400 transition-all duration-300">EX</span>
+            <span className="text-2xl font-bold font-space">
+              <span className="text-white group-hover:text-gray-200 transition-colors">Open</span>
+              <span className="bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:via-indigo-400 group-hover:to-blue-400 transition-all duration-300">Learn</span>
             </span>
         </Link>
 
@@ -377,9 +381,9 @@ export default function Navbar() {
                   : 'text-white/70 hover:text-white'
             }`}
           >
-            Home
+            <span className="font-space">Home</span>
               {isActiveLink('/') && (
-                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 to-purple-600"></span>
+                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></span>
               )}
           </Link>
           <Link 
@@ -390,9 +394,9 @@ export default function Navbar() {
                   : 'text-white/70 hover:text-white'
             }`}
           >
-            Marketplace
+            <span className="font-space">Library</span>
               {isActiveLink('/marketplace') && (
-                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 to-purple-600"></span>
+                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></span>
               )}
           </Link>
           <Link 
@@ -403,9 +407,9 @@ export default function Navbar() {
                   : 'text-white/70 hover:text-white'
             }`}
           >
-            Upload
+            <span className="font-space">Contribute</span>
               {isActiveLink('/upload') && (
-                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 to-purple-600"></span>
+                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></span>
               )}
           </Link>
           <Link 
@@ -416,9 +420,9 @@ export default function Navbar() {
                   : 'text-white/70 hover:text-white'
             }`}
           >
-            My Materials
+            <span className="font-space">My Collection</span>
               {isActiveLink('/my-materials') && (
-                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 to-purple-600"></span>
+                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></span>
               )}
           </Link>
           </div>
@@ -434,12 +438,12 @@ export default function Navbar() {
             <div className="relative">
               <Input
                 type="text"
-                placeholder="Search study materials..."
+                placeholder="Search the knowledge library..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-9 w-full rounded-lg border-none bg-slate-900/70 pl-9 pr-12 text-white 
-                  shadow-lg shadow-purple-500/5 backdrop-blur-sm placeholder:text-slate-400 
-                  focus:ring-2 focus:ring-purple-500/20 relative z-10 text-sm"
+                className="h-9 w-full rounded-lg border-none glass-input pl-9 pr-12 text-white 
+                  shadow-lg shadow-purple-500/10 backdrop-blur-sm placeholder:text-slate-400 
+                  focus:ring-2 focus:ring-purple-500/30 relative z-10 text-sm font-space"
               />
               
               {/* Sort button inside search box */}
@@ -506,7 +510,11 @@ export default function Navbar() {
 
       {/* Mobile Navigation Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-16 border-b border-slate-800/60 bg-black/95 backdrop-blur-xl md:hidden">
+        <div className="absolute left-0 right-0 top-16 border-b border-white/10 bg-black/80 backdrop-blur-xl md:hidden">
+          <div className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-600/10 to-blue-600/10 opacity-80"></div>
+            <div className="absolute bottom-0 h-[1px] w-full bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"></div>
+          </div>
           <div className="container mx-auto px-4 py-5">
             {/* Mobile Search Component */}
             <form onSubmit={handleSearch} className="relative mb-5">
@@ -517,12 +525,12 @@ export default function Navbar() {
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="Search study materials..."
+                  placeholder="Search the knowledge library..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-10 w-full rounded-lg border-none bg-slate-900/70 pl-9 pr-12 text-white 
-                    shadow-lg shadow-purple-500/5 backdrop-blur-sm placeholder:text-slate-400 
-                    focus:ring-2 focus:ring-purple-500/20 relative z-10"
+                  className="h-10 w-full rounded-lg border-none glass-input pl-9 pr-12 text-white 
+                    shadow-lg shadow-purple-500/10 backdrop-blur-sm placeholder:text-slate-400 
+                    focus:ring-2 focus:ring-purple-500/30 relative z-10 font-space"
                 />
                 
                 {/* Sort button inside search box - mobile */}
@@ -566,55 +574,39 @@ export default function Navbar() {
                   </Select>
                 </div>
                 
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-600/50 via-indigo-500/50 to-blue-500/50 p-[1px] -z-0 pointer-events-none"></div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-600/50 via-indigo-500/50 to-blue-500/50 p-[1.5px] -z-0 pointer-events-none animate-gradient"></div>
               </div>
             </form>
 
             <div className="flex flex-col space-y-5">
-            <Link
-              href="/"
-                className={`text-base font-medium transition-colors ${
-                isActiveLink('/') 
-                    ? 'text-white' 
-                    : 'text-white/70 hover:text-white'
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              Home
-            </Link>
-            <Link
-              href="/marketplace"
-                className={`text-base font-medium transition-colors ${
-                isActiveLink('/marketplace') 
-                    ? 'text-white' 
-                    : 'text-white/70 hover:text-white'
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              Marketplace
-            </Link>
-            <Link
-              href="/upload"
-                className={`text-base font-medium transition-colors ${
-                isActiveLink('/upload') 
-                    ? 'text-white' 
-                    : 'text-white/70 hover:text-white'
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              Upload
-            </Link>
-            <Link
-              href="/my-materials"
-                className={`text-base font-medium transition-colors ${
-                isActiveLink('/my-materials') 
-                    ? 'text-white' 
-                    : 'text-white/70 hover:text-white'
-              }`}
-              onClick={() => setIsOpen(false)}
-            >
-              My Materials
-            </Link>
+              <Link
+                href="/"
+                className={`text-base font-medium font-space ${isActiveLink('/') ? 'text-gradient-blue-purple' : 'text-white/80 hover:text-white'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Home
+              </Link>
+              <Link
+                href="/marketplace"
+                className={`text-base font-medium font-space ${isActiveLink('/marketplace') ? 'text-gradient-blue-purple' : 'text-white/80 hover:text-white'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Marketplace
+              </Link>
+              <Link
+                href="/upload"
+                className={`text-base font-medium font-space ${isActiveLink('/upload') ? 'text-gradient-blue-purple' : 'text-white/80 hover:text-white'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Upload
+              </Link>
+              <Link
+                href="/my-materials"
+                className={`text-base font-medium font-space ${isActiveLink('/my-materials') ? 'text-gradient-blue-purple' : 'text-white/80 hover:text-white'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                My Materials
+              </Link>
               
               <div className="pt-2">
                 <WalletButton isMobile={true} />
