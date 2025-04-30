@@ -175,7 +175,7 @@ export default function MyMaterialsPage() {
     setContentHash(null)
   }
 
-  // Replace the handleOpenInBrowser function with a new version that uses blob URLs
+  // Handle opening content in browser
   const handleOpenInBrowser = async (hash: string) => {
     if (!hash) {
       toast({
@@ -192,17 +192,9 @@ export default function MyMaterialsPage() {
       description: "Downloading content from IPFS...",
     });
 
-    // Get the CID (remove ipfs:// prefix if present)
-    const cid = hash.startsWith('ipfs://') ? hash.substring(7) : hash;
-    console.log('Using CID:', cid);
-    
-    // Create URLs for multiple gateways to try
-    const gatewayUrls = [
-      `https://cloudflare-ipfs.com/ipfs/${cid}`,
-      `https://ipfs.io/ipfs/${cid}`,
-      `https://dweb.link/ipfs/${cid}`,
-      `https://gateway.pinata.cloud/ipfs/${cid}`
-    ];
+    // Use the formatIpfsUrl function to create consistent gateway URLs
+    const gatewayUrls = formatIpfsUrl(hash);
+    console.log('Using gateway URLs:', gatewayUrls);
     
     try {
       // Try to fetch the PDF from each gateway until one works
@@ -457,9 +449,7 @@ export default function MyMaterialsPage() {
             {/* PDF Viewer with AI Assistant */}
             {showPdfViewer && selectedMaterial && contentHash && (
               <PdfViewerWithAi
-                pdfUrl={contentHash.startsWith('ipfs://') 
-                  ? `https://gateway.ipfs.io/ipfs/${contentHash.substring(7)}` 
-                  : `https://gateway.ipfs.io/ipfs/${contentHash}`}
+                pdfUrl={contentHash}
                 title={selectedMaterial.title}
                 onClose={handleCloseContentViewer}
                 onOpenInBrowser={() => handleOpenInBrowser(contentHash)}

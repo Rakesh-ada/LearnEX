@@ -63,6 +63,40 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
   
   const containerRef = useRef<HTMLDivElement>(null)
   
+  // Helper function to ensure proper URL format
+  const formatIpfsUrl = (url: string): string => {
+    // If it's already a complete URL (e.g., from a gateway), return it
+    if (url.startsWith('http') && !url.includes('/ipfs/https://')) {
+      return url;
+    }
+    
+    // If it has the double gateway issue, fix it
+    if (url.includes('/ipfs/https://')) {
+      const parts = url.split('/ipfs/');
+      if (parts.length >= 2) {
+        const secondPart = parts[1];
+        if (secondPart.includes('/ipfs/')) {
+          // Extract just the CID
+          const cidParts = secondPart.split('/ipfs/');
+          return `${parts[0]}/ipfs/${cidParts[1]}`;
+        }
+      }
+    }
+    
+    // Handle ipfs:// protocol
+    if (url.startsWith('ipfs://')) {
+      return `https://gateway.ipfs.io/ipfs/${url.substring(7)}`;
+    }
+    
+    // If it's just a CID, add the preferred gateway
+    if (!url.startsWith('http')) {
+      return `https://gateway.ipfs.io/ipfs/${url}`;
+    }
+    
+    // Default case
+    return url;
+  };
+  
   // Handle document load success
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages)
@@ -211,25 +245,23 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
       setIframeLoading(true);
       
       try {
+        // Properly format the URL first to avoid double gateway issues
+        const formattedUrl = formatIpfsUrl(pdfUrl);
+        console.log(`Formatted PDF URL: ${formattedUrl}`);
+        
         // Try to load the PDF with react-pdf first
-        if (pdfUrl.startsWith('blob:')) {
+        if (formattedUrl.startsWith('blob:')) {
           // If it's already a blob URL, use it directly
-          setLocalPdfUrl(pdfUrl);
+          setLocalPdfUrl(formattedUrl);
           setIsLoading(false);
         } else {
-          // Try alternate gateway if primary is Pinata and it fails
-          let currentPdfUrl = pdfUrl;
-          let isPinataGateway = pdfUrl.includes('gateway.pinata.cloud');
-          
-          console.log(`Attempting to load PDF from: ${currentPdfUrl}`);
-          
           // Try a simple HEAD request to see if the PDF is accessible
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 5000);
           
           try {
             // Just check if the URL is reachable
-            const response = await fetch(currentPdfUrl, { 
+            const response = await fetch(formattedUrl, { 
               method: 'HEAD',
               signal: controller.signal
             });
@@ -243,7 +275,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
                 throw new Error("Invalid CID format or content not available on IPFS");
               }
               
-              if (response.status === 401 && isPinataGateway) {
+              if (response.status === 401 && formattedUrl.includes('gateway.pinata.cloud')) {
                 throw new Error("Pinata gateway authentication required. This may be a private pin.");
               }
               
@@ -251,22 +283,29 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose, onOpenInBrowse
             }
             
             // If we can reach it, set it as the URL, but don't download it
-            setLocalPdfUrl(currentPdfUrl);
+            setLocalPdfUrl(formattedUrl);
             setIsLoading(false);
           } catch (err) {
             console.log('Head request failed, using iframe fallback:', err);
             
-            // For Pinata gateway errors, try to use a different gateway as fallback
-            if (isPinataGateway) {
-              console.log('Pinata gateway failed, falling back to alternate gateway');
-              // Try a different gateway (e.g., Cloudflare)
-              const alternateUrl = pdfUrl.replace('gateway.pinata.cloud', 'cloudflare-ipfs.com');
-              console.log(`Trying alternate gateway: ${alternateUrl}`);
-              currentPdfUrl = alternateUrl;
+            // If the main gateway fails, try Cloudflare as a fallback
+            if (formattedUrl.includes('gateway.pinata.cloud') || formattedUrl.includes('gateway.ipfs.io')) {
+              // Extract the CID - assuming the URL format is consistent
+              const parts = formattedUrl.split('/ipfs/');
+              if (parts.length > 1) {
+                const cid = parts[1];
+                const alternateUrl = `https://cloudflare-ipfs.com/ipfs/${cid}`;
+                console.log(`Trying alternate gateway: ${alternateUrl}`);
+                
+                setLocalPdfUrl(alternateUrl);
+              } else {
+                // If we can't parse the URL properly, just use the original
+                setLocalPdfUrl(formattedUrl);
+              }
+            } else {
+              setLocalPdfUrl(formattedUrl);
             }
             
-            // Use iframe fallback with potentially updated URL
-            setLocalPdfUrl(currentPdfUrl);
             setUseIframeViewer(true);
             setIsLoading(false);
           }
