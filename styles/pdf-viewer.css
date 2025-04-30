@@ -4,12 +4,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+  z-index: 1;
+  cursor: zoom-in;
 }
 
 .pdf-page {
   margin: 10px 0;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   background-color: white;
+  position: relative;
+  z-index: 1;
 }
 
 /* Hide chrome PDF viewer header */
@@ -26,9 +31,41 @@ iframe {
   align-items: center;
   width: 100%;
   height: 100%;
+  min-height: 80vh; /* Ensure it takes up most of the viewport height */
   background-color: #2d3748;
   overflow: auto;
   position: relative;
+  z-index: 1;
+  cursor: zoom-in;
+}
+
+/* Main PDF viewer container - ensure it's fullscreen ready */
+.pdf-viewer-main {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+/* Fix for button interactions */
+.react-pdf__Page {
+  position: relative;
+  z-index: 1;
+}
+
+.react-pdf__Page canvas {
+  display: block;
+  user-select: none;
+}
+
+/* Make sure controls are above the PDF */
+.pdf-controls {
+  position: relative;
+  z-index: 10;
 }
 
 /* For hiding PDF iframe UI */

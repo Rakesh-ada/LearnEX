@@ -9,15 +9,11 @@ import {
   ChevronRight, 
   ZoomIn, 
   ZoomOut, 
-  Maximize, 
-  Minimize,
   RotateCw,
-  Download,
   X,
   MessageSquareText,
   Sparkles,
   Loader,
-  ExternalLink
 } from "lucide-react"
 import { 
   Dialog,
@@ -275,11 +271,32 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
     };
   }, [pdfUrl]);
   
+  // Make it go fullscreen on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && containerRef.current) {
+      try {
+        setTimeout(() => {
+          if (containerRef.current && document.fullscreenEnabled) {
+            containerRef.current.requestFullscreen().catch(e => console.log("Fullscreen failed:", e));
+          }
+        }, 1000);
+      } catch (err) {
+        console.error("Fullscreen error:", err);
+      }
+    }
+    
+    return () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(e => console.log("Exit fullscreen failed"));
+      }
+    };
+  }, []);
+  
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm pdf-viewer-main">
       <div 
         ref={containerRef}
-        className="relative flex flex-col w-full h-full max-w-6xl max-h-[90vh] bg-slate-900 rounded-lg overflow-hidden border border-white/10"
+        className="relative flex flex-col w-full h-full max-w-[95vw] max-h-[95vh] bg-slate-900 rounded-lg overflow-hidden border border-white/10"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-slate-900 to-slate-800">
@@ -322,7 +339,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
               </div>
             ) : useIframeViewer ? (
               // Use iframe if direct fetching is not working
-              <div className="w-full h-full flex items-center justify-center relative">
+              <div className="w-full h-full flex items-center justify-center relative" onClick={toggleFullscreen}>
                 {iframeLoading && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-800 z-10">
                     <Loader className="h-8 w-8 text-purple-500 animate-spin mb-4" />
@@ -342,7 +359,10 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center pdf-container">
+              <div 
+                className="flex flex-col items-center pdf-container"
+                onClick={toggleFullscreen}
+              >
                 <Document
                   file={localPdfUrl}
                   onLoadSuccess={onDocumentLoadSuccess}
@@ -540,18 +560,6 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
               className="text-white hover:bg-white/10"
             >
               <RotateCw className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleFullscreen}
-              className="text-white hover:bg-white/10"
-            >
-              {isFullscreen ? (
-                <Minimize className="h-5 w-5" />
-              ) : (
-                <Maximize className="h-5 w-5" />
-              )}
             </Button>
           </div>
         </div>
