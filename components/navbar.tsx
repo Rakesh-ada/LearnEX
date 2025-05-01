@@ -366,8 +366,8 @@ export default function Navbar() {
         <div className="flex items-center gap-10">
         <Link href="/" className="flex items-center group">
             <span className="text-2xl font-bold font-space">
-              <span className="text-white group-hover:text-gray-200 transition-colors">Open</span>
-              <span className="bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:via-indigo-400 group-hover:to-blue-400 transition-all duration-300">Learn</span>
+              <span className="text-white group-hover:text-gray-200 transition-colors">Learn</span>
+              <span className="bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 bg-clip-text text-transparent group-hover:from-purple-500 group-hover:via-indigo-400 group-hover:to-blue-400 transition-all duration-300">EX</span>
             </span>
         </Link>
 
@@ -435,16 +435,22 @@ export default function Navbar() {
               <Search className="h-4 w-4 text-purple-400" />
             </div>
             
-            <div className="relative">
+            <div className="relative group">
               <Input
                 type="text"
                 placeholder="Search the knowledge library..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-9 w-full rounded-lg border-none glass-input pl-9 pr-12 text-white 
-                  shadow-lg shadow-purple-500/10 backdrop-blur-sm placeholder:text-slate-400 
-                  focus:ring-2 focus:ring-purple-500/30 relative z-10 text-sm font-space"
+                  shadow-lg shadow-purple-900/30 backdrop-blur-sm placeholder:text-slate-500
+                  focus:ring-2 focus:ring-purple-900/50 relative z-10 text-sm font-space
+                  bg-slate-950/70 transition-all duration-300
+                  group-hover:shadow-purple-800/40 group-hover:bg-slate-950/80"
               />
+              
+              {/* 3D effect elements */}
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-blue-900/60 p-[1px] -z-0 blur-[0.5px] group-hover:blur-0 transition-all duration-300"></div>
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-950/50 via-indigo-950/50 to-blue-950/50 p-[1px] -z-0 translate-y-[2px] translate-x-[2px] blur-[1px] group-hover:translate-y-[3px] group-hover:translate-x-[3px] group-hover:blur-[1.5px] transition-all duration-300"></div>
               
               {/* Sort button inside search box */}
               <div className="absolute inset-y-0 right-0 flex items-center pr-2 z-20">
@@ -461,33 +467,31 @@ export default function Navbar() {
                     </span>
                   </SelectTrigger>
                   <SelectContent 
-                    className="rounded-lg border border-slate-700/50 bg-slate-900/90 
-                      text-white shadow-xl shadow-purple-500/10 backdrop-blur-md min-w-[160px]"
+                    className="rounded-lg border border-slate-800/70 bg-slate-950/90 
+                      text-white shadow-xl shadow-purple-900/20 backdrop-blur-md min-w-[160px]"
                     align="end"
                   >
                     <SelectItem 
                       value="newest"
-                      className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                      className="hover:bg-purple-900/20 focus:bg-purple-900/20"
                     >
                       Newest First
                     </SelectItem>
                     <SelectItem 
                       value="price-low"
-                      className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                      className="hover:bg-purple-900/20 focus:bg-purple-900/20"
                     >
                       Price: Lowest
                     </SelectItem>
                     <SelectItem 
                       value="price-high"
-                      className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                      className="hover:bg-purple-900/20 focus:bg-purple-900/20"
                     >
                       Price: Highest
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-600/50 via-indigo-500/50 to-blue-500/50 p-[1px] -z-0 pointer-events-none"></div>
             </div>
           </form>
         </div>
@@ -522,16 +526,22 @@ export default function Navbar() {
                 <Search className="h-4 w-4 text-purple-400" />
               </div>
               
-              <div className="relative">
+              <div className="relative group">
                 <Input
                   type="text"
                   placeholder="Search the knowledge library..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="h-10 w-full rounded-lg border-none glass-input pl-9 pr-12 text-white 
-                    shadow-lg shadow-purple-500/10 backdrop-blur-sm placeholder:text-slate-400 
-                    focus:ring-2 focus:ring-purple-500/30 relative z-10 font-space"
+                    shadow-lg shadow-purple-900/30 backdrop-blur-sm placeholder:text-slate-500
+                    focus:ring-2 focus:ring-purple-900/50 relative z-10 font-space
+                    bg-slate-950/70 transition-all duration-300
+                    group-hover:shadow-purple-800/40 group-hover:bg-slate-950/80"
                 />
+                
+                {/* 3D effect elements */}
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-blue-900/60 p-[1px] -z-0 blur-[0.5px] group-hover:blur-0 transition-all duration-300"></div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-950/50 via-indigo-950/50 to-blue-950/50 p-[1px] -z-0 translate-y-[2px] translate-x-[2px] blur-[1px] group-hover:translate-y-[3px] group-hover:translate-x-[3px] group-hover:blur-[1.5px] transition-all duration-300"></div>
                 
                 {/* Sort button inside search box - mobile */}
                 <div className="absolute inset-y-0 right-0 flex items-center pr-2 z-20">
@@ -548,33 +558,31 @@ export default function Navbar() {
                       </span>
                     </SelectTrigger>
                     <SelectContent 
-                      className="rounded-lg border border-slate-700/50 bg-slate-900/90 
-                        text-white shadow-xl shadow-purple-500/10 backdrop-blur-md min-w-[160px]"
+                      className="rounded-lg border border-slate-800/70 bg-slate-950/90 
+                        text-white shadow-xl shadow-purple-900/20 backdrop-blur-md min-w-[160px]"
                       align="end"
                     >
                       <SelectItem 
                         value="newest"
-                        className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                        className="hover:bg-purple-900/20 focus:bg-purple-900/20"
                       >
                         Newest First
                       </SelectItem>
                       <SelectItem 
                         value="price-low"
-                        className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                        className="hover:bg-purple-900/20 focus:bg-purple-900/20"
                       >
                         Price: Lowest
                       </SelectItem>
                       <SelectItem 
                         value="price-high"
-                        className="hover:bg-purple-500/20 focus:bg-purple-500/20"
+                        className="hover:bg-purple-900/20 focus:bg-purple-900/20"
                       >
                         Price: Highest
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-purple-600/50 via-indigo-500/50 to-blue-500/50 p-[1.5px] -z-0 pointer-events-none animate-gradient"></div>
               </div>
             </form>
 

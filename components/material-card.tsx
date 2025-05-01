@@ -13,9 +13,11 @@ interface MaterialCardProps {
     description: string
     type: string
     size: string
-    purchaseDate: string
+    purchaseDate?: string
+    creationDate?: string
     image?: string
     thumbnailHash?: string
+    isOwned?: boolean
   }
   onClick: () => void
 }
@@ -27,6 +29,11 @@ export default function MaterialCard({ material, onClick }: MaterialCardProps) {
   
   const hasThumbnail = material.thumbnailHash && isValidIPFSCid(material.thumbnailHash)
   const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(material.thumbnailHash!) : ""
+
+  // Determine which date to use and create a formatted date string
+  const dateToUse = material.isOwned ? material.creationDate : material.purchaseDate
+  const formattedDate = dateToUse ? new Date(dateToUse).toLocaleDateString() : "N/A"
+  const dateLabel = material.isOwned ? "Created" : "Purchased"
 
   return (
     <motion.div
@@ -93,7 +100,7 @@ export default function MaterialCard({ material, onClick }: MaterialCardProps) {
         <div className="flex items-center justify-between text-xs text-slate-400">
           <div className="flex items-center">
             <Calendar className="mr-1 h-3 w-3" />
-            {new Date(material.purchaseDate).toLocaleDateString()}
+            <span className="mr-1">{dateLabel}:</span> {formattedDate}
           </div>
           <div>{material.size}</div>
         </div>

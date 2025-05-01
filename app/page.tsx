@@ -40,7 +40,11 @@ export default function Home() {
             </div>
             
             <h1 className="mb-6 text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white font-space">
-              Decentralized <span className="text-gradient-blue-purple">Content Library</span> For Students
+              <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+                Web3 Open Library
+              </span> 
+              <br />
+              For Everyone
             </h1>
             
             <p className="mb-10 mx-auto max-w-2xl text-xl text-slate-300">

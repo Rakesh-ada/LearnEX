@@ -299,8 +299,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
         className="relative flex flex-col w-full h-full max-w-[95vw] max-h-[95vh] bg-slate-900 rounded-lg overflow-hidden border border-white/10"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-slate-900 to-slate-800">
-          <h2 className="text-xl font-bold text-white font-space truncate">{title}</h2>
+        <div className="flex items-center justify-end p-3 border-b border-white/10 bg-gradient-to-r from-slate-900 to-slate-800">
           <div className="flex items-center space-x-2">
             <Button 
               variant="ghost" 

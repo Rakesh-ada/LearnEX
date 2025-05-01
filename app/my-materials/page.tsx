@@ -7,7 +7,7 @@ import MaterialCard from "@/components/material-card"
 import { FileText, Download, Lock, BookOpen, ExternalLink } from "lucide-react"
 import Loader from "@/components/ui/cube-loader"
 import { useWallet } from "@/hooks/use-wallet"
-import { getMyPurchasedMaterials, getContentHash } from "@/lib/blockchain"
+import { getMyPurchasedMaterials, getContentHash, getMyListedMaterials } from "@/lib/blockchain"
 import { toast } from "@/hooks/use-toast"
 import ContentViewer from "@/components/content-viewer"
 import PdfViewerWithAi from "@/components/pdf-viewer-with-ai"
@@ -53,6 +53,7 @@ export default function MyMaterialsPage() {
   const [activeTab, setActiveTab] = useState("all")
   const [selectedMaterial, setSelectedMaterial] = useState<any | null>(null)
   const [purchasedMaterials, setPurchasedMaterials] = useState<any[]>([])
+  const [createdMaterials, setCreatedMaterials] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [contentHash, setContentHash] = useState<string | null>(null)
@@ -60,7 +61,7 @@ export default function MyMaterialsPage() {
   const [showContentViewer, setShowContentViewer] = useState(false)
   const [showPdfViewer, setShowPdfViewer] = useState(false)
 
-  // Fetch purchased materials when wallet is connected
+  // Fetch purchased and created materials when wallet is connected
   useEffect(() => {
     const fetchMaterials = async () => {
       if (!currentAccount) return
@@ -69,25 +70,46 @@ export default function MyMaterialsPage() {
         setIsLoading(true)
         setError(null)
         
-        const materials = await getMyPurchasedMaterials()
+        // Fetch purchased materials
+        const purchased = await getMyPurchasedMaterials()
         
-        // Transform the data for display
-        const formattedMaterials = materials.map((material: any) => {
+        // Transform the purchased data for display
+        const formattedPurchased = purchased.map((material: any) => {
           return {
             id: material.id.toString(),
             title: material.title,
             description: material.description,
             type: "pdf", // Default all to PDF type
             size: "2.4 MB", // Placeholder size
-            purchaseDate: new Date().toISOString(), // Placeholder date
+            purchaseDate: material.createdAt || new Date().toISOString(), // Use createdAt from blockchain
             image: "",
+            isOwned: false,
           }
         })
         
-        setPurchasedMaterials(formattedMaterials)
+        setPurchasedMaterials(formattedPurchased)
         
-        if (formattedMaterials.length === 0) {
-          setError("You haven't purchased any materials yet.")
+        // Fetch created materials (using listed materials instead)
+        const created = await getMyListedMaterials()
+        
+        // Transform the created data for display
+        const formattedCreated = created.map((material: any) => {
+          return {
+            id: material.id.toString(),
+            title: material.title,
+            description: material.description,
+            type: "pdf", // Default all to PDF type
+            size: "2.4 MB", // Placeholder size
+            creationDate: material.createdAt || new Date().toISOString(), // Use createdAt from blockchain
+            image: "",
+            isOwned: true,
+          }
+        })
+        
+        setCreatedMaterials(formattedCreated)
+        
+        if (formattedPurchased.length === 0 && formattedCreated.length === 0) {
+          setError("You haven't purchased or created any materials yet.")
         }
       } catch (err) {
         console.error("Error fetching materials:", err)
@@ -103,6 +125,16 @@ export default function MyMaterialsPage() {
       setIsLoading(false)
     }
   }, [currentAccount])
+
+  // Function to get the materials based on the active tab
+  const getMaterialsByTab = () => {
+    if (activeTab === 'all') {
+      return purchasedMaterials;
+    } else if (activeTab === 'pdf') {
+      return createdMaterials;
+    }
+    return [];
+  }
 
   // Update the handleSelectMaterial function to use the improved CID handling
   const handleSelectMaterial = async (material: any) => {
@@ -264,82 +296,65 @@ export default function MyMaterialsPage() {
   };
 
   return (
-    <main className="min-h-screen pt-16">
+    <main className="min-h-screen">
       <ClientOnly fallback={<SimpleFallback />}>
         <SpaceBackground colorTheme="blue" shootingStars density={800} speed={0.0003} />
       </ClientOnly>
       
-      {/* Page Header */}
-      <section className="relative py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-center space-y-3 mb-2">
-            <div className="flex items-center space-x-2">
-              <div className="h-[1px] w-12 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
-              <span className="text-xs font-medium text-gradient-blue-cyan uppercase tracking-wider font-space">Personal Library</span>
-              <div className="h-[1px] w-12 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
-            </div>
-            <h1 className="text-center">
-              <span className="inline-block bg-gradient-to-r from-purple-400 via-blue-400 to-purple-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent font-space">
-                My Collection
-              </span>
-            </h1>
-          </div>
-        </div>
-      </section>
-      
       {/* Main Content Section */}
-      <section className="relative pb-16">
+      <section className="relative py-16">
         <div className="container mx-auto px-4">
-          <div className="rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900/50 to-black/50 p-8 backdrop-blur-sm shadow-xl">
+          <div className="rounded-2xl border border-slate-800 bg-gradient-to-b from-slate-900/50 to-black/50 p-8 backdrop-blur-sm shadow-xl mt-16">
             {isLoading ? (
-              <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-slate-800/50 bg-black/30 p-8 backdrop-blur-sm">
-                <div className="flex items-center justify-center h-20 w-20 mb-6">
+              <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-slate-800/50 bg-black/30 p-6 backdrop-blur-sm">
+                <div className="flex items-center justify-center h-16 w-16 mb-4">
                   <Loader size="lg" color="purple" />
                 </div>
                 <p className="text-purple-300 animate-pulse">Loading your materials...</p>
               </div>
             ) : !currentAccount ? (
-              <div className="flex min-h-[400px] flex-col items-center justify-center rounded-xl border border-slate-800/50 bg-black/30 p-12 backdrop-blur-sm">
-                <div className="rounded-full bg-purple-900/30 p-4 mb-6">
-                  <Lock className="h-12 w-12 text-purple-400" />
+              <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border border-slate-800/50 bg-black/30 p-8 backdrop-blur-sm">
+                <div className="rounded-full bg-purple-900/30 p-4 mb-4">
+                  <Lock className="h-10 w-10 text-purple-400" />
                 </div>
-                <h2 className="mb-3 text-2xl font-bold text-white">Connect Your Wallet</h2>
-                <p className="mb-8 max-w-md text-center text-lg text-slate-400">
+                <h2 className="mb-2 text-xl font-bold text-white">Connect Your Wallet</h2>
+                <p className="mb-6 max-w-md text-center text-base text-slate-400">
                   Please connect your wallet to view your purchased materials
                 </p>
                 <Button 
                   onClick={connect}
                   variant="default"
-                  className="h-12 min-w-[200px] text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 border-none"
+                  className="h-10 min-w-[180px] text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 border-none"
                 >
                   Connect Wallet
                 </Button>
               </div>
             ) : (
-              <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                  <TabsList className="h-12 bg-slate-900/50 p-1 border border-slate-800/50 rounded-lg shadow-md">
-                    <TabsTrigger 
-                      value="all" 
-                      className="text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:shadow-md transition-all duration-200"
-                    >
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      All Materials
-                    </TabsTrigger>
-                    <TabsTrigger 
-                      value="pdf"
-                      className="text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:shadow-md transition-all duration-200"
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Documents
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <div className="flex items-center gap-2 bg-slate-900/50 py-2 px-4 rounded-lg border border-slate-800/30">
-                    <span className="text-slate-400 text-sm">Items:</span>
-                    <p className="text-lg font-bold text-purple-400">
-                      {purchasedMaterials.length}
-                    </p>
+              <div className="space-y-6">
+                <div className="flex justify-end items-center">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <select
+                        value={activeTab}
+                        onChange={(e) => setActiveTab(e.target.value)}
+                        className="appearance-none bg-slate-900/50 text-white border border-slate-800/30 rounded-lg py-2 pl-4 pr-10 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200"
+                      >
+                        <option value="all">Purchased</option>
+                        <option value="pdf">Owned</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
+                          <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 bg-slate-900/50 py-2 px-4 rounded-lg border border-slate-800/30">
+                      <span className="text-slate-400 text-sm">Items:</span>
+                      <p className="text-lg font-bold text-purple-400">
+                        {getMaterialsByTab().length}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -368,29 +383,17 @@ export default function MyMaterialsPage() {
                   </div>
                 )}
 
-                {!isLoading && !error && purchasedMaterials.length > 0 && (
-                  <>
-                    <TabsContent value="all" className="mt-0">
-                      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {purchasedMaterials.map((material) => (
-                          <MaterialCard key={material.id} material={material} onClick={() => handleSelectMaterial(material)} />
-                        ))}
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="pdf" className="mt-0">
-                      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {purchasedMaterials.filter(m => m.type === "pdf").map((material) => (
-                          <MaterialCard key={material.id} material={material} onClick={() => handleSelectMaterial(material)} />
-                        ))}
-                      </div>
-                    </TabsContent>
-                  </>
+                {!isLoading && !error && getMaterialsByTab().length > 0 && (
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {getMaterialsByTab().map((material) => (
+                      <MaterialCard key={material.id} material={material} onClick={() => handleSelectMaterial(material)} />
+                    ))}
+                  </div>
                 )}
 
-                {!isLoading && !error && purchasedMaterials.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="mb-6 w-52 h-52">
+                {!isLoading && !error && getMaterialsByTab().length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="mb-4 w-40 h-40">
                       <svg className="w-full h-full" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                         {/* Bookshelf */}
                         <rect x="40" y="80" width="160" height="10" rx="2" fill="#374151" />
@@ -417,13 +420,13 @@ export default function MyMaterialsPage() {
                         <text x="120" y="115" fontSize="36" fill="#6D28D9" fontWeight="bold" textAnchor="middle">?</text>
                       </svg>
                     </div>
-                    <h3 className="mb-3 text-2xl font-semibold text-white">No Materials Found</h3>
-                    <p className="mb-8 max-w-md text-slate-400">
+                    <h3 className="mb-2 text-xl font-semibold text-white">No Materials Found</h3>
+                    <p className="mb-4 max-w-md text-slate-400">
                       You haven't purchased any study materials yet. Visit the marketplace to find resources.
                     </p>
                     <Button 
                       variant="default" 
-                      className="min-w-[220px] h-12 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 border-none shadow-lg transition-all duration-200 hover:scale-105" 
+                      className="min-w-[180px] h-10 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 border-none shadow-lg transition-all duration-200 hover:scale-105" 
                       asChild
                     >
                       <a href="/marketplace" className="flex items-center justify-center gap-2">
@@ -433,7 +436,7 @@ export default function MyMaterialsPage() {
                     </Button>
                   </div>
                 )}
-              </Tabs>
+              </div>
             )}
 
             {/* Content Viewer Modal */}
@@ -452,7 +455,6 @@ export default function MyMaterialsPage() {
                 pdfUrl={contentHash}
                 title={selectedMaterial.title}
                 onClose={handleCloseContentViewer}
-                onOpenInBrowser={() => handleOpenInBrowser(contentHash)}
               />
             )}
           </div>
