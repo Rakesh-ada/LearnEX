@@ -14,6 +14,8 @@ import {
   MessageSquareText,
   Sparkles,
   Loader,
+  Video,
+  ExternalLink
 } from "lucide-react"
 import { 
   Dialog,
@@ -33,11 +35,77 @@ if (typeof window !== 'undefined') {
   pdfjs.GlobalWorkerOptions.workerSrc = '';
 }
 
+// Access API keys from environment variables
+const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+
+// Gemini API endpoints - using 2.0-flash with v1beta path
+const GEMINI_API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/search";
+
 interface PdfViewerWithAiProps {
   pdfUrl: string
   title: string
   onClose: () => void
 }
+
+// Interface for video recommendations
+interface VideoRecommendation {
+  title: string;
+  url: string;
+  thumbnail: string;
+}
+
+// Pre-built prompt templates for common topics
+const PROMPT_TEMPLATES = {
+  explain: "Explain the concept of {topic} in simple terms a beginner would understand. Include key principles and real-world applications.",
+  summarize: "Provide a comprehensive summary of {topic}, covering the most important aspects, key developments, and current state of the field.",
+  videos: "Recommend the best YouTube channels, courses, or specific videos to learn about {topic} from beginner to advanced level.",
+  compare: "Compare and contrast {topic} with related technologies or approaches. Highlight key differences, advantages, and limitations.",
+  future: "Discuss the future trends and potential developments in {topic} over the next 5-10 years. What innovations or breakthroughs might we expect?",
+  history: "Provide a brief history of {topic}, including when it was developed, major milestones, and how it has evolved over time.",
+  career: "What career opportunities exist in {topic}? Describe job roles, required skills, and how to start a career in this field."
+};
+
+// Popular tech topics with custom descriptions
+const POPULAR_TOPICS = [
+  { 
+    id: "blockchain", 
+    name: "Blockchain", 
+    description: "Distributed ledger technology powering cryptocurrencies and decentralized applications",
+    icon: "Layers"
+  },
+  { 
+    id: "machine-learning", 
+    name: "Machine Learning", 
+    description: "Systems that learn and improve from experience without explicit programming",
+    icon: "Brain" 
+  },
+  { 
+    id: "quantum-computing", 
+    name: "Quantum Computing", 
+    description: "Computing using quantum-mechanical phenomena like superposition and entanglement",
+    icon: "Atom" 
+  },
+  { 
+    id: "neural-networks", 
+    name: "Neural Networks", 
+    description: "Computing systems inspired by biological neural networks in human brains",
+    icon: "Network" 
+  },
+  { 
+    id: "cloud-computing", 
+    name: "Cloud Computing", 
+    description: "On-demand delivery of computing resources over the internet",
+    icon: "Cloud" 
+  },
+  { 
+    id: "cybersecurity", 
+    name: "Cybersecurity", 
+    description: "Protection of computer systems from information disclosure and theft",
+    icon: "Shield" 
+  }
+];
 
 export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWithAiProps) {
   // PDF viewer state
@@ -58,7 +126,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
   const [aiQuery, setAiQuery] = useState("")
   const [aiResponse, setAiResponse] = useState<string | null>(null)
   const [isAiThinking, setIsAiThinking] = useState(false)
-  const [aiHistory, setAiHistory] = useState<Array<{question: string, answer: string}>>([])
+  const [aiHistory, setAiHistory] = useState<Array<{question: string, answer: string, videos?: VideoRecommendation[]}>>([]); 
   
   const containerRef = useRef<HTMLDivElement>(null)
   
@@ -181,47 +249,158 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
     document.body.removeChild(link)
   }
   
+  // Function to fetch videos related to a topic
+  const fetchRelatedVideos = async (topic: string): Promise<VideoRecommendation[]> => {
+    try {
+      // Use the YouTube API to fetch real video recommendations
+      const response = await fetch(
+        `${YOUTUBE_API_URL}?part=snippet&q=${encodeURIComponent(topic)}+tutorial&maxResults=3&type=video&key=${YOUTUBE_API_KEY}`
+      );
+      
+      if (!response.ok) {
+        console.error(`YouTube API request failed with status ${response.status}`);
+        throw new Error(`YouTube API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.items && data.items.length > 0) {
+        return data.items.map((item: any) => ({
+          title: item.snippet.title,
+          url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
+          thumbnail: item.snippet.thumbnails.medium.url
+        }));
+      } else {
+        // Fallback to mock data if no results
+        return [
+          {
+            title: `Learn about ${topic} - Tutorial`,
+            url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+tutorial`,
+            thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
+          },
+          {
+            title: `${topic} explained for beginners`,
+            url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+for+beginners`,
+            thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
+          }
+        ];
+      }
+    } catch (error) {
+      console.error("Error fetching related videos:", error);
+      // Return fallback data in case of error
+      return [
+        {
+          title: `Learn about ${topic}`,
+          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}`,
+          thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
+        }
+      ];
+    }
+  };
+  
+  // Function to query Gemini AI
+  const queryGeminiAI = async (query: string): Promise<string> => {
+    try {
+      const response = await fetch(`${GEMINI_API_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are a helpful AI assistant for students. 
+              Answer the following query about educational content: "${query}". 
+              Provide a comprehensive but concise explanation. 
+              Make your answer informative for a student trying to learn this topic.
+              Include 1-2 key concepts that would help the student understand the topic better.`
+            }]
+          }]
+        })
+      });
+      
+      if (!response.ok) {
+        console.error(`API request failed with status ${response.status}`, await response.text());
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Extract the response text from the Gemini API response
+      if (data.candidates && data.candidates[0]?.content?.parts && data.candidates[0].content.parts[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        console.error("Unexpected API response structure:", JSON.stringify(data));
+        return "I apologize, but I couldn't generate a response for this query. Please try again with a different question.";
+      }
+    } catch (error) {
+      console.error("Error querying Gemini AI:", error);
+      return "I encountered an error while processing your request. Please try again later.";
+    }
+  };
+  
   // AI assistant functions
   const toggleAiPanel = () => {
     setIsAiPanelOpen(prev => !prev)
   }
   
+  // Function to apply a prompt template to a topic
+  const applyPromptTemplate = (template: string, topic: string): string => {
+    return template.replace("{topic}", topic);
+  };
+
+  // Function to build smart prompts
+  const buildSmartPrompt = (topic: string, promptType: keyof typeof PROMPT_TEMPLATES): string => {
+    return applyPromptTemplate(PROMPT_TEMPLATES[promptType], topic);
+  };
+
+  // Updated AI query submit handler to use more context-aware queries
   const handleAiQuerySubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     
-    if (!aiQuery.trim()) return
+    if (!aiQuery.trim()) return;
     
-    setIsAiThinking(true)
+    setIsAiThinking(true);
     
     try {
-      // Simulate AI response (in a real app, this would call an API)
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Enhance the user's query with additional context
+      let enhancedQuery = aiQuery;
       
-      // Example responses based on query content
-      let response = ""
-      const query = aiQuery.toLowerCase()
+      // Check if the query is just a topic name without specific instructions
+      const isSimpleTopic = POPULAR_TOPICS.some(topic => 
+        aiQuery.toLowerCase() === topic.name.toLowerCase() || 
+        aiQuery.toLowerCase().includes(topic.name.toLowerCase())
+      );
       
-      if (query.includes("summary") || query.includes("summarize")) {
-        response = "This document appears to be about decentralized learning platforms and how they can revolutionize education through blockchain technology. The key points include secure content sharing, ownership verification, and community governance."
-      } else if (query.includes("explain") || query.includes("what is")) {
-        response = "The concept mentioned refers to a blockchain-based system for educational content distribution. It uses smart contracts to verify ownership and access rights, while ensuring creators are properly compensated for their work."
-      } else if (query.includes("example") || query.includes("instance")) {
-        response = "An example application would be a university sharing research papers through this platform, where access is granted to verified students and faculty, with automatic royalty distribution to the research department when external organizations purchase access."
-      } else {
-        response = "I can help you understand this document better. Try asking me to summarize key points, explain concepts, or provide examples of applications for the ideas presented."
+      if (isSimpleTopic && !aiQuery.includes("explain") && aiQuery.split(" ").length < 4) {
+        // If user just entered a topic name, default to explanation
+        enhancedQuery = buildSmartPrompt(aiQuery, "explain");
       }
       
+      // Call Gemini API with the enhanced query
+      const aiResponseText = await queryGeminiAI(enhancedQuery);
+      
+      // Get video recommendations
+      const videos = await fetchRelatedVideos(aiQuery);
+      
+      // Create the history entry with both the AI response and videos
+      const historyEntry = {
+        question: aiQuery,
+        answer: aiResponseText,
+        videos: videos
+      };
+      
       // Add to history
-      setAiHistory(prev => [...prev, { question: aiQuery, answer: response }])
-      setAiResponse(response)
-      setAiQuery("")
+      setAiHistory(prev => [...prev, historyEntry]);
+      setAiResponse(aiResponseText);
+      setAiQuery("");
     } catch (error) {
-      console.error("Error getting AI response:", error)
-      setAiResponse("I'm sorry, I couldn't process your request. Please try again.")
+      console.error("Error getting AI response:", error);
+      setAiResponse("I'm sorry, I couldn't process your request. Please try again.");
     } finally {
-      setIsAiThinking(false)
+      setIsAiThinking(false);
     }
-  }
+  };
   
   // Handle iframe load event
   const handleIframeLoad = () => {
@@ -392,107 +571,160 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
             )}
           </div>
           
-          {/* AI Assistant Panel */}
+          {/* AI Assistant Panel - Enhanced visual design */}
           {isAiPanelOpen && (
-            <div className="w-80 border-l border-white/10 bg-slate-900 flex flex-col">
-              <div className="p-4 border-b border-white/10 bg-gradient-to-r from-purple-900/30 to-blue-900/30">
-                <div className="flex items-center space-x-2">
-                  <Sparkles className="h-5 w-5 text-purple-400" />
-                  <h3 className="text-lg font-bold text-white font-space">AI Assistant</h3>
+            <div className="w-[30vw] min-w-[280px] max-w-[450px] transition-all duration-300
+              border-l border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col">
+              <div className="p-5 border-b border-white/10 bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-blue-900/40">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                      <Sparkles className="h-4 w-4 text-white" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white font-space tracking-tight">AI Assistant</h3>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 rounded-full text-white/70 hover:text-white hover:bg-white/10"
+                    onClick={toggleAiPanel}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <p className="text-xs text-slate-300 mt-1">
-                  Ask questions about this document to get insights and explanations
-                </p>
               </div>
               
-              <div className="flex-1 overflow-auto p-4 space-y-4">
+              <div className="flex-1 overflow-auto p-5 space-y-5 bg-slate-900/50">
                 {aiHistory.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 p-4 rounded-lg border border-white/10 mb-4">
-                      <Sparkles className="h-8 w-8 text-purple-400 mx-auto mb-2" />
-                      <p className="text-white text-sm">
-                        I can help you understand this document better. Ask me anything!
+                  <div className="flex flex-col items-center">
+                    <div className="bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 p-6 rounded-xl border border-white/5 backdrop-blur-sm mb-8 w-full">
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500/30 to-indigo-600/30 flex items-center justify-center mx-auto mb-4 ring-4 ring-purple-500/10">
+                        <Sparkles className="h-7 w-7 text-purple-400" />
+                      </div>
+                      <p className="text-white text-sm text-center font-medium">
+                        Select a topic or use a prompt template
                       </p>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 mt-4">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs border-white/10 hover:bg-white/5"
-                        onClick={() => setAiQuery("Summarize this document")}
-                      >
-                        Summarize
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs border-white/10 hover:bg-white/5"
-                        onClick={() => setAiQuery("Explain the key concepts")}
-                      >
-                        Key Concepts
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs border-white/10 hover:bg-white/5"
-                        onClick={() => setAiQuery("Give me examples")}
-                      >
-                        Examples
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-xs border-white/10 hover:bg-white/5"
-                        onClick={() => setAiQuery("How can I apply this?")}
-                      >
-                        Applications
-                      </Button>
+                    
+                    {/* Topic cards with icons - enhanced design */}
+                    <div className="grid grid-cols-2 gap-4 mb-8 w-full">
+                      {POPULAR_TOPICS.map((topic) => (
+                        <button
+                          key={topic.id}
+                          onClick={() => setAiQuery(topic.name)}
+                          className="flex flex-col items-center text-center p-4 rounded-xl bg-gradient-to-b from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 border border-white/5 transition-all duration-300 shadow-md hover:shadow-lg hover:shadow-purple-500/5 group"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600/20 to-blue-600/20 flex items-center justify-center mb-3 group-hover:from-purple-600/30 group-hover:to-blue-600/30 transition-all duration-300 ring-2 ring-white/5">
+                            <Sparkles className="h-5 w-5 text-purple-400" />
+                          </div>
+                          <h4 className="text-sm font-medium text-white mb-1">{topic.name}</h4>
+                          <p className="text-xs text-slate-400 line-clamp-2">{topic.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Prompt templates - enhanced design */}
+                    <div className="space-y-4 w-full">
+                      <h4 className="text-xs font-medium text-indigo-300 uppercase tracking-wider text-left px-1">Prompt templates</h4>
+                      <div className="flex flex-wrap gap-2 justify-start">
+                        {Object.entries(PROMPT_TEMPLATES).map(([key, template]) => (
+                          <button
+                            key={key}
+                            onClick={() => setAiQuery(applyPromptTemplate(template, "this topic"))}
+                            className="px-3 py-1.5 text-xs rounded-full bg-gradient-to-r from-slate-800 to-slate-900 hover:from-indigo-900/30 hover:to-purple-900/30 text-slate-300 hover:text-white border border-white/5 transition-all duration-300"
+                          >
+                            {key.charAt(0).toUpperCase() + key.slice(1)}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : (
-                  aiHistory.map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-start space-x-2">
-                        <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0">
+                  <div className="space-y-6">
+                    {aiHistory.map((item, index) => (
+                      <div key={index} className="space-y-3">
+                        <div className="flex items-start space-x-3">
+                          <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600/30">
                           <MessageSquareText className="h-4 w-4 text-slate-300" />
                         </div>
-                        <div className="flex-1 bg-slate-800 rounded-lg p-3 text-sm text-white">
+                          <div className="flex-1 bg-slate-800 rounded-xl p-4 text-sm text-white shadow-md">
                           {item.question}
                         </div>
                       </div>
-                      <div className="flex items-start space-x-2">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center flex-shrink-0">
+                        <div className="flex items-start space-x-3">
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center flex-shrink-0 ring-2 ring-purple-500/30">
                           <Sparkles className="h-4 w-4 text-white" />
                         </div>
-                        <div className="flex-1 bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-lg p-3 text-sm text-white">
+                          <div className="flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-slate-800/95 rounded-xl p-4 text-sm text-white shadow-md border border-purple-500/10">
                           {item.answer}
+                            
+                            {item.videos && item.videos.length > 0 && (
+                              <div className="mt-4 pt-4 border-t border-white/10">
+                                <p className="text-xs font-semibold mb-3 text-indigo-300">Recommended Videos</p>
+                                <div className="space-y-4">
+                                  {item.videos.map((video, videoIndex) => (
+                                    <a 
+                                      key={videoIndex}
+                                      href={video.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex flex-col rounded-xl bg-slate-900/80 hover:bg-slate-800 transition-all duration-300 overflow-hidden shadow-md hover:shadow-lg hover:shadow-purple-500/10 border border-white/5"
+                                    >
+                                      <div className="relative aspect-video w-full overflow-hidden">
+                                        <img 
+                                          src={video.thumbnail} 
+                                          alt={video.title}
+                                          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                          onError={(e) => {
+                                            (e.target as HTMLImageElement).src = "https://placehold.co/320x180/gray/white?text=Video";
+                                          }}
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-center justify-center">
+                                          <div className="w-14 h-14 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                                            <Video className="h-7 w-7 text-white" />
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="p-3">
+                                        <p className="text-xs font-medium line-clamp-2 text-white">{video.title}</p>
+                                        <div className="flex items-center mt-2">
+                                          <ExternalLink className="h-3 w-3 text-indigo-400 mr-1" />
+                                          <span className="text-[10px] text-indigo-300">Watch on YouTube</span>
+                                        </div>
+                                      </div>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
+                    ))}
                     </div>
-                  ))
                 )}
               </div>
               
-              <form onSubmit={handleAiQuerySubmit} className="p-4 border-t border-white/10">
+              <form onSubmit={handleAiQuerySubmit} className="p-4 border-t border-white/10 bg-slate-900/80 backdrop-blur-sm">
                 <div className="relative">
                   <Input
                     value={aiQuery}
                     onChange={(e) => setAiQuery(e.target.value)}
-                    placeholder="Ask about this document..."
-                    className="pr-12 bg-slate-800 border-white/10 focus:border-purple-500/50 focus:ring-purple-500/20"
+                    placeholder="Enter your query..."
+                    className="pr-12 bg-slate-800 border-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 rounded-lg shadow-inner"
                     disabled={isAiThinking}
                   />
                   <Button
                     type="submit"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0 h-full text-purple-400 hover:text-purple-300"
+                    className="absolute right-0 top-0 h-full text-purple-400 hover:text-purple-300 transition-colors"
                     disabled={isAiThinking}
                   >
                     {isAiThinking ? (
-                      <Loader className="h-4 w-4 animate-spin" />
+                      <Loader className="h-5 w-5 animate-spin" />
                     ) : (
-                      <Sparkles className="h-4 w-4" />
+                      <Sparkles className="h-5 w-5" />
                     )}
                   </Button>
                 </div>

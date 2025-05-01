@@ -23,7 +23,7 @@ export default function Home() {
         <SpaceBackground colorTheme="purple" shootingStars={true} cosmicDust={true} />
       </ClientOnly>
 
-      {/* Hero Section - Modern Web3/AI Style */}
+      {/* Hero Section - Better centered and fixed */}
       <section className="relative flex min-h-screen flex-col items-center justify-center px-4 pt-16">
         <div className="container mx-auto flex flex-col items-center text-center">
           <motion.div
@@ -32,23 +32,25 @@ export default function Home() {
             transition={{ duration: 0.8 }}
             className="max-w-3xl"
           >
-            <div className="mb-4 flex justify-center">
-              <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white backdrop-blur-sm">
-                <span className="mr-1.5 flex h-2 w-2 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 animate-pulse"></span>
-                Open Knowledge For Everyone
+            <div className="mb-10 flex justify-center">
+              <span className="inline-flex items-center rounded-full px-5 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] shadow-lg">
+                BLOCKCHAIN-POWERED EDUCATION
               </span>
             </div>
             
-            <h1 className="mb-6 text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white font-space">
-              <span className="bg-gradient-to-r from-purple-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
-                Web3 Open Library
-              </span> 
-              <br />
-              For Everyone
+            <h1 className="mb-8 text-center text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white font-space">
+              <div className="inline-block">
+                <span className="bg-gradient-to-r from-[#a855f7] via-[#6366f1] to-[#3b82f6] bg-clip-text text-transparent">
+                  Knowledge
+                </span>
+                <span className="text-white">‎ Unleashed</span>
+              </div>
             </h1>
             
-            <p className="mb-10 mx-auto max-w-2xl text-xl text-slate-300">
-              A community-owned educational resource hub where students can freely access, contribute, and share academic materials without centralized control.
+            <p className="mb-12 mx-auto max-w-2xl text-xl text-white/80 leading-relaxed font-light">
+              The decentralized learning platform where academic excellence meets 
+              blockchain security. Own, share, and access verified educational content without 
+              boundaries.
             </p>
           </motion.div>
 
@@ -56,23 +58,27 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0"
+            className="flex flex-col space-y-4 sm:flex-row sm:space-x-6 sm:space-y-0"
           >
             <Link href="/marketplace">
-              <Button variant="cursor-style" size="cursor-lg" className="relative overflow-hidden group">
-                <span className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                <span className="relative z-10 font-space">Explore Library</span>
+              <Button variant="cursor-style" size="cursor-lg" className="relative overflow-hidden group bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 px-8 py-4 text-base">
+                <span className="relative z-10 font-space font-medium flex items-center">
+                  Explore Library
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </span>
               </Button>
             </Link>
             <Link href="/upload">
-            <Button
-              variant="outline"
+              <Button
+                variant="outline"
                 size="cursor-lg"
-                className="border-white/10 text-white hover:bg-white/5 backdrop-blur-sm font-space relative overflow-hidden group"
-            >
-                <span className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-indigo-500/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
-                <span className="relative z-10">Contribute Content</span>
-            </Button>
+                className="border-white/20 text-white hover:bg-white/5 backdrop-blur-sm font-space relative overflow-hidden group px-8 py-4 text-base"
+              >
+                <span className="relative z-10 font-medium flex items-center">
+                  Contribute
+                  <Upload className="ml-2 h-4 w-4" />
+                </span>
+              </Button>
             </Link>
           </motion.div>
         </div>
@@ -85,27 +91,28 @@ export default function Home() {
             opacity: { delay: 1.5, duration: 1 },
             y: { delay: 1.5, duration: 2, repeat: Number.POSITIVE_INFINITY, repeatType: "loop" },
           }}
-          className="absolute bottom-8 flex flex-col items-center"
+          className="absolute bottom-8 flex flex-col items-center cursor-pointer"
+          onClick={scrollToFeatured}
         >
-          <span className="mb-2 text-sm text-slate-400">Scroll to discover</span>
-          <div className="relative h-10 w-6 rounded-full border-2 border-slate-400">
-            <div className="absolute left-1/2 top-2 h-2 w-2 -translate-x-1/2 rounded-full bg-slate-400"></div>
+          <span className="mb-2 text-sm text-white/80"></span>
+          <div className="relative h-10 w-6 rounded-full border-2 border-white/50">
+            <div className="absolute left-1/2 top-2 h-2 w-2 -translate-x-1/2 rounded-full bg-white"></div>
           </div>
         </motion.div>
       </section>
 
       {/* Features Section - Modern Web3/AI Style */}
-      <section ref={featuredRef} className="relative py-20">
+      <section ref={featuredRef} className="relative py-24">
         <div className="container mx-auto px-4">
-          <div className="mb-16 text-center">
-            <div className="inline-flex items-center justify-center mb-4">
-              <div className="h-[1px] w-12 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
-              <span className="mx-4 text-sm font-medium text-gradient-purple-pink font-space">CORE PRINCIPLES</span>
-              <div className="h-[1px] w-12 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
+          <div className="mb-20 text-center">
+            <div className="inline-flex items-center justify-center mb-6">
+              <div className="h-[1px] w-16 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
+              <span className="mx-4 text-sm font-medium text-gradient-purple-pink font-space tracking-widest">CORE PRINCIPLES</span>
+              <div className="h-[1px] w-16 bg-gradient-to-r from-transparent via-purple-500 to-transparent"></div>
             </div>
-            <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl font-space">Open Knowledge Ecosystem</h2>
-            <p className="mx-auto max-w-2xl text-slate-300">
-              LearnEX creates a decentralized library where educational content is owned by the community, accessible to all, and secured by blockchain technology.
+            <h2 className="mb-6 text-4xl font-bold text-white sm:text-5xl font-space tracking-tight">Open Knowledge Ecosystem</h2>
+            <p className="mx-auto max-w-2xl text-lg text-slate-300 leading-relaxed">
+              Built on the principles of openness, security, and community ownership. LearnEX transforms how we share and access educational content.
             </p>
           </div>
 
@@ -116,15 +123,15 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="group relative rounded-xl glass-card p-6 backdrop-blur-sm hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300"
+              className="group relative rounded-xl glass-card p-8 backdrop-blur-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-500 border border-white/5"
             >
-              <div className="absolute -inset-0.5 -z-10 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 opacity-0 blur transition duration-300 group-hover:opacity-30"></div>
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-purple-600/20 to-blue-500/20 border border-white/10">
+              <div className="absolute -inset-0.5 -z-10 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 opacity-0 blur transition duration-500 group-hover:opacity-30"></div>
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-600/20 to-blue-500/20 border border-white/10 group-hover:scale-110 transition-transform duration-300">
                 <Upload className="h-6 w-6 text-purple-400" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-white font-space">Contribute & Share</h3>
-              <p className="text-slate-300">
-                Share your notes, research papers, and study guides with the community. Your contributions are stored on decentralized networks, ensuring permanent availability.
+              <h3 className="mb-4 text-xl font-bold text-white font-space tracking-tight">Contribute & Earn</h3>
+              <p className="text-slate-300 leading-relaxed">
+                Share your academic knowledge with the community and receive compensation through smart contracts. Your contributions are securely stored on decentralized networks with permanent availability and proper attribution.
               </p>
             </motion.div>
 
@@ -134,15 +141,15 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="group relative rounded-xl glass-card p-6 backdrop-blur-sm hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300"
+              className="group relative rounded-xl glass-card p-8 backdrop-blur-sm hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-500 border border-white/5"
             >
-              <div className="absolute -inset-0.5 -z-10 rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 opacity-0 blur transition duration-300 group-hover:opacity-30"></div>
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-blue-600/20 to-indigo-500/20 border border-white/10">
+              <div className="absolute -inset-0.5 -z-10 rounded-xl bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 opacity-0 blur transition duration-500 group-hover:opacity-30"></div>
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-600/20 to-indigo-500/20 border border-white/10 group-hover:scale-110 transition-transform duration-300">
                 <BookOpen className="h-6 w-6 text-blue-400" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-white font-space">Discover & Access</h3>
-              <p className="text-slate-300">
-                Browse the open library of educational resources. Content is accessible to all community members, with no gatekeepers controlling what you can learn.
+              <h3 className="mb-4 text-xl font-bold text-white font-space tracking-tight">Discover & Learn</h3>
+              <p className="text-slate-300 leading-relaxed">
+                Access a vast library of verified educational resources with our AI-powered smart assistant. Find exactly what you need with advanced search features and personalized recommendations based on your learning patterns.
               </p>
             </motion.div>
 
@@ -152,15 +159,15 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="group relative rounded-xl glass-card p-6 backdrop-blur-sm hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300"
+              className="group relative rounded-xl glass-card p-8 backdrop-blur-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-500 border border-white/5"
             >
-              <div className="absolute -inset-0.5 -z-10 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 opacity-0 blur transition duration-300 group-hover:opacity-30"></div>
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-white/10">
+              <div className="absolute -inset-0.5 -z-10 rounded-xl bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 opacity-0 blur transition duration-500 group-hover:opacity-30"></div>
+              <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-white/10 group-hover:scale-110 transition-transform duration-300">
                 <Download className="h-6 w-6 text-indigo-400" />
               </div>
-              <h3 className="mb-3 text-xl font-bold text-white font-space">Govern & Evolve</h3>
-              <p className="text-slate-300">
-                Participate in community governance to shape the future of the platform. As a contributor, you have a voice in how the library evolves and grows.
+              <h3 className="mb-4 text-xl font-bold text-white font-space tracking-tight">Own & Control</h3>
+              <p className="text-slate-300 leading-relaxed">
+                True ownership of your educational materials through blockchain verification. Vote on platform changes, set your own pricing models, and participate in a democratic ecosystem that rewards quality and collaboration.
               </p>
             </motion.div>
           </div>
@@ -176,10 +183,7 @@ export default function Home() {
               <span className="mx-4 text-sm font-medium text-gradient-blue-cyan font-space">TESTIMONIALS</span>
               <div className="h-[1px] w-12 bg-gradient-to-r from-transparent via-blue-500 to-transparent"></div>
             </div>
-            <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl font-space">Loved by students worldwide</h2>
-            <p className="mx-auto max-w-2xl text-slate-300">
-              Students and educators around the world reach for LearnEX by choice.
-            </p>
+            <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl font-space">Loved by Students Worldwide</h2>
           </div>
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -310,18 +314,38 @@ export default function Home() {
             </div>
       </section>
 
-      {/* CTA Section - Cursor.com Style */}
-      <section className="relative py-16">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center text-center">
-            <h2 className="mb-6 text-3xl font-bold text-white sm:text-4xl">Build your knowledge faster</h2>
-            <p className="mb-8 max-w-2xl text-lg text-slate-300">
-              Intelligent, secure, and decentralized, LearnEX is the best way to access study materials.
+      {/* CTA Section - Enhanced */}
+      <section className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/0 via-purple-900/5 to-blue-900/10 z-0"></div>
+        <motion.div 
+          className="absolute -right-24 top-1/3 w-64 h-64 rounded-full bg-purple-500/5 blur-3xl z-0"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ 
+            duration: 8,
+            repeat: Infinity,
+            repeatType: "reverse"
+          }}
+        />
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
+            <h2 className="mb-6 text-4xl font-bold text-white sm:text-5xl font-space tracking-tight">
+              Transform Your Learning Experience
+            </h2>
+            <p className="mb-10 text-xl text-slate-200 leading-relaxed">
+              Join thousands of students and educators building the future of decentralized education. Access premium content, contribute your knowledge, and be part of a revolutionary learning ecosystem.
             </p>
             
             <Link href="/marketplace">
-              <Button variant="cursor-style" size="cursor-lg">
-                Start Exploring
+              <Button variant="cursor-style" size="cursor-lg" className="px-10 py-7 text-lg font-medium rounded-xl transition-all duration-300 relative overflow-hidden group">
+                <span className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-500 to-blue-500 opacity-80 group-hover:opacity-100 transition-all duration-300"></span>
+                <span className="relative z-10 flex items-center">
+                  Start Your Journey
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </span>
               </Button>
             </Link>
           </div>
