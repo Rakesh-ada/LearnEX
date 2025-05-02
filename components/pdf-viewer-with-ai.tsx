@@ -237,7 +237,7 @@ As the LearnEx PDF Assistant, ensure that every user experience is:
 
 🔗 Blockchain-Informed: Educate users about the role and benefits of blockchain in education.
 
-Now respond to this: ${aiQuery}
+Pdf file is already uploaded and whatever the user ask is the content of the pdf file. Make sure to follow these above guidelines and now respond to this query: ${aiQuery}
 `;
 
 export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWithAiProps) {
@@ -894,15 +894,74 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
                               <div className="mt-4 pt-4 border-t border-white/10">
                                 <button 
                                   onClick={async () => {
-                                    // Force fetch educational videos when the button is clicked
-                                    const videos = await fetchRelatedVideos(item.question, true);
-                                    
-                                    // Update the history item with the fetched videos
-                                    setAiHistory(prev => 
-                                      prev.map((historyItem, idx) => 
-                                        idx === index ? { ...historyItem, videos } : historyItem
-                                      )
-                                    );
+                                    try {
+                                      // Show loading state
+                                      const updatedHistory = [...aiHistory];
+                                      updatedHistory[index] = {
+                                        ...updatedHistory[index],
+                                        videos: [{ 
+                                          title: "Loading educational videos...", 
+                                          url: "#", 
+                                          thumbnail: "https://i.ytimg.com/vi/placeholder/mqdefault.jpg" 
+                                        }]
+                                      };
+                                      setAiHistory(updatedHistory);
+                                      
+                                      // Force fetch educational videos when the button is clicked
+                                      // Use a more direct approach to get educational videos
+                                      const educationalQuery = item.question
+                                        .replace(/^(hi|hello|hey|greetings|thanks|thank you|please|okay)[\s\.,!?]*/i, '')
+                                        .replace(/[\.,!?]+$/, '')
+                                        .trim();
+                                        
+                                      const response = await fetch(
+                                        `${YOUTUBE_API_URL}?part=snippet&q=${encodeURIComponent(educationalQuery)}+educational+tutorial+course&maxResults=3&type=video&key=${YOUTUBE_API_KEY}`
+                                      );
+                                      
+                                      if (!response.ok) {
+                                        throw new Error(`YouTube API request failed with status ${response.status}`);
+                                      }
+                                      
+                                      const data = await response.json();
+                                      
+                                      let videos: VideoRecommendation[] = [];
+                                      
+                                      if (data.items && data.items.length > 0) {
+                                        videos = data.items.map((videoItem: any) => ({
+                                          title: videoItem.snippet.title,
+                                          url: `https://www.youtube.com/watch?v=${videoItem.id.videoId}`,
+                                          thumbnail: videoItem.snippet.thumbnails.medium.url
+                                        }));
+                                      } else {
+                                        // Fallback if no videos found
+                                        videos = [{
+                                          title: `Learn about ${educationalQuery} - Educational Tutorial`,
+                                          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(educationalQuery)}+tutorial+learning`,
+                                          thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
+                                        }];
+                                      }
+                                      
+                                      // Update the history item with the fetched videos
+                                      const newHistory = [...aiHistory];
+                                      newHistory[index] = {
+                                        ...newHistory[index],
+                                        videos: videos
+                                      };
+                                      setAiHistory(newHistory);
+                                    } catch (error) {
+                                      console.error("Error fetching videos:", error);
+                                      // Handle error state
+                                      const errorHistory = [...aiHistory];
+                                      errorHistory[index] = {
+                                        ...errorHistory[index],
+                                        videos: [{
+                                          title: "Could not load videos. Try again later.",
+                                          url: "#",
+                                          thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
+                                        }]
+                                      };
+                                      setAiHistory(errorHistory);
+                                    }
                                   }}
                                   className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 transition-all duration-300"
                                 >
