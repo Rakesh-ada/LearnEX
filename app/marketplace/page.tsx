@@ -133,39 +133,55 @@ export default function MarketplacePage() {
 
   // Fetch materials in pages
   const fetchMaterials = async (pageToFetch = 0, reset = false) => {
-        setIsLoading(true)
+    setIsLoading(true)
     try {
+      console.log(`Fetching materials: page ${pageToFetch}, limit ${PAGE_SIZE}`)
       const fetchedMaterials = await getAllMaterials(pageToFetch * PAGE_SIZE, PAGE_SIZE)
-        const formattedMaterials = fetchedMaterials
-          .filter(material => 
-            material?.id &&
-            material?.title?.trim() &&
-            material?.description?.trim() &&
-            material?.price &&
-            material?.owner?.trim() &&
-            material?.category?.trim() &&
-            material?.createdAt
-          )
-          .map(material => ({
-            id: material.id.toString(),
-            title: material.title.trim(),
-            description: material.description.trim(),
-            price: `${material.price} ETH`,
-            author: material.owner.trim(),
-            category: material.category.trim(),
-            image: "/placeholder.svg?height=400&width=400",
-            createdAt: material.createdAt,
-            isActive: material.isActive ?? true
-          }))
+      console.log(`Received ${fetchedMaterials.length} materials from getAllMaterials`)
+      
+      const formattedMaterials = fetchedMaterials
+        .filter(material => 
+          material?.id &&
+          material?.title?.trim() &&
+          material?.description?.trim() &&
+          material?.price &&
+          material?.owner?.trim() &&
+          material?.category?.trim() &&
+          material?.createdAt
+        )
+        .map(material => ({
+          id: material.id.toString(),
+          title: material.title.trim(),
+          description: material.description.trim(),
+          price: `${material.price} ETH`,
+          author: material.owner.trim(),
+          category: material.category.trim(),
+          image: "/placeholder.svg?height=400&width=400",
+          createdAt: material.createdAt,
+          isActive: material.isActive ?? true
+        }))
+      
+      console.log(`Formatted ${formattedMaterials.length} valid materials`)
       setMaterials(prev => reset ? formattedMaterials : [...prev, ...formattedMaterials])
       setHasMore(formattedMaterials.length === PAGE_SIZE)
-        setError(null)
-      } catch (err) {
-        setError("Failed to load marketplace items. Please try again later.")
-      } finally {
-        setIsLoading(false)
+      setError(null)
+    } catch (err: any) {
+      console.error("Error fetching materials:", err)
+      let errorMessage = "Failed to load marketplace items. Please try again later."
+      
+      if (err?.message) {
+        if (err.message.includes("could not decode result data")) {
+          errorMessage = "No materials data found. The contract may not have any listed materials yet."
+        } else if (err.message.includes("network")) {
+          errorMessage = "Network error. Please check your connection and wallet setup."
+        }
       }
+      
+      setError(errorMessage)
+    } finally {
+      setIsLoading(false)
     }
+  }
 
   // Handle URL item parameter
   useEffect(() => {

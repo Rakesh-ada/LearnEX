@@ -132,3 +132,39 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Global word break and wrap utilities */
+.break-words {
+  word-break: break-word;
+}
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+/* Fix for the PDF viewer AI response container */
+.chat-response-container {
+  max-width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.chat-response-container pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.chat-response-container code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Ensure tables don't break the layout */
+.markdown-content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}

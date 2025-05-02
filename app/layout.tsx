@@ -29,6 +29,13 @@ export default function RootLayout({
           <main className="flex-1 relative z-10">{children}</main>
         </Providers>
         
+        {/* Marked.js for markdown parsing */}
+        <Script 
+          src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js" 
+          strategy="beforeInteractive"
+          id="marked-script"
+        />
+        
         {/* Script to remove fdprocessedid attributes that cause hydration errors */}
         <Script id="remove-fd-attributes">
           {`

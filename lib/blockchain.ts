@@ -732,6 +732,11 @@ export const getAllMaterials = async (
     // Get material IDs from the blockchain
     const materialIds = await getActiveMaterialsOnChain(offset, limit);
     
+    // If there are no materials, return an empty array immediately
+    if (!materialIds || materialIds.length === 0) {
+      return [];
+    }
+    
     // Get details for each material
     const materialsPromises = materialIds.map(id => getMaterialDetailsOnChain(id));
     const materials = await Promise.all(materialsPromises);
@@ -742,10 +747,15 @@ export const getAllMaterials = async (
     console.error('Error getting materials:', error);
     
     // Fallback to API if blockchain interaction fails
-    const response = await fetch(`/api/materials?page=${Math.floor(offset / limit) + 1}&limit=${limit}`);
-    const data = await response.json();
-    
-    return data.success ? data.data.materials : [];
+    try {
+      const response = await fetch(`/api/materials?page=${Math.floor(offset / limit) + 1}&limit=${limit}`);
+      const data = await response.json();
+      
+      return data.success ? data.data.materials : [];
+    } catch (fetchError) {
+      console.error('Error fetching from API fallback:', fetchError);
+      return [];
+    }
   }
 };
 
