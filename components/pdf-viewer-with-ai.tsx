@@ -15,7 +15,8 @@ import {
   Sparkles,
   Loader,
   Video,
-  ExternalLink
+  ExternalLink,
+  PlusCircle
 } from "lucide-react"
 import { 
   Dialog,
@@ -382,11 +383,30 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
   }
   
   // Function to fetch videos related to a topic
-  const fetchRelatedVideos = async (topic: string): Promise<VideoRecommendation[]> => {
+  const fetchRelatedVideos = async (topic: string, shouldShowVideos: boolean = false): Promise<VideoRecommendation[]> => {
+    // Skip video recommendations for general or greeting queries
+    if (!shouldShowVideos) {
+      return [];
+    }
+
     try {
-      // Use the YouTube API to fetch real video recommendations
+      // Filter out non-educational keywords from the topic
+      const filteredTopic = topic
+        .replace(/^(hi|hello|hey|greetings|thanks|thank you|please|okay)[\s\.,!?]*/i, '')
+        .replace(/[\.,!?]+$/, '')
+        .trim();
+        
+      // If the filtered topic is too short or generic, don't fetch videos
+      if (filteredTopic.length < 3 || /^(how are you|who are you|what can you do|what's up)$/i.test(filteredTopic)) {
+        return [];
+      }
+
+      // Enhance search query to specifically target educational content
+      const educationalQuery = `${encodeURIComponent(filteredTopic)}+educational+tutorial+course+learn`;
+      
+      // Use the YouTube API to fetch educational video recommendations
       const response = await fetch(
-        `${YOUTUBE_API_URL}?part=snippet&q=${encodeURIComponent(topic)}+tutorial&maxResults=3&type=video&key=${YOUTUBE_API_KEY}`
+        `${YOUTUBE_API_URL}?part=snippet&q=${educationalQuery}&maxResults=3&type=video&videoCategoryId=27&key=${YOUTUBE_API_KEY}`
       );
       
       if (!response.ok) {
@@ -397,36 +417,53 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
       const data = await response.json();
       
       if (data.items && data.items.length > 0) {
-        return data.items.map((item: any) => ({
+        // Filter out possible non-educational content based on title keywords
+        const educationalVideos = data.items.filter((item: any) => {
+          const title = item.snippet.title.toLowerCase();
+          const description = item.snippet.description.toLowerCase();
+          
+          // Check for educational keywords in title or description
+          const hasEducationalTerms = 
+            title.includes('learn') || 
+            title.includes('tutorial') || 
+            title.includes('course') || 
+            title.includes('lesson') ||
+            title.includes('education') ||
+            title.includes('guide') ||
+            title.includes('how to') ||
+            description.includes('learn') || 
+            description.includes('tutorial') || 
+            description.includes('course');
+            
+          // Avoid obvious entertainment-only content
+          const hasEntertainmentTerms =
+            title.includes('funny') ||
+            title.includes('prank') ||
+            title.includes('reaction') ||
+            title.includes('gameplay');
+            
+          return hasEducationalTerms && !hasEntertainmentTerms;
+        });
+        
+        return educationalVideos.map((item: any) => ({
           title: item.snippet.title,
           url: `https://www.youtube.com/watch?v=${item.id.videoId}`,
           thumbnail: item.snippet.thumbnails.medium.url
         }));
       } else {
-        // Fallback to mock data if no results
+        // Fallback to more specific educational search if no results
         return [
           {
-            title: `Learn about ${topic} - Tutorial`,
-            url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+tutorial`,
-            thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
-          },
-          {
-            title: `${topic} explained for beginners`,
-            url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}+for+beginners`,
+            title: `Learn about ${filteredTopic} - Educational Tutorial`,
+            url: `https://www.youtube.com/results?search_query=${encodeURIComponent(filteredTopic)}+course+tutorial+learning`,
             thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
           }
         ];
       }
     } catch (error) {
       console.error("Error fetching related videos:", error);
-      // Return fallback data in case of error
-      return [
-        {
-          title: `Learn about ${topic}`,
-          url: `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}`,
-          thumbnail: `https://i.ytimg.com/vi/placeholder/mqdefault.jpg`
-        }
-      ];
+      // Return empty array in case of error
+      return [];
     }
   };
   
@@ -508,8 +545,32 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
       // Call Gemini API with the enhanced query
       const aiResponseText = await queryGeminiAI(enhancedQuery);
       
-      // Get video recommendations
-      const videos = await fetchRelatedVideos(aiQuery);
+      // Determine if this is a query that would benefit from video explanations
+      
+      // Check for common greeting patterns or generic interactions to exclude
+      const genericPatterns = [
+        /^(hi|hello|hey|greetings)/i,
+        /^(how are you|what's up|how's it going)/i,
+        /^(thanks|thank you)/i,
+        /^(bye|goodbye)/i,
+        /^(who are you|what can you do)/i
+      ];
+      
+      const isGenericQuery = genericPatterns.some(pattern => pattern.test(aiQuery.trim()));
+      
+      // Check for educational indicators in the query
+      const educationalIndicators = [
+        /explain|tutorial|learn|teach|course|lesson|how to|what is|define|concept of|understand/i,
+        /video|watch|visual|demonstrate/i
+      ];
+      
+      const hasEducationalIntent = educationalIndicators.some(pattern => pattern.test(aiQuery));
+      
+      // Only fetch videos for educational queries that would benefit from visual explanation
+      const shouldShowVideos = !isGenericQuery && (hasEducationalIntent || isSimpleTopic);
+      
+      // Get video recommendations only if appropriate
+      const videos = await fetchRelatedVideos(aiQuery, shouldShowVideos);
       
       // Create the history entry with both the AI response and videos
       const historyEntry = {
@@ -776,24 +837,24 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
                       <div key={index} className="space-y-3">
                         <div className="flex items-start space-x-3">
                           <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 ring-2 ring-slate-600/30">
-                          <MessageSquareText className="h-4 w-4 text-slate-300" />
-                        </div>
+                            <MessageSquareText className="h-4 w-4 text-slate-300" />
+                          </div>
                           <div className="flex-1 bg-slate-800 rounded-xl p-4 text-sm text-white shadow-md">
-                          {item.question}
+                            {item.question}
+                          </div>
                         </div>
-                      </div>
                         <div className="flex items-start space-x-3">
                           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center flex-shrink-0 ring-2 ring-purple-500/30">
-                          <Sparkles className="h-4 w-4 text-white" />
-                        </div>
+                            <Sparkles className="h-4 w-4 text-white" />
+                          </div>
                           <div className="flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-slate-800/95 rounded-xl p-4 text-sm text-white shadow-md border border-purple-500/10 chat-response-container overflow-hidden">
                             <div className="w-full overflow-hidden break-words">
                               <MarkdownRenderer content={item.answer} className="overflow-wrap-anywhere break-words" />
                             </div>
                             
-                            {item.videos && item.videos.length > 0 && (
+                            {item.videos && item.videos.length > 0 ? (
                               <div className="mt-4 pt-4 border-t border-white/10">
-                                <p className="text-xs font-semibold mb-3 text-indigo-300">Recommended Videos</p>
+                                <p className="text-xs font-semibold mb-3 text-indigo-300">Recommended Educational Videos</p>
                                 <div className="space-y-4">
                                   {item.videos.map((video, videoIndex) => (
                                     <a 
@@ -829,12 +890,32 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
                                   ))}
                                 </div>
                               </div>
+                            ) : (
+                              <div className="mt-4 pt-4 border-t border-white/10">
+                                <button 
+                                  onClick={async () => {
+                                    // Force fetch educational videos when the button is clicked
+                                    const videos = await fetchRelatedVideos(item.question, true);
+                                    
+                                    // Update the history item with the fetched videos
+                                    setAiHistory(prev => 
+                                      prev.map((historyItem, idx) => 
+                                        idx === index ? { ...historyItem, videos } : historyItem
+                                      )
+                                    );
+                                  }}
+                                  className="flex items-center gap-2 px-4 py-2 text-xs rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 transition-all duration-300"
+                                >
+                                  <PlusCircle className="h-3 w-3" />
+                                  <span>Find Educational Videos</span>
+                                </button>
+                              </div>
                             )}
                           </div>
                         </div>
                       </div>
                     ))}
-                    </div>
+                  </div>
                 )}
               </div>
               
