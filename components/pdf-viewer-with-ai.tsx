@@ -168,45 +168,35 @@ const PROMPT_TEMPLATES = {
   career: "What career opportunities exist in {topic}? Describe job roles, required skills, and how to start a career in this field."
 };
 
-// Popular tech topics with custom descriptions
-const POPULAR_TOPICS = [
+const AI_FEATURES = [
   { 
-    id: "blockchain", 
-    name: "Blockchain", 
-    description: "Distributed ledger technology powering cryptocurrencies and decentralized applications",
-    icon: "Layers"
+    id: "document-summary", 
+    name: "Document Summary", 
+    description: "Intelligent identification of key information, quickly creating concise summaries to help you grasp the essence of the documents",
+    icon: "FileText"
   },
   { 
-    id: "machine-learning", 
-    name: "Machine Learning", 
-    description: "Systems that learn and improve from experience without explicit programming",
-    icon: "Brain" 
+    id: "smart-qa", 
+    name: "Smart Q&A", 
+    description: "Answering questions based on the document content, providing professional answers to enhance your understanding of the documents",
+    icon: "HelpCircle" 
   },
   { 
-    id: "quantum-computing", 
-    name: "Quantum Computing", 
-    description: "Computing using quantum-mechanical phenomena like superposition and entanglement",
-    icon: "Atom" 
+    id: "multiple-model", 
+    name: "Multiple Model Support", 
+    description: "Seamlessly interact with top-tier LLMs such as Gemini 2.0 Flash and GPT-4o, enabling enhanced flexibility, performance, and scalability",
+    icon: "Cpu" 
   },
   { 
-    id: "neural-networks", 
-    name: "Neural Networks", 
-    description: "Computing systems inspired by biological neural networks in human brains",
-    icon: "Network" 
-  },
-  { 
-    id: "cloud-computing", 
-    name: "Cloud Computing", 
-    description: "On-demand delivery of computing resources over the internet",
-    icon: "Cloud" 
-  },
-  { 
-    id: "cybersecurity", 
-    name: "Cybersecurity", 
-    description: "Protection of computer systems from information disclosure and theft",
-    icon: "Shield" 
+    id: "document-translation", 
+    name: "Document Translation", 
+    description: "Translate a PDF file and compare it side by side with the original file on the left and the translated file on the right",
+    icon: "Languages" 
   }
 ];
+
+// Replace POPULAR_TOPICS with AI_FEATURES
+const POPULAR_TOPICS = AI_FEATURES;
 
 export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWithAiProps) {
   // PDF viewer state
@@ -446,7 +436,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
               
               > Note: This is an important consideration to keep in mind.
               
-              Now answer the query using this structured approach to make the content easy to understand and learn from.`
+              Now answer the query using this structured approach to make the content easy to understand, concise yet informative and learn from.`
             }]
           }]
         })
