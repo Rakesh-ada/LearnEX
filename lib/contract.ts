@@ -127,7 +127,7 @@ export const listMaterialOnChain = async (
         priceInWei
       );
       console.log('Gas estimate:', gasEstimate.toString());
-    } catch (estimateError) {
+    } catch (estimateError: any) {
       console.error('Gas estimation failed:', estimateError);
       
       // Extract more detailed error message
@@ -1130,5 +1130,158 @@ export const canUploadMaterials = async (): Promise<boolean> => {
     console.error('Unexpected error checking upload rights:', error);
     // Be conservative - restrict uploads if we encounter an unexpected error
     return false;
+  }
+};
+
+/**
+ * Safely test the contract version and handle ABI mismatches
+ */
+export const testContractVersion = async (): Promise<{ success: boolean, version: string | null, details: any }> => {
+  try {
+    const contract = await getContract();
+    if (!contract) {
+      return { success: false, version: null, details: "Contract not available" };
+    }
+
+    // Check if function exists in the ABI
+    if (typeof contract.getContractVersion !== 'function') {
+      return { 
+        success: false, 
+        version: null, 
+        details: "getContractVersion function not found in contract ABI" 
+      };
+    }
+
+    // First, try a manual calldata approach to handle potential ABI mismatches
+    try {
+      // Get contract address and provider
+      const contractAddress = getCurrentContractAddress();
+      const provider = getProvider();
+      
+      if (!provider) {
+        return { success: false, version: null, details: "Provider not available" };
+      }
+
+      // Create correct function selector for "getContractVersion()" 
+      // The selector is the first 4 bytes of the keccak256 hash of the function signature
+      // For "getContractVersion()" this is "0x0d2020dd"
+      const getVersionSelector = "0x0d2020dd"; // precomputed selector for getContractVersion()
+      
+      // Make a direct low-level call with the correct selector
+      const rawResult = await provider.call({
+        to: contractAddress, 
+        data: getVersionSelector
+      });
+
+      console.log("Raw getContractVersion result with correct selector:", rawResult);
+      
+      if (rawResult && rawResult !== "0x") {
+        // Try to decode the result if it's not empty
+        let decodedVersion = "Unknown format";
+        
+        try {
+          // If the output format is a string, it should be encoded like this:
+          // First 32 bytes: offset to string data (usually 0x20 = 32)
+          // Next 32 bytes: length of string
+          // Remaining bytes: the string data itself, padded to 32 byte boundary
+          if (rawResult.length > 130) { // At least enough bytes for offset+length+some data
+            const offsetHex = rawResult.slice(2, 66);
+            const offset = parseInt(offsetHex, 16);
+            
+            if (offset === 32 || offset === 64) { // Common offsets for string data
+              const lengthHex = rawResult.slice(66, 130);
+              const length = parseInt(lengthHex, 16);
+              
+              if (length > 0 && length < 100) { // Reasonable string length
+                const stringStart = 2 + (offset + 32) * 2; // Convert byte offset to hex char offset
+                const stringEnd = stringStart + length * 2;
+                
+                if (stringEnd <= rawResult.length) {
+                  const hexString = rawResult.slice(stringStart, stringEnd);
+                  // Convert hex to string more safely
+                  try {
+                    // Browser approach with TextDecoder
+                    const byteArray = hexString.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || [];
+                    if (typeof TextDecoder !== 'undefined') {
+                      const textDecoder = new TextDecoder('utf-8');
+                      decodedVersion = textDecoder.decode(new Uint8Array(byteArray));
+                    } else {
+                      // Node.js approach or simpler fallback
+                      decodedVersion = byteArray.map(byte => String.fromCharCode(byte)).join('');
+                    }
+                  } catch (e) {
+                    // Last resort fallback: just return the hex
+                    decodedVersion = `HEX:${hexString}`;
+                  }
+                }
+              }
+            }
+          }
+        } catch (decodeError) {
+          console.error("Error decoding version string:", decodeError);
+        }
+        
+        return { 
+          success: true, 
+          version: decodedVersion, 
+          details: { 
+            rawResponse: rawResult,
+            note: "Manual low-level call succeeded, decoded version is best effort" 
+          } 
+        };
+      }
+    } catch (rawError) {
+      console.error("Raw call to getContractVersion failed:", rawError);
+    }
+
+    // Then try the standard ABI call as fallback
+    try {
+      const versionInfo = await contract.getContractVersion();
+      
+      if (versionInfo) {
+        if (Array.isArray(versionInfo)) {
+          return { 
+            success: true, 
+            version: versionInfo[0] || "Unknown version", 
+            details: { isArray: true, data: versionInfo } 
+          };
+        } else if (typeof versionInfo === 'object') {
+          return { 
+            success: true, 
+            version: versionInfo.version || "Unknown version", 
+            details: { isObject: true, data: versionInfo } 
+          };
+        } else {
+          return { 
+            success: true, 
+            version: String(versionInfo), 
+            details: { isPrimitive: true, data: versionInfo } 
+          };
+        }
+      }
+    } catch (abiError) {
+      console.error("Standard ABI call to getContractVersion failed:", abiError);
+      return { 
+        success: false, 
+        version: null, 
+        details: {
+          error: abiError instanceof Error ? abiError.message : String(abiError),
+          note: "Both manual call and ABI call failed" 
+        }
+      };
+    }
+    
+    return { 
+      success: false, 
+      version: null, 
+      details: "Function exists but returned no data through any method" 
+    };
+  } catch (error) {
+    console.error("Error testing contract version:", error);
+    return { 
+      success: false, 
+      version: null, 
+      details: error instanceof Error ? error.message : String(error) 
+    };
   }
 }; 
