@@ -28,6 +28,107 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import "@/styles/pdf-viewer.css"
+import MarkdownRenderer from "./markdown-renderer"
+
+// Add a style tag for additional markdown styles
+const markdownStyles = `
+  .markdown-content pre {
+    background-color: rgba(0, 0, 0, 0.25);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    max-width: 100%;
+  }
+  
+  .markdown-content code {
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  
+  .markdown-content ul, .markdown-content ol {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+  }
+  
+  .markdown-content ul {
+    list-style-type: disc;
+  }
+  
+  .markdown-content ol {
+    list-style-type: decimal;
+  }
+  
+  .markdown-content p {
+    margin: 0.5rem 0;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .markdown-content h1, .markdown-content h2, .markdown-content h3, 
+  .markdown-content h4, .markdown-content h5, .markdown-content h6 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: white;
+    font-weight: bold;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .markdown-content h1 { font-size: 1.5rem; }
+  .markdown-content h2 { font-size: 1.25rem; }
+  .markdown-content h3 { font-size: 1.125rem; }
+  
+  .markdown-content blockquote {
+    border-left: 4px solid #8b5cf6;
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: #d1d5db;
+    font-style: italic;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .markdown-content a {
+    color: #818cf8;
+    text-decoration: underline;
+    word-break: break-all;
+  }
+  
+  .markdown-content a:hover {
+    color: #6366f1;
+  }
+  
+  .markdown-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  
+  .markdown-content th, .markdown-content td {
+    border: 1px solid #374151;
+    padding: 0.5rem;
+    text-align: left;
+    word-break: break-word;
+  }
+  
+  .markdown-content th {
+    background-color: #1f2937;
+  }
+
+  /* Add this to ensure all content wraps properly inside the chat container */
+  .chat-response-container {
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+  }
+`;
 
 // Set a dummy worker source or disable worker to avoid the CDN errors
 if (typeof window !== 'undefined') {
@@ -311,9 +412,41 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
             parts: [{
               text: `You are a helpful AI assistant for students. 
               Answer the following query about educational content: "${query}". 
-              Provide a comprehensive but concise explanation. 
+              Provide a comprehensive but concise explanation in well-structured markdown format.
+              Use headings, bullet points, code blocks, and other markdown features to make your answer more readable.
               Make your answer informative for a student trying to learn this topic.
-              Include 1-2 key concepts that would help the student understand the topic better.`
+              Include 1-2 key concepts that would help the student understand the topic better.
+              
+              IMPORTANT: Format your response using proper markdown syntax:
+              - Use # for main headings, ## for subheadings, and ### for section titles
+              - Use **bold** for key terms or important concepts
+              - Use *italics* for emphasis
+              - Use bullet lists and numbered lists where appropriate
+              - For code examples, use \`\`\`language code blocks with the appropriate language specified
+              - Use > for blockquotes or important notes
+              - Use tables for structured data if appropriate
+              - Include links to relevant resources if helpful
+              
+              EXAMPLE FORMATTING:
+              # Main Topic
+              ## Key Concept 1
+              **Important term**: Explanation of the term.
+              
+              Key points:
+              * First important point
+              * Second important point
+                * Sub-point with more detail
+              
+              ## Practical Examples
+              Here's how to implement this in code:
+              \`\`\`python
+              def example_function():
+                  return "This is an example"
+              \`\`\`
+              
+              > Note: This is an important consideration to keep in mind.
+              
+              Now answer the query using this structured approach to make the content easy to understand and learn from.`
             }]
           }]
         })
@@ -473,6 +606,9 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
   
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm pdf-viewer-main">
+      {/* Add the style tag for markdown styles */}
+      <style dangerouslySetInnerHTML={{ __html: markdownStyles }} />
+      
       <div 
         ref={containerRef}
         className="relative flex flex-col w-full h-full max-w-[95vw] max-h-[95vh] bg-slate-900 rounded-lg overflow-hidden border border-white/10"
@@ -574,7 +710,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
           {/* AI Assistant Panel - Enhanced visual design */}
           {isAiPanelOpen && (
             <div className="w-[30vw] min-w-[280px] max-w-[450px] transition-all duration-300
-              border-l border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col">
+              border-l border-white/10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 flex flex-col overflow-hidden">
               <div className="p-5 border-b border-white/10 bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-blue-900/40">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -594,7 +730,7 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
                 </div>
               </div>
               
-              <div className="flex-1 overflow-auto p-5 space-y-5 bg-slate-900/50">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 space-y-5 bg-slate-900/50">
                 {aiHistory.length === 0 ? (
                   <div className="flex flex-col items-center">
                     <div className="bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 p-6 rounded-xl border border-white/5 backdrop-blur-sm mb-8 w-full">
@@ -655,8 +791,10 @@ export default function PdfViewerWithAi({ pdfUrl, title, onClose }: PdfViewerWit
                           <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center flex-shrink-0 ring-2 ring-purple-500/30">
                           <Sparkles className="h-4 w-4 text-white" />
                         </div>
-                          <div className="flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-slate-800/95 rounded-xl p-4 text-sm text-white shadow-md border border-purple-500/10">
-                          {item.answer}
+                          <div className="flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-slate-800/95 rounded-xl p-4 text-sm text-white shadow-md border border-purple-500/10 chat-response-container overflow-hidden">
+                            <div className="w-full overflow-hidden break-words">
+                              <MarkdownRenderer content={item.answer} className="overflow-wrap-anywhere break-words" />
+                            </div>
                             
                             {item.videos && item.videos.length > 0 && (
                               <div className="mt-4 pt-4 border-t border-white/10">

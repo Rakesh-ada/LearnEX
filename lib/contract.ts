@@ -323,8 +323,17 @@ export const getActiveMaterialsOnChain = async (
     const contract = await getContract();
     if (!contract) throw new Error('Contract not available');
 
-    const materialIds = await contract.getActiveMaterials(offset, limit);
-    return materialIds.map((id: ethers.BigNumberish) => Number(id));
+    try {
+      const materialIds = await contract.getActiveMaterials(offset, limit);
+      return materialIds.map((id: ethers.BigNumberish) => Number(id));
+    } catch (error: any) {
+      console.warn('Received empty result from getActiveMaterials, returning empty array:', error);
+      // This handles the specific "could not decode result data" error
+      if (error.message && error.message.includes('could not decode result data')) {
+        return [];
+      }
+      throw error; // Rethrow if it's a different error
+    }
   } catch (error) {
     console.error('Error getting active materials on chain:', error);
     return [];

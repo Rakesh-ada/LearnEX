@@ -122,3 +122,48 @@ iframe {
 .pdf-viewer-container::-webkit-scrollbar-thumb:hover {
   background: rgba(139, 92, 246, 0.7);
 }
+
+/* Add these styles for better code block handling in the PDF viewer */
+.chat-response-container pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-response-container pre code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-response-container .markdown-content {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.chat-response-container table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.chat-response-container p, 
+.chat-response-container h1, 
+.chat-response-container h2, 
+.chat-response-container h3, 
+.chat-response-container h4, 
+.chat-response-container h5, 
+.chat-response-container h6,
+.chat-response-container li,
+.chat-response-container blockquote {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Ensure links properly wrap */
+.chat-response-container a {
+  word-break: break-all;
+}
