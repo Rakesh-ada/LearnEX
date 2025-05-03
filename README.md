@@ -14,6 +14,8 @@ Study Marketplace allows creators to list educational materials on the blockchai
 - Purchase materials using cryptocurrency
 - View purchased materials
 - Platform fee system for sustainability
+- Deploy your own contracts with step-by-step guide and video tutorials
+- EDU Chain Explorer for tracking transactions and contract interactions
 
 ## Tech Stack
 
@@ -86,12 +88,26 @@ If you plan to deploy this project to GitHub Pages or use GitHub Actions for CI/
 
 ### Smart Contract Deployment
 
+You have two options for deploying the smart contract:
+
+#### Option 1: Use the Default Contract
+
 The contract is currently deployed at address `0xe12D1e1698d7E07206b5C6C49466631c4dDfbF1B` on the edu-chain network.
 
-If you need to deploy your own contract:
+#### Option 2: Deploy Your Own Contract
 
-1. Follow the instructions in `contracts/DEPLOYMENT_GUIDE.md` to deploy the smart contract using Remix IDE.
-2. Update the contract address in your `.env.local` file.
+1. Navigate to the "Organization" tab in the application
+2. Select the "Deployment Guide" tab
+3. Follow the step-by-step instructions:
+   - Prepare your contracts (StudyMarketplace.sol or SchoolLibrary.sol)
+   - Open Remix IDE
+   - Create & compile the smart contract
+   - Deploy with MetaMask
+   - Copy the contract address to use in the application
+4. Watch the embedded video tutorial for detailed guidance
+5. Get test ETH from the [EDU-Chain HackQuest Faucet](https://www.hackquest.io/faucets/656476) before deploying
+
+After deployment, update the contract address in your `.env.local` file.
 
 ### Running the Application
 
@@ -116,6 +132,14 @@ Visit `http://localhost:3000` to see the application.
 2. Browse available materials
 3. Purchase materials you're interested in
 4. Access your purchased materials in "My Library"
+
+### For Organizations
+
+1. Connect your wallet to the edu-chain network
+2. Navigate to the "Organization" tab
+3. Deploy your own contract or explore existing contracts
+4. View transactions, contract information, and analytics
+5. Verify your contract on the EDU Chain explorer
 
 ## Project Structure
 

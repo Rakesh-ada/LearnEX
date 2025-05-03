@@ -33,9 +33,10 @@ import {
   listMaterialWithFallback,
   verifyContractFunctions 
 } from "@/lib/blockchain"
-import { verifyContract, checkUserBalance, checkNetwork, switchToCorrectNetwork, testContractConnection, canUploadMaterials, getProvider, getContract } from "@/lib/contract"
+import { verifyContract, checkUserBalance, checkNetwork, switchToCorrectNetwork, testContractConnection, canUploadMaterials, getProvider, getContract, testContractVersion, getCurrentContractAddress } from "@/lib/contract"
 import { toast } from "@/hooks/use-toast"
 import { pinFileToIPFS } from "@/lib/pinning-service"
+import { TestContractResult } from "@/lib/contract-types"
 
 const formSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -227,42 +228,45 @@ export default function UploadMaterialForm() {
       } else {
         // Check for StudyMarketplace characteristics
         try {
-          if (typeof contract.getContractVersion === 'function') {
-            const versionInfo = await contract.getContractVersion();
-            console.log("Contract version info:", versionInfo);
+          // First try the safer version testing function
+          const versionTest = await testContractVersion();
+          console.log("Contract version test result:", versionTest);
+          
+          if (versionTest.success) {
             detectedType = "StudyMarketplace";
-            
-            // Force check upload permissions for marketplace too
-            const canUploadResult = await canUploadMaterials();
-            setCanUpload(canUploadResult);
-            
-            if (!canUploadResult) {
-              // This is unexpected - regular marketplace should allow uploads
-              console.error("Unexpected permission restriction in StudyMarketplace");
-              toast({
-                title: "Permission Warning",
-                description: "Upload appears to be restricted in a standard marketplace. Enable debug mode to troubleshoot.",
-                variant: "destructive",
-              });
+            console.log("Detected contract type via version test: StudyMarketplace");
+          } else {
+            // Try alternate detection method by function presence
+            if (typeof contract.getActiveMaterials === 'function' && 
+                typeof contract.purchaseMaterial === 'function') {
+              detectedType = "StudyMarketplace";
+              console.log("Detected contract type by function presence: StudyMarketplace");
             }
           }
+            
+          // Force check upload permissions for marketplace too
+          const canUploadResult = await canUploadMaterials();
+          setCanUpload(canUploadResult);
+          
+          if (!canUploadResult && detectedType === "StudyMarketplace") {
+            // This is unexpected - regular marketplace should allow uploads
+            console.error("Unexpected permission restriction in StudyMarketplace");
+            toast({
+              title: "Permission Warning",
+              description: "Upload appears to be restricted in a standard marketplace. Enable debug mode to troubleshoot.",
+              variant: "destructive",
+            });
+          }
         } catch (error) {
-          console.error("Error checking contract version:", error);
+          console.error("Error detecting contract type:", error);
         }
       }
       
+      // Set the detected contract type
       setContractType(detectedType);
       
-      // Log contract detection results
-      console.log({
-        detectedContractType: detectedType,
-        hasIsApprovedCreatorFunction: hasIsApprovedCreator,
-        adminAddress: adminAddress || "Unknown",
-        uploadPermission: canUpload
-      });
-      
     } catch (error) {
-      console.error("Error in detectContractType:", error);
+      console.error("Error in contract type detection:", error);
       setContractType("Unknown");
     } finally {
       setIsCheckingUploadRights(false);
@@ -461,7 +465,56 @@ export default function UploadMaterialForm() {
         console.error("Error listing material on blockchain:", error);
         let txErrorMessage = "You don't have permission to upload materials, or there was an error in the transaction.";
         
+        // Check for specific errors related to newly deployed contracts
         if (error.message) {
+          console.log("Detailed error:", error.message);
+          
+          if (error.message.includes("transaction failed") || 
+              error.message.includes("reverted") || 
+              error.message.includes("execution reverted")) {
+            
+            // Add a more helpful message for newly deployed contracts
+            txErrorMessage = "Transaction failed. If you're using a newly deployed contract, make sure:";
+            txErrorMessage += "\n1. You're using the same wallet that deployed the contract";
+            txErrorMessage += "\n2. You're on the correct network";
+            txErrorMessage += "\n3. The contract was deployed with the complete bytecode";
+            
+            // Suggest checking platform fee recipient
+            toast({
+              title: "Contract Ownership Check",
+              description: "Checking if your wallet is the platform fee recipient...",
+            });
+            
+            // Add a slight delay to show the toast before the async call
+            setTimeout(async () => {
+              try {
+                const contract = await getContract();
+                if (contract) {
+                  const feeRecipient = await contract.platformFeeRecipient();
+                  const currentWallet = currentAccount;
+                  
+                  console.log("Contract fee recipient:", feeRecipient);
+                  console.log("Current wallet:", currentWallet);
+                  
+                  if (feeRecipient.toLowerCase() !== currentWallet.toLowerCase()) {
+                    toast({
+                      title: "Permission Issue",
+                      description: `Your current wallet (${currentWallet.slice(0,6)}...${currentWallet.slice(-4)}) is NOT the platform fee recipient of this contract. The fee recipient is ${feeRecipient.slice(0,6)}...${feeRecipient.slice(-4)}`,
+                      variant: "destructive",
+                    });
+                  } else {
+                    toast({
+                      title: "Wallet is Fee Recipient",
+                      description: "Your wallet is the platform fee recipient, so you should be able to list materials. The error might be caused by something else.",
+                    });
+                  }
+                }
+              } catch (checkError) {
+                console.error("Error checking fee recipient:", checkError);
+              }
+            }, 500);
+          }
+          
           txErrorMessage += ` Error: ${error.message}`;
         }
         
@@ -615,6 +668,26 @@ export default function UploadMaterialForm() {
     setDebugMode(!debugMode);
   };
 
+  const testContractVersionOnClick = async () => {
+    try {
+      const result = await testContractVersion();
+      console.log("Contract version test result:", result);
+      
+      toast({
+        title: `Contract Version Test: ${result.success ? "Success" : "Failed"}`,
+        description: `Version: ${result.version || "N/A"}${result.details ? "\nDetails available in console" : ""}`,
+        variant: result.success ? "default" : "destructive",
+      });
+    } catch (error) {
+      console.error("Error testing contract version:", error);
+      toast({
+        title: "Contract Version Test Failed",
+        description: error instanceof Error ? error.message : String(error),
+        variant: "destructive",
+      });
+    }
+  };
+
   // Update the display message for upload permissions
   const getUploadRestrictionMessage = () => {
     if (contractType === "SchoolLibrary") {
@@ -700,163 +773,107 @@ export default function UploadMaterialForm() {
       )}
 
       {debugMode && (
-        <Alert className="mb-4 bg-amber-900/30 border-amber-700">
-          <Bug className="h-4 w-4" />
-          <AlertTitle>Debug Tools</AlertTitle>
-          <AlertDescription className="flex flex-col space-y-2">
-            <p>Use these tools to diagnose contract issues:</p>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <Button 
-                onClick={handleTestContract} 
-                disabled={isTestingContract}
-                variant="gradient-subtle" 
+        <div className="mt-6 p-4 border border-gray-200 rounded-md bg-gray-50">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-md font-semibold">Debug Information</h3>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleDebugMode}
+            >
+              Hide Debug
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-sm mb-1">Contract Address: {getCurrentContractAddress() || "N/A"}</p>
+              <p className="text-sm mb-1">Network: {currentNetwork || "Not connected"}</p>
+              <p className="text-sm mb-1">Contract Type: {contractType || "Unknown"}</p>
+              <p className="text-sm mb-1">Can Upload: {canUpload === null ? "Unknown" : canUpload ? "Yes" : "No"}</p>
+            </div>
+            <div>
+              <p className="text-sm mb-1">Wallet: {currentAccount || "Not connected"}</p>
+              <p className="text-sm mb-1">Balance: {userBalance || "Unknown"}</p>
+              <p className="text-sm mb-1">Contract Verified: {contractVerified === null ? "Unknown" : contractVerified ? "Yes" : "No"}</p>
+              <p className="text-sm mb-1">Correct Network: {isCorrectNetwork === null ? "Unknown" : isCorrectNetwork ? "Yes" : "No"}</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestContract}
+              disabled={isTestingContract || !currentAccount}
+            >
+              {isTestingContract ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <Bug className="mr-2 h-4 w-4" />
+                  Test Contract
+                </>
+              )}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={testContractVersionOnClick}
+              disabled={!currentAccount}
+            >
+              <Bug className="mr-2 h-4 w-4" />
+              Test Version
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestSimplified}
+              disabled={isTestingSimplified || !currentAccount}
+            >
+              {isTestingSimplified ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <Bug className="mr-2 h-4 w-4" />
+                  Simple Test
+                </>
+              )}
+            </Button>
+            
+            {!isCorrectNetwork && (
+              <Button
+                variant="outline"
                 size="sm"
+                onClick={handleSwitchNetwork}
+                disabled={isSwitchingNetwork || !currentAccount}
               >
-                {isTestingContract ? (
+                {isSwitchingNetwork ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Testing...
+                    Switching...
                   </>
                 ) : (
-                  "Test Contract Connection"
+                  <>Switch to Sepolia</>
                 )}
               </Button>
-              
-              <Button 
-                variant="gradient-subtle" 
-                size="sm"
-                onClick={handleTestSimplified}
-                disabled={isTestingSimplified}
-              >
-                {isTestingSimplified ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Testing...
-                  </>
-                ) : (
-                  "Test With Simple Params"
-                )}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={async () => {
-                  try {
-                    await detectContractType();
-                    const canUploadResult = await canUploadMaterials();
-                    setCanUpload(canUploadResult);
-                    
-                  toast({
-                      title: `Contract Type: ${contractType || "Unknown"}`,
-                      description: `Upload permission: ${canUploadResult ? "Allowed" : "Restricted"}`,
-                    });
-                  } catch (error) {
-                    console.error("Error checking permissions:", error);
-                    toast({
-                      title: "Permission Check Failed",
-                      description: "Could not determine upload permissions",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Check Permissions
-              </Button>
-              
-              <Button 
-                variant={canUpload ? "default" : "destructive"}
-                size="sm"
-                onClick={async () => {
-                  try {
-                    setIsCheckingUploadRights(true);
-                    // Reset permissions state
-                    setCanUpload(null);
-                    setContractType(null);
-                    setContractVerified(null);
-                    
-                    // Force reconnection to contract
-                    toast({
-                      title: "Refreshing Contract Connection",
-                      description: "Reconnecting and checking permissions...",
-                    });
-                    
-                    // Wait for contract verification
-                    const isVerified = await verifyContract();
-                    setContractVerified(isVerified);
-                    
-                    // Detect contract type
-                    await detectContractType();
-                    
-                    // Re-check permissions one more time
-                    const canUploadResult = await canUploadMaterials();
-                    setCanUpload(canUploadResult);
-                    
-                    toast({
-                      title: "Refresh Complete",
-                      description: `Contract: ${contractType}, Upload: ${canUploadResult ? "Allowed" : "Restricted"}`,
-                      variant: canUploadResult ? "default" : "destructive",
-                    });
-                  } catch (error) {
-                    console.error("Error during permission refresh:", error);
-                    toast({
-                      title: "Refresh Failed",
-                      description: "Could not refresh contract connection",
-                      variant: "destructive",
-                    });
-                  } finally {
-                    setIsCheckingUploadRights(false);
-                  }
-                }}
-              >
-                Force Refresh
-              </Button>
+            )}
+          </div>
+          
+          {contractTestResult && (
+            <div className="mt-4 p-3 bg-gray-100 rounded text-xs font-mono overflow-auto max-h-40">
+              <pre>{JSON.stringify(contractTestResult, null, 2)}</pre>
             </div>
-            
-            {contractType && (
-              <div className="mt-2 p-3 bg-slate-900/70 rounded text-xs">
-                <h3 className="font-bold mb-1 text-sm text-violet-400">Contract Diagnostics</h3>
-                <div className={`mb-2 p-2 rounded ${canUpload ? "bg-green-900/40 border border-green-700" : "bg-red-900/40 border border-red-700"}`}>
-                  <p className="font-bold">{canUpload ? "✅ UPLOAD PERMITTED" : "❌ UPLOAD RESTRICTED"}</p>
-                  <p className="text-xs">{canUpload 
-                    ? "This account can upload materials" 
-                    : contractType === "SchoolLibrary" 
-                      ? "This is expected - only admin can upload to School Library" 
-                      : "This is unexpected - regular marketplace should allow uploads"}
-                  </p>
-                </div>
-                
-                <p><strong>Contract Type:</strong> {contractType}</p>
-                <p><strong>Contract Verified:</strong> {contractVerified === null ? "Unknown" : contractVerified ? "Yes ✅" : "No ❌"}</p>
-                <p><strong>Network:</strong> {currentNetwork || "Unknown"}</p>
-                <p><strong>Connected Account:</strong> {currentAccount ? `${currentAccount.substring(0, 6)}...${currentAccount.substring(currentAccount.length - 4)}` : "None"}</p>
-                
-                <hr className="my-2 border-slate-700" />
-                <p className="text-amber-300 text-xs">
-                  If permissions are incorrect, check:
-                  <br />1. You're connected to the right account
-                  <br />2. The contract type is correctly detected
-                  <br />3. Try refreshing the connection
-                </p>
-              </div>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {contractTestResult && (
-        <Alert className={`mb-4 ${contractTestResult.success ? 'bg-green-900/50 border-green-700' : 'bg-red-900/50 border-red-700'}`}>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{contractTestResult.success ? 'Contract Test Successful' : 'Contract Test Failed'}</AlertTitle>
-          <AlertDescription>
-            <p>{contractTestResult.message}</p>
-            {contractTestResult.details && (
-              <pre className="mt-2 text-xs overflow-auto max-h-40 p-2 bg-black/50 rounded">
-                {JSON.stringify(contractTestResult.details, null, 2)}
-              </pre>
-            )}
-          </AlertDescription>
-        </Alert>
+          )}
+        </div>
       )}
 
       {hasEnoughBalance === false && isCorrectNetwork !== false && (

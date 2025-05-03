@@ -616,4 +616,7 @@ export const CONTRACT_ABI = [
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
-]; 
+];
+
+// Alias for use in the contract interaction component
+export const STUDY_MARKETPLACE_ABI = CONTRACT_ABI; 

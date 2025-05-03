@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import MaterialCard from "@/components/material-card"
-import { FileText, Download, Lock, BookOpen, ExternalLink } from "lucide-react"
+import { FileText, Download, Lock, BookOpen, ExternalLink, Filter, ChevronDown, SortDesc, ArrowUpDown } from "lucide-react"
 import Loader from "@/components/ui/cube-loader"
 import { useWallet } from "@/hooks/use-wallet"
 import { getMyPurchasedMaterials, getContentHash, getMyListedMaterials } from "@/lib/blockchain"
@@ -14,6 +14,12 @@ import PdfViewerWithAi from "@/components/pdf-viewer-with-ai"
 import SpaceBackground from "@/components/space-background"
 import ClientOnly from "@/lib/client-only"
 import SimpleFallback from "@/components/simple-fallback"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 // Add a CID validation helper function at the top of the file
 const isValidCid = (cid: string): boolean => {
@@ -48,9 +54,23 @@ const formatIpfsUrl = (hash: string): string[] => {
   ];
 };
 
+// Add a helper function to format dates in Indian format (DD/MM/YYYY)
+const formatIndianDate = (dateString: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+  
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  
+  return `${day}/${month}/${year}`;
+};
+
 export default function MyMaterialsPage() {
   const { currentAccount, connect } = useWallet()
   const [activeTab, setActiveTab] = useState("all")
+  const [sortOrder, setSortOrder] = useState("newest")
   const [selectedMaterial, setSelectedMaterial] = useState<any | null>(null)
   const [purchasedMaterials, setPurchasedMaterials] = useState<any[]>([])
   const [createdMaterials, setCreatedMaterials] = useState<any[]>([])
@@ -75,13 +95,14 @@ export default function MyMaterialsPage() {
         
         // Transform the purchased data for display
         const formattedPurchased = purchased.map((material: any) => {
+          const purchaseDate = material.createdAt || new Date().toISOString();
           return {
             id: material.id.toString(),
             title: material.title,
             description: material.description,
             type: "pdf", // Default all to PDF type
-            size: "2.4 MB", // Placeholder size
-            purchaseDate: material.createdAt || new Date().toISOString(), // Use createdAt from blockchain
+            purchaseDate: purchaseDate,
+            formattedDate: formatIndianDate(purchaseDate),
             image: "",
             isOwned: false,
           }
@@ -94,13 +115,14 @@ export default function MyMaterialsPage() {
         
         // Transform the created data for display
         const formattedCreated = created.map((material: any) => {
+          const creationDate = material.createdAt || new Date().toISOString();
           return {
             id: material.id.toString(),
             title: material.title,
             description: material.description,
             type: "pdf", // Default all to PDF type
-            size: "2.4 MB", // Placeholder size
-            creationDate: material.createdAt || new Date().toISOString(), // Use createdAt from blockchain
+            creationDate: creationDate,
+            formattedDate: formatIndianDate(creationDate),
             image: "",
             isOwned: true,
           }
@@ -128,13 +150,43 @@ export default function MyMaterialsPage() {
 
   // Function to get the materials based on the active tab
   const getMaterialsByTab = () => {
+    let materials = [];
+    
     if (activeTab === 'all') {
-      return purchasedMaterials;
+      materials = [...purchasedMaterials];
     } else if (activeTab === 'pdf') {
-      return createdMaterials;
+      materials = [...createdMaterials];
     }
-    return [];
+    
+    // Sort the materials based on the sort order
+    return sortMaterials(materials, sortOrder);
   }
+
+  // Function to sort materials
+  const sortMaterials = (materials: any[], order: string) => {
+    const sorted = [...materials];
+    
+    switch (order) {
+      case 'newest':
+        return sorted.sort((a, b) => {
+          const dateA = new Date(a.purchaseDate || a.creationDate || 0);
+          const dateB = new Date(b.purchaseDate || b.creationDate || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+      case 'oldest':
+        return sorted.sort((a, b) => {
+          const dateA = new Date(a.purchaseDate || a.creationDate || 0);
+          const dateB = new Date(b.purchaseDate || b.creationDate || 0);
+          return dateA.getTime() - dateB.getTime();
+        });
+      case 'a-z':
+        return sorted.sort((a, b) => a.title.localeCompare(b.title));
+      case 'z-a':
+        return sorted.sort((a, b) => b.title.localeCompare(a.title));
+      default:
+        return sorted;
+    }
+  };
 
   // Update the handleSelectMaterial function to use the improved CID handling
   const handleSelectMaterial = async (material: any) => {
@@ -333,23 +385,81 @@ export default function MyMaterialsPage() {
               <div className="space-y-6">
                 <div className="flex justify-end items-center">
                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <select
-                        value={activeTab}
-                        onChange={(e) => setActiveTab(e.target.value)}
-                        className="appearance-none bg-slate-900/50 text-white border border-slate-800/30 rounded-lg py-2 pl-4 pr-10 cursor-pointer hover:bg-slate-800/50 transition-colors duration-200"
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="h-10 px-4 bg-slate-900/80 border-slate-700 hover:bg-slate-800/70 hover:border-slate-600 text-white flex items-center gap-2"
+                        >
+                          <Filter className="h-4 w-4 text-purple-400" />
+                          {activeTab === "all" ? "Purchased" : "Owned"}
+                          <ChevronDown className="h-4 w-4 text-purple-400 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent 
+                        align="end"
+                        className="bg-slate-900 border border-slate-700 text-white shadow-lg shadow-purple-900/20"
                       >
-                        <option value="all">Purchased</option>
-                        <option value="pdf">Owned</option>
-                      </select>
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-purple-400">
-                          <path d="m6 9 6 6 6-6"/>
-                        </svg>
-                      </div>
-                    </div>
+                        <DropdownMenuItem 
+                          className={`flex items-center hover:bg-slate-800 focus:bg-slate-800 ${activeTab === "all" ? "bg-slate-800/70 text-purple-400" : ""}`}
+                          onClick={() => setActiveTab("all")}
+                        >
+                          Purchased
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className={`flex items-center hover:bg-slate-800 focus:bg-slate-800 ${activeTab === "pdf" ? "bg-slate-800/70 text-purple-400" : ""}`}
+                          onClick={() => setActiveTab("pdf")}
+                        >
+                          Owned
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     
-                    <div className="flex items-center gap-2 bg-slate-900/50 py-2 px-4 rounded-lg border border-slate-800/30">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="h-10 px-4 bg-slate-900/80 border-slate-700 hover:bg-slate-800/70 hover:border-slate-600 text-white flex items-center gap-2"
+                        >
+                          <ArrowUpDown className="h-4 w-4 text-purple-400" />
+                          {sortOrder === "newest" ? "Newest First" : 
+                           sortOrder === "oldest" ? "Oldest First" : 
+                           sortOrder === "a-z" ? "A-Z" : "Z-A"}
+                          <ChevronDown className="h-4 w-4 text-purple-400 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent 
+                        align="end"
+                        className="bg-slate-900 border border-slate-700 text-white shadow-lg shadow-purple-900/20"
+                      >
+                        <DropdownMenuItem 
+                          className={`flex items-center hover:bg-slate-800 focus:bg-slate-800 ${sortOrder === "newest" ? "bg-slate-800/70 text-purple-400" : ""}`}
+                          onClick={() => setSortOrder("newest")}
+                        >
+                          Newest First
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className={`flex items-center hover:bg-slate-800 focus:bg-slate-800 ${sortOrder === "oldest" ? "bg-slate-800/70 text-purple-400" : ""}`}
+                          onClick={() => setSortOrder("oldest")}
+                        >
+                          Oldest First
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className={`flex items-center hover:bg-slate-800 focus:bg-slate-800 ${sortOrder === "a-z" ? "bg-slate-800/70 text-purple-400" : ""}`}
+                          onClick={() => setSortOrder("a-z")}
+                        >
+                          A-Z
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          className={`flex items-center hover:bg-slate-800 focus:bg-slate-800 ${sortOrder === "z-a" ? "bg-slate-800/70 text-purple-400" : ""}`}
+                          onClick={() => setSortOrder("z-a")}
+                        >
+                          Z-A
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    
+                    <div className="flex items-center h-10 gap-2 bg-slate-900/80 py-2 px-4 rounded-lg border border-slate-700">
                       <span className="text-slate-400 text-sm">Items:</span>
                       <p className="text-lg font-bold text-purple-400">
                         {getMaterialsByTab().length}

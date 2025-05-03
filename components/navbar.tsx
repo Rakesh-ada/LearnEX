@@ -425,6 +425,19 @@ export default function Navbar() {
                 <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></span>
               )}
           </Link>
+          <Link 
+            href="/organization" 
+              className={`group relative text-sm font-medium tracking-wide transition-colors ${
+              isActiveLink('/organization') 
+                  ? 'text-white' 
+                  : 'text-white/70 hover:text-white'
+            }`}
+          >
+            <span className="font-space">Organization</span>
+              {isActiveLink('/organization') && (
+                <span className="absolute -bottom-[22px] left-0 h-[2px] w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600"></span>
+              )}
+          </Link>
           </div>
         </div>
 
@@ -614,6 +627,13 @@ export default function Navbar() {
                 onClick={() => setIsOpen(false)}
               >
                 My Materials
+              </Link>
+              <Link
+                href="/organization"
+                className={`text-base font-medium font-space ${isActiveLink('/organization') ? 'text-gradient-blue-purple' : 'text-white/80 hover:text-white'}`}
+                onClick={() => setIsOpen(false)}
+              >
+                Organization
               </Link>
               
               <div className="pt-2">
