@@ -841,7 +841,7 @@ export default function OrganizationTab() {
                                   <iframe 
                                     width="100%" 
                                     height="100%" 
-                                    src="https://www.youtube.com/embed/qXPjX8JS708?si=Fl57punSPAzm4RoC" 
+                                    src="https://www.youtube.com/embed/pN93WdNs3HM" 
                                     title="YouTube video player" 
                                     frameBorder="0" 
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
@@ -857,7 +857,7 @@ export default function OrganizationTab() {
                                 
                                 <div className="mt-4 flex">
                                   <a 
-                                    href="https://youtu.be/qXPjX8JS708?si=ahe5Emf_qN1IhMb5" 
+                                    href="https://youtu.be/pN93WdNs3HM" 
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center text-red-400 hover:text-red-300 transition-colors duration-200"
