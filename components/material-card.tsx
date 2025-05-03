@@ -12,9 +12,9 @@ interface MaterialCardProps {
     title: string
     description: string
     type: string
-    size: string
     purchaseDate?: string
     creationDate?: string
+    formattedDate?: string
     image?: string
     thumbnailHash?: string
     isOwned?: boolean
@@ -30,10 +30,9 @@ export default function MaterialCard({ material, onClick }: MaterialCardProps) {
   const hasThumbnail = material.thumbnailHash && isValidIPFSCid(material.thumbnailHash)
   const thumbnailUrl = hasThumbnail ? getIPFSGatewayUrl(material.thumbnailHash!) : ""
 
-  // Determine which date to use and create a formatted date string
-  const dateToUse = material.isOwned ? material.creationDate : material.purchaseDate
-  const formattedDate = dateToUse ? new Date(dateToUse).toLocaleDateString() : "N/A"
+  // Determine which date label to show
   const dateLabel = material.isOwned ? "Created" : "Purchased"
+  const displayDate = material.formattedDate || "N/A"
 
   return (
     <motion.div
@@ -97,12 +96,11 @@ export default function MaterialCard({ material, onClick }: MaterialCardProps) {
         <p className="mb-3 line-clamp-2 text-sm text-slate-300">{material.description}</p>
 
         {/* Details */}
-        <div className="flex items-center justify-between text-xs text-slate-400">
+        <div className="flex items-center justify-start text-xs text-slate-400">
           <div className="flex items-center">
             <Calendar className="mr-1 h-3 w-3" />
-            <span className="mr-1">{dateLabel}:</span> {formattedDate}
+            <span className="mr-1">{dateLabel}:</span> {displayDate}
           </div>
-          <div>{material.size}</div>
         </div>
       </div>
     </motion.div>
