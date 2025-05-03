@@ -547,7 +547,7 @@ export default function OrganizationTab() {
                         value="code" 
                         className="border-b-2 border-transparent data-[state=active]:border-blue-500 rounded-none bg-transparent px-4 py-2 text-base font-medium text-slate-400 hover:text-white data-[state=active]:text-white data-[state=active]:shadow-none"
                       >
-                        Deployment Guide
+                        Smart Contract Deployment Guide
                       </TabsTrigger>
                     </TabsList>
                   </div>
@@ -814,39 +814,124 @@ export default function OrganizationTab() {
                       <div className="px-6 py-5 border-b border-slate-700">
                         <h2 className="text-xl font-bold flex items-center">
                           <Code className="h-5 w-5 mr-2 text-blue-400" />
-                          Deployment Guide
+                          Smart Contract Deployment Guide
                         </h2>
                         <p className="text-sm text-slate-400">
-                          How to deploy EDU Chain contracts using Remix IDE
+                          Learn how to deploy your own StudyMarketplace contract on EDU Chain
                         </p>
                       </div>
                       
                       <div className="p-6">
                         <div className="space-y-6">
-                          {/* Video Tutorial */}
-                          <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
-                            <h3 className="text-lg font-medium mb-3">Video Tutorial</h3>
-                            <div className="aspect-video bg-slate-800 rounded-lg overflow-hidden flex items-center justify-center h-32">
-                              <Link 
-                                href="https://youtu.be/qXPjX8JS708?si=05DG10uihJ6g206R" 
+                          {/* Featured Video Section */}
+                          <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-700/30 rounded-lg p-6">
+                            <h3 className="text-xl font-semibold text-blue-300 mb-3">Video Tutorial: Deploy Your Own Contracts</h3>
+                            
+                            <div className="aspect-video bg-slate-800/70 rounded-lg overflow-hidden">
+                              <iframe 
+                                width="100%" 
+                                height="100%" 
+                                src="https://www.youtube.com/embed/qXPjX8JS708?si=Fl57punSPAzm4RoC" 
+                                title="YouTube video player" 
+                                frameBorder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                referrerPolicy="strict-origin-when-cross-origin" 
+                                allowFullScreen
+                                className="w-full aspect-video"
+                              ></iframe>
+                            </div>
+                            
+                            <p className="mt-4 text-slate-300">
+                              Watch the tutorial directly above or click "View on YouTube" to open in a new tab. This comprehensive guide walks you through the entire process of deploying your own StudyMarketplace contract on EDU Chain using Remix IDE.
+                            </p>
+                            
+                            <div className="mt-4 flex">
+                              <a 
+                                href="https://youtu.be/qXPjX8JS708?si=ahe5Emf_qN1IhMb5" 
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex flex-col items-center hover:text-blue-400 transition-colors"
+                                className="inline-flex items-center text-red-400 hover:text-red-300 transition-colors duration-200"
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500">
-                                  <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
-                                  <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                                <svg className="w-6 h-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"></path>
                                 </svg>
-                                <span className="mt-2 text-sm">Watch Tutorial: Deploying Smart Contracts</span>
-                              </Link>
+                                View on YouTube
+                              </a>
+                            </div>
+                          </div>
+
+                          {/* Simple Steps Summary */}
+                          <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-6">
+                            <h3 className="text-lg font-medium text-blue-300 mb-4">Quick Deployment Steps</h3>
+                            
+                            <div className="space-y-4">
+                              <div className="flex">
+                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-700/50 text-blue-300 font-bold mr-3">
+                                  1
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-white">Prepare Your Contracts</h4>
+                                  <p className="text-sm text-slate-300">
+                                    Select and copy the contract code from the contract options below
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex">
+                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-700/50 text-blue-300 font-bold mr-3">
+                                  2
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-white">Go to Remix IDE</h4>
+                                  <p className="text-sm text-slate-300">
+                                    Visit <a href="https://remix.ethereum.org" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">remix.ethereum.org</a> in your browser
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex">
+                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-700/50 text-blue-300 font-bold mr-3">
+                                  3
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-white">Create & Compile Smart Contract</h4>
+                                  <p className="text-sm text-slate-300">
+                                    Create a new Solidity file and paste the contract code, then compile with Solidity 0.8.17+
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex">
+                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-700/50 text-blue-300 font-bold mr-3">
+                                  4
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-white">Deploy with MetaMask</h4>
+                                  <p className="text-sm text-slate-300">
+                                    Switch to the "Deploy & Run Transactions" tab, connect MetaMask to EDU Chain, and deploy with your wallet address as the platform fee recipient
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex">
+                                <div className="flex-shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-700/50 text-blue-300 font-bold mr-3">
+                                  5
+                                </div>
+                                <div>
+                                  <h4 className="font-medium text-white">Copy Contract Address</h4>
+                                  <p className="text-sm text-slate-300">
+                                    After deployment, copy your new contract address and paste it in the "My Contracts" tab to interact with it
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           </div>
                           
-                          {/* Step 1: Prepare Contracts */}
-                          <div className="space-y-4">
-                            <h3 className="text-xl font-medium border-b border-slate-700 pb-2">Step 1: Prepare Your Contracts</h3>
+                          {/* Prepare Your Contracts Section */}
+                          <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-6">
+                            <h3 className="text-lg font-medium text-blue-300 mb-4">Step 1: Prepare Your Contracts</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="bg-slate-700/30 p-4 rounded-lg">
+                              <div className="bg-slate-800/50 p-4 rounded-lg">
                                 <h4 className="text-base font-medium text-blue-400 mb-2">StudyMarketplace.sol</h4>
                                 <p className="text-sm text-slate-300 mb-3">
                                   The main marketplace contract that enables decentralized selling and purchasing of educational materials.
@@ -860,7 +945,7 @@ export default function OrganizationTab() {
                                   Copy File Link
                                 </Button>
                               </div>
-                              <div className="bg-slate-700/30 p-4 rounded-lg">
+                              <div className="bg-slate-800/50 p-4 rounded-lg">
                                 <h4 className="text-base font-medium text-blue-400 mb-2">SchoolLibrary.sol</h4>
                                 <p className="text-sm text-slate-300 mb-3">
                                   A specialized contract for school libraries with controlled access and centralized management of educational materials.
@@ -877,172 +962,44 @@ export default function OrganizationTab() {
                             </div>
                           </div>
                           
-                          {/* Step 2: Remix IDE */}
-                          <div>
-                            <h3 className="text-xl font-medium border-b border-slate-700 pb-2">Step 2: Setup Remix IDE</h3>
-                            <ol className="mt-3 space-y-3 list-decimal list-inside text-slate-300">
-                              <li>
-                                <span className="font-medium text-white">Open Remix IDE</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Go to <Link href="https://remix.ethereum.org" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">remix.ethereum.org</Link> in your browser
-                                </p>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Create New Files</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Click the "+" icon in the file explorer and create two files: <code className="bg-slate-800 px-1 py-0.5 rounded">StudyMarketplace.sol</code> and <code className="bg-slate-800 px-1 py-0.5 rounded">SchoolLibrary.sol</code>
-                                </p>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Copy Contract Code</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Copy the full source code from the GitHub repository and paste into each file
-                                </p>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Compile Contracts</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Select the Solidity compiler (0.8.20+) and click "Compile" for each contract
-                                </p>
-                              </li>
-                            </ol>
+                          {/* Contract Code Section */}
+                          <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-6">
+                            <h3 className="text-lg font-medium text-blue-300 mb-4">Step 2: Open Remix IDE</h3>
+                            <p className="text-sm text-slate-300 mb-4">
+                              Click the button below to open Remix IDE in a new tab and start creating your smart contract:
+                            </p>
+                            
+                            <div className="flex">
+                              <Button
+                                variant="outline" 
+                                className="flex-1 border-slate-600 bg-slate-800/70 hover:bg-slate-700"
+                                onClick={() => window.open("https://remix.ethereum.org/", "_blank")}
+                              >
+                                <ExternalLink className="h-4 w-4 mr-2" />
+                                Open Remix IDE
+                              </Button>
+                            </div>
                           </div>
                           
-                          {/* Step 3: Connect to EDU Chain */}
-                          <div>
-                            <h3 className="text-xl font-medium border-b border-slate-700 pb-2">Step 3: Connect to EDU Chain</h3>
-                            <ol className="mt-3 space-y-3 list-decimal list-inside text-slate-300">
-                              <li>
-                                <span className="font-medium text-white">Connect MetaMask</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Ensure MetaMask is installed and connected to EDU Chain Testnet
-                                </p>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">EDU Chain Network Settings</span>
-                                <div className="pl-6 text-sm text-slate-400 mt-1">
-                                  <p>Add EDU Chain to MetaMask with these parameters:</p>
-                                  <ul className="mt-2 space-y-1 list-disc list-inside pl-2">
-                                    <li>Network Name: <span className="text-white">EDU Chain Testnet</span></li>
-                                    <li>RPC URL: <span className="text-white">https://rpc.edu-chain.org</span></li>
-                                    <li>Chain ID: <span className="text-white">0xa345 (41797)</span></li>
-                                    <li>Currency Symbol: <span className="text-white">EDU</span></li>
-                                    <li>Block Explorer: <span className="text-white">https://edu-chain-testnet.blockscout.com</span></li>
-                                  </ul>
-                                </div>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Select Environment</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  In Remix, go to "Deploy & Run Transactions" tab and select "Injected Provider - MetaMask" as your environment
-                                </p>
-                              </li>
-                            </ol>
-                          </div>
-                          
-                          {/* Step 4: Deploy Contracts */}
-                          <div>
-                            <h3 className="text-xl font-medium border-b border-slate-700 pb-2">Step 4: Deploy Contracts</h3>
-                            <ol className="mt-3 space-y-3 list-decimal list-inside text-slate-300">
-                              <li>
-                                <span className="font-medium text-white">StudyMarketplace Deployment</span>
-                                <div className="pl-6 text-sm text-slate-400 mt-1">
-                                  <p>Select StudyMarketplace.sol from the contract dropdown</p>
-                                  <p className="mt-1">Add your wallet address as the constructor parameter (_platformFeeRecipient)</p>
-                                  <p className="mt-1">Click "Deploy" and confirm the transaction in MetaMask</p>
-                                </div>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">SchoolLibrary Deployment</span>
-                                <div className="pl-6 text-sm text-slate-400 mt-1">
-                                  <p>Select SchoolLibrary.sol from the contract dropdown</p>
-                                  <p className="mt-1">Add your wallet address as the constructor parameter (_platformFeeRecipient)</p>
-                                  <p className="mt-1">Click "Deploy" and confirm the transaction in MetaMask</p>
-                                </div>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Save Contract Addresses</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  After deployment, copy and save the contract addresses for future reference
-                                </p>
-                              </li>
-                            </ol>
-                          </div>
-                          
-                          {/* Step 5: Verify Contracts */}
-                          <div>
-                            <h3 className="text-xl font-medium border-b border-slate-700 pb-2">Step 5: Verify Contracts on Blockscout</h3>
-                            <ol className="mt-3 space-y-3 list-decimal list-inside text-slate-300">
-                              <li>
-                                <span className="font-medium text-white">Go to EDU Chain Explorer</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Visit <Link href="https://edu-chain-testnet.blockscout.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">edu-chain-testnet.blockscout.com</Link>
-                                </p>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Search Contract</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Paste your contract address in the search bar and go to the contract page
-                                </p>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Verify & Publish</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Click "Verify & Publish" and enter the contract details:
-                                </p>
-                                <ul className="mt-2 space-y-1 list-disc list-inside pl-8 text-slate-400">
-                                  <li>Contract Name: <span className="text-white">StudyMarketplace</span> or <span className="text-white">SchoolLibrary</span></li>
-                                  <li>Compiler Version: <span className="text-white">v0.8.20+commit.a1b79de6</span></li>
-                                  <li>Enable optimization: <span className="text-white">Yes, with 200 runs</span></li>
-                                  <li>Paste the complete source code</li>
-                                  <li>ABI-encoded constructor arguments (from Remix)</li>
-                                </ul>
-                              </li>
-                              <li>
-                                <span className="font-medium text-white">Explore Verified Contract</span>
-                                <p className="pl-6 text-sm text-slate-400 mt-1">
-                                  Once verified, the contract code and all functions will be visible in the explorer
-                                </p>
-                              </li>
-                            </ol>
-                          </div>
-                          
-                          {/* Additional Resources */}
-                          <div className="bg-blue-900/20 border border-blue-800/40 rounded-lg p-4 mt-6">
-                            <h3 className="text-lg font-medium text-blue-300 mb-2">Additional Resources</h3>
-                            <ul className="space-y-2 text-slate-300">
+                          {/* Tips and Resources */}
+                          <div className="bg-blue-900/20 border border-blue-800/40 rounded-lg p-6">
+                            <h3 className="text-lg font-medium text-blue-300 mb-3">Pro Tips</h3>
+                            <ul className="space-y-3 text-slate-300">
                               <li className="flex items-start">
-                                <div className="mt-1 mr-2 text-blue-400">•</div>
-                                <div>
-                                  <Link href="https://docs.edu-chain.org" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-                                    EDU Chain Documentation
-                                  </Link>
-                                  <p className="text-sm text-slate-400 mt-0.5">
-                                    Complete documentation for EDU Chain, including network settings and contract development
-                                  </p>
-                                </div>
+                                <div className="text-blue-400 mr-2">•</div>
+                                <p>Make sure to use the <strong>same wallet</strong> for deployment and for uploading materials</p>
                               </li>
                               <li className="flex items-start">
-                                <div className="mt-1 mr-2 text-blue-400">•</div>
-                                <div>
-                                  <Link href="https://faucet.edu-chain.org" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-                                    EDU Chain Testnet Faucet
-                                  </Link>
-                                  <p className="text-sm text-slate-400 mt-0.5">
-                                    Get test EDU tokens for deploying and testing contracts
-                                  </p>
-                                </div>
+                                <div className="text-blue-400 mr-2">•</div>
+                                <p>The wallet address you use to deploy becomes the <strong>platform fee recipient</strong></p>
                               </li>
                               <li className="flex items-start">
-                                <div className="mt-1 mr-2 text-blue-400">•</div>
-                                <div>
-                                  <Link href="https://remix-ide.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-                                    Remix IDE Documentation
-                                  </Link>
-                                  <p className="text-sm text-slate-400 mt-0.5">
-                                    Learn how to use all features of Remix IDE for Solidity development
-                                  </p>
-                                </div>
+                                <div className="text-blue-400 mr-2">•</div>
+                                <p>Get test ETH from <a href="https://www.hackquest.io/faucets/656476" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">EDU-Chain HackQuest Faucet</a> before deploying</p>
+                              </li>
+                              <li className="flex items-start">
+                                <div className="text-blue-400 mr-2">•</div>
+                                <p>Watch the full video tutorial for detailed step-by-step instructions</p>
                               </li>
                             </ul>
                           </div>
