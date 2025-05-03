@@ -166,7 +166,10 @@ const PROMPT_TEMPLATES = {
   compare: "Compare and contrast {topic} with related technologies or approaches. Highlight key differences, advantages, and limitations.",
   future: "Discuss the future trends and potential developments in {topic} over the next 5-10 years. What innovations or breakthroughs might we expect?",
   history: "Provide a brief history of {topic}, including when it was developed, major milestones, and how it has evolved over time.",
-  career: "What career opportunities exist in {topic}? Describe job roles, required skills, and how to start a career in this field."
+  career: "What career opportunities exist in {topic}? Describe job roles, required skills, and how to start a career in this field.",
+  practical: "Give me practical, step-by-step instructions to implement or use {topic} in a real-world scenario with code examples where applicable.",
+  challenges: "What are the main challenges or limitations of {topic}? Discuss the problems that need to be solved and potential solutions.",
+  resources: "What are the best books, websites, courses, and communities to learn more about {topic} for someone who wants to master it?"
 };
 
 const AI_FEATURES = [
@@ -183,10 +186,10 @@ const AI_FEATURES = [
     icon: "HelpCircle" 
   },
   { 
-    id: "multiple-model", 
-    name: "Multiple Model Support", 
-    description: "Seamlessly interact with top-tier LLMs such as Gemini 2.0 Flash and GPT-4o, enabling enhanced flexibility, performance, and scalability",
-    icon: "Cpu" 
+    id: "instant-answer", 
+    name: "Instant Answer", 
+    description: "Get immediate responses to your questions with lightning-fast processing, optimized for quick learning and time-sensitive inquiries",
+    icon: "Zap" 
   },
   { 
     id: "document-translation", 
