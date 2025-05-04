@@ -1,4 +1,4 @@
-# 🎓 LearnEX - Decentralized Study Library
+# 🎓 LearnEX - Decentralized Study Material Library
 
 A decentralized library for buying and selling educational materials using blockchain technology.
 
