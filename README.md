@@ -136,21 +136,21 @@ Visit `http://localhost:3000` to see the application.
 
 ## 📚 Usage
 
-### For Content Creators 👨‍🏫👩‍🏫
+### 1. For Content Creators 👨‍🏫👩‍🏫
 
 1. Connect your wallet to the edu-chain network
 2. Navigate to "Upload Material"
 3. Fill in the details and upload your content
 4. Set a price and list your material
 
-### For Learners 👨‍🎓👩‍🎓
+### 2. For Learners 👨‍🎓👩‍🎓
 
 1. Connect your wallet to the edu-chain network
 2. Browse available materials
 3. Purchase materials you're interested in
 4. Access your purchased materials in "My Library"
 
-### For Organizations 🏢
+### 3. For Organizations 🏢
 
 1. Connect your wallet to the edu-chain network
 2. Navigate to the "Organization" tab
