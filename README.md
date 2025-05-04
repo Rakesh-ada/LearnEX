@@ -23,14 +23,14 @@ LearnEX allows creators to list educational materials on the blockchain and earn
 
 This platform empowers creators, promotes decentralization, and ensures censorship-resistant access to education.
 
-It's not just a project—it's a step toward 🌍 #EducationForAll.
+It's not just a project—it's a step toward #EducationForAll 🌍
 
 ## 💻 Tech Stack
 
-- **Frontend**: ⚛️ Next.js, React, TypeScript, Tailwind CSS
-- **Blockchain**: 🔗 Ethereum-compatible networks (currently deployed on edu-chain)
-- **Storage**: 📂 IPFS via Pinata
-- **Web3 Integration**: 🌐 ethers.js
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS ⚛️
+- **Blockchain**: Ethereum-compatible networks (currently deployed on edu-chain) 🔗
+- **Storage**: IPFS via Pinata 📂
+- **Web3 Integration**: ethers.js 🌐
 
 ## 🚀 Getting Started
 
@@ -174,4 +174,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the `MIT License` - see the LICENSE file for details.
