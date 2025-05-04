@@ -4,7 +4,7 @@ A decentralized library for buying and selling educational materials using block
 
 ## 🔍 Overview
 
-Study Marketplace allows creators to list educational materials on the blockchain and earn cryptocurrency when users purchase their content. All content is stored on IPFS for decentralized, censorship-resistant hosting.
+LearnEX allows creators to list educational materials on the blockchain and earn cryptocurrency when users purchase their content. All content is stored on IPFS for decentralized, censorship-resistant hosting.
 
 ## ✨ Features
 
