@@ -1,6 +1,6 @@
-# 🎓 Study Marketplace - Decentralized Learning Platform
+# 🎓 LearnEX - Decentralized Study Library
 
-A decentralized marketplace for buying and selling educational materials using blockchain technology.
+A decentralized library for buying and selling educational materials using blockchain technology.
 
 ## 🔍 Overview
 
